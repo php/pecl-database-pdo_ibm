@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<package version="1.0">
+ <name>PDO_IBM</name>
+ <summary>PDO driver for IBM databases</summary>
+ <description>
+  This extension provides an IBM database driver for PDO. This driver supports IBM DB2
+  Universal Database, IBM Cloudscape, and Apache Derby databases.
+ </description>
+ <license>Apache License 2.0</license>
+ <maintainers>
+  <maintainer>
+   <user>kfbombar</user>
+   <name>Kellen Bombardier</name>
+   <email>kfbombar@us.ibm.com</email>
+   <role>lead</role>
+  </maintainer>
+  <maintainer>
+   <user>kraman</user>
+   <name>Krishna Raman</name>
+   <email>kraman@gmail.com</email>
+   <role>lead</role>
+  </maintainer>
+ </maintainers>
+
+ <release>
+  <version>0.9.0</version>
+  <date>2006-11-06</date>
+  <license>Apache License 2.0</license>
+  <state>beta</state>
+  <notes>
+    Initial version of the PDO_IBM driver
+  </notes>
+  <configureoptions>
+   <configureoption name="with-pdo_ibm" prompt="DB2 install directory location?" />
+  </configureoptions>
+  <filelist>
+   <dir name="/" baseinstalldir="pdo_ibm" role="src">
+    <file name="CREDITS" role="doc" />
+    <file name="config.m4" role="src" />
+    <file name="config.w32" role="src" />
+    <file name="ibm_driver.c" role="src" />
+    <file name="ibm_statement.c" role="src" />
+    <file name="package.xml" role="src" />
+    <file name="pdo_ibm.c" role="src" />
+    <file name="php_pdo_ibm.h" role="src" />
+    <file name="php_pdo_ibm_int.h" role="src" />
+   </dir>
+   <dir name="tests" role="test">
+    <file name="fvt.inc" role="test" />
+    <file name="skipif.inc" role="test" />
+    <file name="spook.png" role="test" />
+    <file name="clob.dat" role="test" />
+    <file name="fvt_001.phpt" role="test" />
+    <file name="fvt_002.phpt" role="test" />
+    <file name="fvt_003.phpt" role="test" />
+    <file name="fvt_004.phpt" role="test" />
+    <file name="fvt_010.phpt" role="test" />
+    <file name="fvt_011.phpt" role="test" />
+    <file name="fvt_012.phpt" role="test" />
+    <file name="fvt_013.phpt" role="test" />
+    <file name="fvt_014.phpt" role="test" />
+    <file name="fvt_015.phpt" role="test" />
+    <file name="fvt_016.phpt" role="test" />
+    <file name="fvt_020.phpt" role="test" />
+    <file name="fvt_021.phpt" role="test" />
+    <file name="fvt_022.phpt" role="test" />
+    <file name="fvt_023.phpt" role="test" />
+    <file name="fvt_030.phpt" role="test" />
+    <file name="fvt_031.phpt" role="test" />
+    <file name="fvt_49872.phpt" role="test" />
+   </dir>
+  </filelist>
+ </release>
+</package>
