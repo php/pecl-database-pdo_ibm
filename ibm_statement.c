@@ -14,7 +14,7 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Krishna Raman, Kellen Bombardier              |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
   |                                                                      |
   +----------------------------------------------------------------------+
 */
@@ -56,6 +56,8 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 		case SQL_LONGVARBINARY:
 		case SQL_VARBINARY:
 		case SQL_BINARY:
+		case SQL_BLOB:
+		case SQL_CLOB:
 		case SQL_XML:
 			ctype = SQL_C_BINARY;
 			break;
@@ -206,6 +208,8 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 			* data, not as char data.
 			*/
 			case SQL_BINARY:
+			case SQL_BLOB:
+			case SQL_CLOB:
 			case SQL_XML:
 			case SQL_VARBINARY:
 			case SQL_LONGVARBINARY:
@@ -421,7 +425,9 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 				/* transfer this as character data. */
 				param_res->ctype = SQL_C_CHAR;
 			}
-			if (param_res->data_type == SQL_BLOB || param_res->data_type == SQL_XML) {
+			if (param_res->data_type == SQL_BLOB ||
+				param_res->data_type == SQL_XML ||
+				param_res->data_type == SQL_CLOB) {
 				/* transfer this as binary data. */
 				param_res->ctype = SQL_C_BINARY;
 			}
@@ -579,6 +585,8 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 		case SQL_LONGVARBINARY:
 		case SQL_VARBINARY:
 		case SQL_BINARY:
+		case SQL_BLOB:
+		case SQL_CLOB:
 		case SQL_XML:
 			{
 				/* we're going to need to do getdata calls to retrieve these */

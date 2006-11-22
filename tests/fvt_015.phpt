@@ -21,11 +21,13 @@ pdo_ibm: Insert/select clob/blob columns with binding to local variable or strea
 			$create = 'CREATE TABLE animals (id INTEGER, my_clob clob, my_blob blob)';
 			$res = $this->db->exec( $create );
 
-			$stmt = $this->db->prepare('insert into animals (id,my_clob) values (:id,:my_clob)');
+			$stmt = $this->db->prepare('insert into animals (id,my_clob,my_blob) values (:id,:my_clob,:my_blob)');
 			$clob = "test clob data\n";
+			$blob = "test blob data\n";
 			print "inserting from php variable\n";
 			$stmt->bindValue( ':id' , 0 );
 			$stmt->bindParam( ':my_clob' , $clob , PDO::PARAM_LOB , strlen($clob) );
+			$stmt->bindParam( ':my_blob' , $blob , PDO::PARAM_LOB , strlen($blob) );
 			$stmt->execute();
 
 			$stmt = $this->db->prepare( 'select id,my_clob,my_blob from animals' );
@@ -36,10 +38,8 @@ pdo_ibm: Insert/select clob/blob columns with binding to local variable or strea
 			$res = $this->db->exec( "DELETE FROM animals" );
 
 			print "inserting from php file stream\n";
-			$stmt = $this->db->prepare('insert into animals (id,my_clob,my_blob) values (:id,:my_clob,:my_blob)');
-			$fpath = dirname(__FILE__) . "/clob.dat";
-			$fp1 = fopen( $fpath , "rb" );
-			$fp2 = dirname(__FILE__) . "/spook.png";
+			$fp1 = fopen( dirname(__FILE__) . "/clob.dat" , "rb" );
+			$fp2 = fopen( dirname(__FILE__) . "/spook.png" , "rb" );
 			$stmt = $this->db->prepare('insert into animals (id,my_clob,my_blob) values (:id,:my_clob,:my_blob)');
 			$stmt->bindValue( ':id' , 1 );
 			$stmt->bindParam( ':my_clob' , $fp1 , PDO::PARAM_LOB );
@@ -107,9 +107,9 @@ array(1) {
     string(15) "test clob data
 "
     ["MY_BLOB"]=>
-    NULL
+    string(%d)%s
     [2]=>
-    NULL
+    string(%d)%s
   }
 }
 inserting from php file stream

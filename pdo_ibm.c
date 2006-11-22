@@ -14,7 +14,7 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Krishna Raman, Kellen Bombardier              |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
   |                                                                      |
   +----------------------------------------------------------------------+
 */
@@ -65,7 +65,7 @@ zend_module_entry pdo_ibm_module_entry =
 	PHP_RSHUTDOWN(pdo_ibm),	/* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(pdo_ibm),
 #if ZEND_MODULE_API_NO >= 20010901
-	"0.1",	/* Replace with version number for your extension */
+	"1.0.0",	/* Replace with version number for your extension */
 #endif
 	STANDARD_MODULE_PROPERTIES
 };

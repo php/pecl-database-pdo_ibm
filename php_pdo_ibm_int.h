@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | (C) Copyright IBM Corporation 2006.                                  |
+  | (C) Copyright IBM Corporation 2006                                   |
   +----------------------------------------------------------------------+
   |                                                                      |
   | Licensed under the Apache License, Version 2.0 (the "License"); you  |
@@ -14,7 +14,7 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Krishna Raman, Kellen Bombardier              |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
   |                                                                      |
   +----------------------------------------------------------------------+
 */

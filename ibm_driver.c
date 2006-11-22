@@ -14,7 +14,7 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Krishna Raman, Kellen Bombardier              |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
   |                                                                      |
   +----------------------------------------------------------------------+
 */
@@ -151,7 +151,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_VER, &server_info,
 			sizeof(server_info), &server_len);
 	/* making char numbers into integers eg. "10" --> 10 or "09" --> 9 */
-	stmt_res->server_ver = (((server_info[0]-'0')*10) + (server_info[1]-'0'));
+	stmt_res->server_ver = ((server_info[0] - '0')*100) + ((server_info[1] - '0')*10) + (server_info[3] - '0');
 
 	/*
 	 * Attach the methods...we are now live, so errors will no longer immediately

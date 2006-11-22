@@ -23,12 +23,12 @@
  </maintainers>
 
  <release>
-  <version>0.9.0</version>
-  <date>2006-11-06</date>
+  <version>1.0.0</version>
+  <date>2006-11-22</date>
   <license>Apache License 2.0</license>
-  <state>beta</state>
+  <state>stable</state>
   <notes>
-    Initial version of the PDO_IBM driver
+    Stable version of the PDO_IBM driver
   </notes>
   <configureoptions>
    <configureoption name="with-pdo_ibm" prompt="DB2 install directory location?" />
@@ -50,6 +50,8 @@
     <file name="skipif.inc" role="test" />
     <file name="spook.png" role="test" />
     <file name="clob.dat" role="test" />
+    <file name="large_clob.dat" role="test" />
+    <file name="large_blob.dat" role="test" />
     <file name="fvt_001.phpt" role="test" />
     <file name="fvt_002.phpt" role="test" />
     <file name="fvt_003.phpt" role="test" />
@@ -61,6 +63,8 @@
     <file name="fvt_014.phpt" role="test" />
     <file name="fvt_015.phpt" role="test" />
     <file name="fvt_016.phpt" role="test" />
+    <file name="fvt_017.phpt" role="test" />
+    <file name="fvt_017b.phpt" role="test" />
     <file name="fvt_020.phpt" role="test" />
     <file name="fvt_021.phpt" role="test" />
     <file name="fvt_022.phpt" role="test" />
