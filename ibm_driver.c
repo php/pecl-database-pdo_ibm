@@ -68,6 +68,9 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	int converted_len = 0;
 	stmt_res->converted_statement = NULL;
 
+	/* clear the current error information to get ready for new execute */
+	clear_stmt_error(stmt);
+
 	/*
 	 * the statement passed in to us at this point is the raw statement the
 	 *  programmer specified.  If the statement is using named parameters
@@ -381,7 +384,7 @@ static int ibm_handle_get_attribute(
 {
 	switch (attr) {
 		case PDO_ATTR_CLIENT_VERSION:
-			ZVAL_STRING(return_value, "Informix 1.0", 1);
+			ZVAL_STRING(return_value, MODULE_RELEASE, 1);
 			return TRUE;
 
 		case PDO_ATTR_AUTOCOMMIT:

@@ -612,10 +612,11 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 		case SQL_NUMERIC:
 		default:
 			in_length = col_res->data_size + 1;
-			col_res->data.str_val = (char *) emalloc(in_length);
+			col_res->data.str_val = (char *) emalloc(in_length+1);
 			check_stmt_allocation(col_res->data.str_val,
 					"stmt_bind_column",
 					"Unable to allocate column buffer");
+			col_res->data.str_val[in_length] = '\0';
 			rc = SQLBindCol((SQLHSTMT) stmt_res->hstmt,
 					(SQLUSMALLINT) (colno + 1), SQL_C_CHAR,
 					col_res->data.str_val, in_length,
@@ -950,6 +951,10 @@ static int ibm_stmt_describer(
 			tmp_name, BUFSIZ, &col_res->namelen, &col_res->data_type, &col_res->data_size,
 			&col_res->scale, &col_res->nullable);
 	check_stmt_error(rc, "SQLDescribeCol");
+
+	rc = SQLColAttribute(stmt_res->hstmt, colno+1, SQL_DESC_DISPLAY_SIZE,
+			NULL, 0, NULL, &col_res->data_size);
+	check_stmt_error(rc, "SQLColAttribute");
 
 	/*
 	* Make sure we get a name properly.  If the name is too long for our

@@ -65,7 +65,7 @@ zend_module_entry pdo_ibm_module_entry =
 	PHP_RSHUTDOWN(pdo_ibm),	/* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(pdo_ibm),
 #if ZEND_MODULE_API_NO >= 20010901
-	"1.0.0",	/* Replace with version number for your extension */
+	MODULE_RELEASE,	/* Replace with version number for your extension */
 #endif
 	STANDARD_MODULE_PROPERTIES
 };

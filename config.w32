@@ -3,7 +3,7 @@ ARG_WITH("pdo-ibm", "DB2 support for PDO. Pass the location of the DB2 installat
 if (PHP_PDO_IBM != "no")
 {
 	if (CHECK_LIB("db2cli.lib", "pdo_ibm", PHP_PDO_IBM) &&
-		CHECK_HEADER_ADD_INCLUDE('sql.h', 'CFLAGS_PDO_IBM', PHP_PDO_IBM + '\\include;' + PHP_PHP_BUILD + "\\include\\db2"))
+		CHECK_HEADER_ADD_INCLUDE('sql.h', 'CFLAGS_PDO_IBM', PHP_PDO_IBM + '\\include'))
 	{
 		ADD_FLAG( 'CFLAGS_PDO_IBM' , '/I "' + PHP_PDO_IBM + '\\include" ');
 		ADD_FLAG( 'LDFLAGS_PDO_IBM' , '/libpath:"' + PHP_PDO_IBM + '\\lib" ' );

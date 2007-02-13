@@ -14,24 +14,21 @@
    <email>kfbombar@us.ibm.com</email>
    <role>lead</role>
   </maintainer>
-  <maintainer>
-   <user>kraman</user>
-   <name>Krishna Raman</name>
-   <email>kraman@gmail.com</email>
-   <role>lead</role>
-  </maintainer>
  </maintainers>
 
  <release>
-  <version>1.0.0</version>
-  <date>2006-11-22</date>
+  <version>1.1.0</version>
+  <date>2007-02-13</date>
   <license>Apache License 2.0</license>
   <state>stable</state>
   <notes>
-    Stable version of the PDO_IBM driver
+    Fixed internal bug regarding wrong getAttribute information
+    Fixed internal bug regarding error description not being cleared
+    Fixed internal bug regarding an issue found when faulty SQL is issued
+    Fixed internal bug regarding float data type issues
   </notes>
   <configureoptions>
-   <configureoption name="with-pdo_ibm" prompt="DB2 install directory location?" />
+   <configureoption name="with-pdo-ibm" prompt="DB2 install directory location?" />
   </configureoptions>
   <filelist>
    <dir name="/" baseinstalldir="pdo_ibm" role="src">
@@ -56,6 +53,11 @@
     <file name="fvt_002.phpt" role="test" />
     <file name="fvt_003.phpt" role="test" />
     <file name="fvt_004.phpt" role="test" />
+    <file name="fvt_005.phpt" role="test" />
+    <file name="fvt_006.phpt" role="test" />
+    <file name="fvt_007.phpt" role="test" />
+    <file name="fvt_008.phpt" role="test" />
+    <file name="fvt_009.phpt" role="test" />
     <file name="fvt_010.phpt" role="test" />
     <file name="fvt_011.phpt" role="test" />
     <file name="fvt_012.phpt" role="test" />
@@ -75,4 +77,6 @@
    </dir>
   </filelist>
  </release>
+ <dep type="php" rel="ge" version="5.0.3" />
+ <dep type="pkg" rel="has" version="1.0.0">PDO</dep>
 </package>

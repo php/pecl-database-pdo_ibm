@@ -1,5 +1,5 @@
 --TEST--
-pdo_informix: Insert and retrieve a very large blob file. (byte column)
+pdo_ibm: Insert and retrieve a very large file.
 --SKIPIF--
 <?php require_once('skipif.inc'); ?>
 --FILE--
