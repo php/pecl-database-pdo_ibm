@@ -435,6 +435,7 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 {
 	int rc = 0;
+	SQLSMALLINT d_length = 0, u_length = 0, p_length = 0;
 	/*
 	* Allocate our driver data control block.  If this is a persistent
 	* connection, we need to allocate this from persistent storage.
@@ -468,21 +469,26 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	*/
 	if (strchr(dbh->data_source, '=') != NULL) {
 		/* first check to see if we have a user name */
-		if (dbh->username != NULL && strlen(dbh->username) > 0) {
+		if (dbh->username != NULL && dbh->password != NULL) {
 			/*
 			* Ok, one was given...however, the DSN may already contain UID
 			* information, so check first.
 			*/
 			if (strstr(dbh->data_source, ";uid=") == NULL
 					&& strstr(dbh->data_source, ";UID=") == NULL) {
-				int dsn_length = strlen(dbh->data_source) + strlen(dbh->username) +
-						strlen(dbh->password) + sizeof(";UID=;PWD=;") + 1;
+				/* Make sure each of the connection parameters is not NULL */
+				d_length = strlen(dbh->data_source);
+				u_length = strlen(dbh->username);
+				p_length = strlen(dbh->password);
+				int dsn_length = d_length + u_length + p_length + sizeof(";UID=;PWD=;") + 1;
 				char *new_dsn = pemalloc(dsn_length, dbh->is_persistent);
 				check_allocation(new_dsn, "dbh_connect", "unable to allocate DSN string");
 				sprintf(new_dsn, "%s;UID=%s;PWD=%s;", dbh->data_source,
 						dbh->username, dbh->password);
+				if (dbh->data_source) {
+					pefree((void *) dbh->data_source, dbh->is_persistent);
+				}
 				/* now replace the DSN with a properly formatted one. */
-				pefree((void *) dbh->data_source, dbh->is_persistent);
 				dbh->data_source = new_dsn;
 			}
 
@@ -494,16 +500,26 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 				0, NULL, SQL_DRIVER_NOPROMPT);
 		check_dbh_error(rc, "SQLDriverConnect");
 	} else {
+		/* Make sure each of the connection parameters is not NULL */
+		if (dbh->data_source) {
+			d_length = strlen(dbh->data_source);
+		}
+		if (dbh->username) {
+			u_length = strlen(dbh->username);
+		}
+		if (dbh->password) {
+			p_length = strlen(dbh->password);
+		}
 		/*
 		* No connection options specified, we can just connect with the name,
 		*  userid, and password as given.
 		*/
 		rc = SQLConnect((SQLHDBC) conn_res->hdbc, (SQLCHAR *) dbh->data_source,
-			(SQLSMALLINT)dbh->data_source_len,
+			(SQLSMALLINT) d_length,
 			(SQLCHAR *) dbh->username,
-			(SQLSMALLINT) strlen(dbh->username),
+			(SQLSMALLINT) u_length,
 			(SQLCHAR *)dbh->password,
-			(SQLSMALLINT) strlen(dbh->password));
+			(SQLSMALLINT) p_length);
 		check_dbh_error(rc, "SQLConnect");
 	}
 
@@ -647,6 +663,8 @@ void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line TSRMLS_D
 
 	/* if we're in the middle of execution when an error was detected, make sure we cancel */
 	if (stmt_res->executing) {
+		/*  raise the error */
+		raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line TSRMLS_CC);
 		/*  cancel the statement */
 		SQLCancel(stmt_res->hstmt);
 		/*  make sure we release execution-related storage. */
@@ -659,8 +677,10 @@ void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line TSRMLS_D
 			stmt_res->converted_statement = NULL;
 		}
 		stmt_res->executing = 0;
+	} else {
+		/*  raise the error */
+		raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line TSRMLS_CC);
 	}
-	raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line TSRMLS_CC);
 }
 
 /*
