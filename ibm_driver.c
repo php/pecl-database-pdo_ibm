@@ -315,17 +315,35 @@ static long ibm_handle_doer(
 		return -1;
 	}
 
-	/* we need to update the number of affected rows. */
-	rc = SQLRowCount(hstmt, &rowCount);
-	if (rc == SQL_ERROR) {
+	/*
+	* Check if SQL_NO_DATA_FOUND was returned:
+	* SQL_NO_DATA_FOUND is returned if the SQL statement is a Searched UPDATE
+	* or Searched DELETE and no rows satisfy the search condition.
+	*/
+	if (rc == SQL_NO_DATA) {
+		rowCount = 0;
+	} else {
+		/* we need to update the number of affected rows. */
+		rc = SQLRowCount(hstmt, &rowCount);
+		if (rc == SQL_ERROR) {
+			/*
+			* NB...we raise the error before freeing the handle so that
+			* we catch the proper error record.
+			*/
+			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
+				"SQLRowCount", __FILE__, __LINE__ TSRMLS_CC);
+			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+			return -1;
+		}
 		/*
-		* NB...we raise the error before freeing the handle so that
-		* we catch the proper error record.
+		* -1 will be retuned if the following:
+		* If the last executed statement referenced by the input statement handle
+		* was not an UPDATE, INSERT, DELETE, or MERGE statement, or if it did not
+		* execute successfully, then the function sets the contents of RowCountPtr to -1.
 		*/
-		raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-			"SQLRowCount", __FILE__, __LINE__ TSRMLS_CC);
-		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-		return -1;
+		if (rowCount == -1) {
+			rowCount = 0;
+		}
 	}
 
 	/* this is a one-shot deal, so make sure we free the statement handle */

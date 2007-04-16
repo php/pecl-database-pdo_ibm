@@ -193,6 +193,11 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 		*/
 		rc = SQLDescribeParam((SQLHSTMT)stmt_res->hstmt, (SQLUSMALLINT)param->paramno + 1, &param_res->data_type,
 				&param_res->param_size, &param_res->scale, &param_res->nullable);
+		/* Free the memory if SQLDescribeParam failed */
+		if (rc == SQL_ERROR) {
+			efree(param_res);
+			param_res = NULL;
+		}
 		check_stmt_error(rc, "SQLDescribeParam");
 
 		/* only attach this if we succeed */
@@ -520,7 +525,7 @@ static int stmt_parameter_pre_execute(pdo_stmt_t *stmt, struct pdo_bound_param_d
 		}
 
 	} else {
-		if (Z_TYPE_P(curr->parameter) != IS_NULL) {
+		if (Z_TYPE_P(curr->parameter) != IS_NULL && param_res != NULL) {
 			/*
 			* if we're processing this as string or binary data,
 			* then directly update the length to the real value.
