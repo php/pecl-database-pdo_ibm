@@ -435,6 +435,8 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 {
 	int rc = 0;
+	int dsn_length = 0;
+	char *new_dsn = NULL;
 	SQLSMALLINT d_length = 0, u_length = 0, p_length = 0;
 	/*
 	* Allocate our driver data control block.  If this is a persistent
@@ -480,8 +482,8 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 				d_length = strlen(dbh->data_source);
 				u_length = strlen(dbh->username);
 				p_length = strlen(dbh->password);
-				int dsn_length = d_length + u_length + p_length + sizeof(";UID=;PWD=;") + 1;
-				char *new_dsn = pemalloc(dsn_length, dbh->is_persistent);
+				dsn_length = d_length + u_length + p_length + sizeof(";UID=;PWD=;") + 1;
+				new_dsn = pemalloc(dsn_length, dbh->is_persistent);
 				check_allocation(new_dsn, "dbh_connect", "unable to allocate DSN string");
 				sprintf(new_dsn, "%s;UID=%s;PWD=%s;", dbh->data_source,
 						dbh->username, dbh->password);
