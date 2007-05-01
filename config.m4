@@ -1,7 +1,7 @@
 if test "$PHP_PDO" != "no"; then
 
 PHP_ARG_WITH(pdo-ibm, for DB2 driver for PDO,
-[  --with-pdo_ibm[=DIR] Include PDO DB2 support, DIR is the base
+[  --with-pdo-ibm[=DIR] Include PDO DB2 support, DIR is the base
                             DB2 install directory, defaults to ${DB2DIR:-nothing}.])
 
 if test "$PHP_PDO_IBM" != "no"; then
