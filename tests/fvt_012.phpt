@@ -15,7 +15,6 @@ pdo_ibm: Count number of affected rows - Select
 			$stmt = $this->db->query( "SELECT name FROM animals WHERE weight < 10.0" );
 			print $stmt->rowCount() . "\n";
 			echo "Number of rows: " . count( $stmt->fetchAll() ) . "\n";
-			$stmt->closeCursor();
 		}
 	}
 

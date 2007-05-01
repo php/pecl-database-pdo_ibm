@@ -30,7 +30,6 @@ pdo_ibm: Scrollable cursor; retrieve negative row
 					print $e . "\n";
 				}
 			}
-			$stmt->closeCursor();
 		}
 	}
 

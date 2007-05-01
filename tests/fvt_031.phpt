@@ -4,13 +4,14 @@ pdo_ibm: Tests all Fetch orientations
 <?php require_once('skipif.inc'); ?>
 --FILE--
 <?php
-	/*	Remember to add ;EnableScrollableCursors=1 to the DSN for this tests 
-		to pass.
-	*/
-
 	require_once('fvt.inc');
 	class Test extends FVTTest
 	{
+		public function __construct()
+		{
+			parent::__construct();
+			$this->dsn .= ";EnableScrollableCursors=1;";
+		}
 		public function runTest()
 		{
 			$this->connect();
@@ -31,8 +32,6 @@ pdo_ibm: Tests all Fetch orientations
 			var_dump( $row );
 			$row = $stmt->fetch( PDO::FETCH_BOTH , PDO::FETCH_ORI_REL , 1 );
 			var_dump( $row );
-
-			$stmt->closeCursor();
 		}
 	}
 

@@ -13,14 +13,12 @@ pdo_ibm: PDOStatement::fetch()
 			$this->prepareDB();
 
 			$stmt = $this->db->query( "SELECT id, breed, name, weight FROM animals WHERE id = 0" );
-			while( $row = $stmt->fetch( PDO::FETCH_BOTH ) )
-			{
-    			$breed = $row[1];
-    			var_dump( $breed );
-    			$name = $row["NAME"];
-    			var_dump( $name );
+			while( $row = $stmt->fetch( PDO::FETCH_BOTH ) ) {
+				$breed = $row[1];
+				var_dump( $breed );
+				$name = $row["NAME"];
+				var_dump( $name );
 			}
-			$stmt->closeCursor();
 		}
 	}
 
