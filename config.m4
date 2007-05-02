@@ -71,6 +71,11 @@ if test "$PHP_PDO_IBM" != "no"; then
 
   PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_inc_path)
 
+  ifdef([PHP_ADD_EXTENSION_DEP],
+  [
+    PHP_ADD_EXTENSION_DEP(pdo_ibm, pdo)
+  ])
+
   PHP_SUBST(PDO_IBM_SHARED_LIBADD)
 
 fi
