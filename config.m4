@@ -2,13 +2,23 @@ if test "$PHP_PDO" != "no"; then
 
 PHP_ARG_WITH(pdo-ibm, for DB2 driver for PDO,
 [  --with-pdo-ibm[=DIR] Include PDO DB2 support, DIR is the base
-                            DB2 install directory, defaults to ${DB2DIR:-nothing}.])
+                            DB2 install directory, defaults to ${DB2DIR:-nothing}.
+                            Set the PHP_PDO_IBM_LIB environment variable to set
+                            the specific location of the DB2 libraries])
 
 if test "$PHP_PDO_IBM" != "no"; then
-  SEARCH_PATH="$PHP_PDO_IBM $DB2PATH $DB2DIR"
+  SEARCH_PATH="$PHP_PDO_IBM_LIB $PHP_PDO_IBM $DB2PATH $DB2DIR"
 
   AC_MSG_CHECKING(Looking for DB2 CLI libraries)
   for i in $SEARCH_PATH ; do
+    AC_MSG_CHECKING([     in $i])
+    if test -r $i/libdb2.so || test -r $i/libdb2.a || test -r $i/libdb400.a ; then
+      LIB_DIR="$i/"
+      AC_MSG_RESULT(found)
+      break
+    else
+      AC_MSG_RESULT()
+    fi
     AC_MSG_CHECKING([     in $i/lib64])
     if test -r $i/lib64/libdb2.so || test -r $i/lib64/libdb2.a || test -r $i/lib64/libdb400.a ; then
       LIB_DIR="$i/lib64/"
