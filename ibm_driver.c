@@ -177,46 +177,6 @@ static void current_error_state(pdo_dbh_t *dbh)
 		conn_res->error_data.lineno);		/* location of the reported error */
 }
 
-/* fetch the last inserted serial id */
-static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
-{
-	char *id = emalloc(20);
-	int rc = 0;
-	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
-
-	sprintf(id, "%d", conn_res->last_insert_id);
-	*len = strlen(id);
-
-	return id;
-}
-
-/* fetch the suppliemental error material */
-static int ibm_handle_fetch_error(
-	pdo_dbh_t *dbh,
-	pdo_stmt_t *stmt,
-	zval *info
-	TSRMLS_DC)
-{
-	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
-	char suppliment[512];
-
-	sprintf(suppliment, "%s (%s[%ld] at %s:%d)", conn_res->error_data.err_msg,	/*  an associated message */
-		conn_res->error_data.failure_name,	/*  the routine name */
-		conn_res->error_data.sqlcode,		/*  native error code of the failure */
-		conn_res->error_data.filename,		/*  source file of the reported error */
-		conn_res->error_data.lineno);		/*  location of the reported error */
-
-	/*
-	 * Now add the error information.  These need to be added
-	 * in a specific order
-	 */
-	add_next_index_long(info, conn_res->error_data.sqlcode);
-	add_next_index_string(info, suppliment, 1);
-
-	return TRUE;
-}
-
-
 /*
 *  NB.  The handle closer is used for PDO dtor purposes, but we also use this
 *  for error cleanup if we need to throw an exception while creating the
@@ -393,6 +353,150 @@ static int ibm_handle_rollback(
 	return TRUE;
 }
 
+/* Set the driver attributes. We allow the setting of autocommit */
+static int ibm_handle_set_attribute(
+	pdo_dbh_t *dbh,
+	long attr,
+	zval *return_value
+	TSRMLS_DC)
+{
+	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
+	int rc = 0;
+
+	switch (attr) {
+		case PDO_ATTR_AUTOCOMMIT:
+			if (dbh->auto_commit != Z_LVAL_P(return_value)) {
+				dbh->auto_commit = Z_LVAL_P(return_value);
+				if (dbh->auto_commit == TRUE) {
+					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
+						(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
+					check_dbh_error(rc, "SQLSetConnectAttr");
+				} else {
+					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
+						(SQLPOINTER) SQL_AUTOCOMMIT_OFF, SQL_NTS);
+					check_dbh_error(rc, "SQLSetConnectAttr");
+				}
+			}
+			return TRUE;
+			break;
+		default:
+			return FALSE;
+	}
+}
+
+/* fetch the last inserted serial id */
+static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
+{
+	char *id = emalloc(20);
+	int rc = 0;
+	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+
+	sprintf(id, "%d", conn_res->last_insert_id);
+	*len = strlen(id);
+
+	return id;
+}
+
+/* fetch the supplemental error material */
+static int ibm_handle_fetch_error(
+	pdo_dbh_t *dbh,
+	pdo_stmt_t *stmt,
+	zval *info
+	TSRMLS_DC)
+{
+	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
+	char suppliment[512];
+
+	sprintf(suppliment, "%s (%s[%ld] at %s:%d)", conn_res->error_data.err_msg,	/*  an associated message */
+		conn_res->error_data.failure_name,	/*  the routine name */
+		conn_res->error_data.sqlcode,		/*  native error code of the failure */
+		conn_res->error_data.filename,		/*  source file of the reported error */
+		conn_res->error_data.lineno);		/*  location of the reported error */
+
+	/*
+	 * Now add the error information.  These need to be added
+	 * in a specific order
+	 */
+	add_next_index_long(info, conn_res->error_data.sqlcode);
+	add_next_index_string(info, suppliment, 1);
+
+	return TRUE;
+}
+
+/* quotes an SQL statement */
+static int ibm_handle_quoter(
+	pdo_dbh_t *dbh,
+	const char *unq,
+	int unq_len,
+	char **q,
+	int *q_len,
+	enum pdo_param_type paramtype
+	TSRMLS_DC)
+{
+	char *sql;
+	int new_length, i, j;
+
+	if(!unq)  {
+		return FALSE;
+	}
+
+	/* allocate twice the source length first (worst case) */
+	sql = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
+
+	/* set the first quote */
+	sql[0] = '\'';
+
+	j = 1;
+	for (i = 0; i < unq_len; i++) {
+		switch (unq[i]) {
+			case '\n':
+				sql[j++] = '\\';
+				sql[j++] = 'n';
+				break;
+			case '\r':
+				sql[j++] = '\\';
+				sql[j++] = 'r';
+				break;
+			case '\x1a':
+				sql[j++] = '\\';
+				sql[j++] = 'Z';
+				break;
+			case '\0':
+				sql[j++] = '\\';
+				sql[j++] = '0';
+				break;
+			case '\'':
+				sql[j++] = '\\';
+				sql[j++] = '\'';
+				break;
+			case '\"':
+				sql[j++] = '\\';
+				sql[j++] = '\"';
+				break;
+			case '\\':
+				sql[j++] = '\\';
+				sql[j++] = '\\';
+				break;
+			default:
+				sql[j++] = unq[i];
+				break;
+		}
+	}
+
+	/* set the last quote and null terminating character */
+	sql[j++] = '\'';
+	sql[j++] = '\0';
+
+	/* copy over final string and free the memory used */
+	*q = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
+	strcpy(*q, sql);
+	*q_len = strlen(sql);
+	efree(sql);
+
+	return TRUE;
+}
+
+
 /* Get the driver attributes. We return the autocommit and version information. */
 static int ibm_handle_get_attribute(
 	pdo_dbh_t *dbh,
@@ -437,11 +541,11 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_closer,
 	ibm_handle_preparer,
 	ibm_handle_doer,
-	NULL,				/* only required if using PLACEHOLDER_NONE */
+	ibm_handle_quoter,		
 	ibm_handle_begin,
 	ibm_handle_commit,
 	ibm_handle_rollback,
-	NULL,				/* set attribute */
+	ibm_handle_set_attribute,
 	ibm_handle_lastInsertID,
 	ibm_handle_fetch_error,
 	ibm_handle_get_attribute,
@@ -555,7 +659,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		check_dbh_error(rc, "SQLSetConnectAttr");
 	}
 
-	dbh->native_case = PDO_CASE_LOWER;
+	/* set the desired case to be upper */
 	dbh->desired_case = PDO_CASE_UPPER;
 
 	/* this is now live!  all error handling goes through normal mechanisms. */
