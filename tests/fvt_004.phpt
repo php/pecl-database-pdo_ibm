@@ -10,7 +10,7 @@ pdo_ibm: Connection attempt with wrong user/pwd
 		public function __construct()
 		{
 			parent::__construct();
-			$this->dsn .= "User Id=not_a_user;Password=invalid_pass";
+			$this->dsn .= "UID=not_a_user;PWD=invalid_pass";
 			$this->user = "";
 			$this->pass = "";
 		}

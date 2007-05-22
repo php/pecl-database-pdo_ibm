@@ -98,13 +98,17 @@ pdo_ibm: Change fetch modes.
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
---EXPECT--
+--EXPECTF--
 As row column numbers: 0 cat Pook            
 As row column names: 0
 As row column numbers: 0 cat Pook            
 As row column names: 0
+
+Notice: Undefined offset:  1 in %s
 Rows not available: 
 As row column number: 0
+
+Notice: Uninitialized string offset:  1 in %s
 Rows not available: 
 The id is: 0 Breed is: cat
 Result in row : 1
@@ -267,6 +271,62 @@ object(stdClass)#3 (2) {
   string(4) "goat"
 }
 object(stdClass)#6 (2) {
+  ["ID"]=>
+  string(1) "6"
+  ["BREED"]=>
+  string(5) "llama"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
+  ["ID"]=>
+  string(1) "0"
+  ["BREED"]=>
+  string(3) "cat"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
+  ["ID"]=>
+  string(1) "1"
+  ["BREED"]=>
+  string(3) "dog"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
+  ["ID"]=>
+  string(1) "2"
+  ["BREED"]=>
+  string(5) "horse"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
+  ["ID"]=>
+  string(1) "3"
+  ["BREED"]=>
+  string(9) "gold fish"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
+  ["ID"]=>
+  string(1) "4"
+  ["BREED"]=>
+  string(10) "budgerigar"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
+  ["ID"]=>
+  string(1) "5"
+  ["BREED"]=>
+  string(4) "goat"
+}
+object(PDORow)#7 (3) {
+  ["queryString"]=>
+  string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
   string(1) "6"
   ["BREED"]=>
