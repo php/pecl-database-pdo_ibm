@@ -363,7 +363,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 			}
 			if (Z_TYPE_P(curr->parameter) == IS_NULL
 					|| (is_num && Z_STRVAL_P(curr->parameter) != NULL
-					&& *(curr->parameter)->value.str.val == '\0')) {
+					&& (Z_STRVAL_P(curr->parameter) == '\0'))) {     
 				param_res->ctype = SQL_C_LONG;
 				param_res->param_size = 0;
 				param_res->scale = 0;
