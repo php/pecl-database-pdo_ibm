@@ -1,65 +1,112 @@
-<?
-    function print_usage( $name ){
-        print "Usage: php $name (informix|db2|ibm) <file>+\n";
-        exit;
-    }
+--TEST--
+pdo_ibm: Insert integer by binding an empty string, a NULL, and an integer string to column
+--SKIPIF--
+<?php require_once('skipif.inc'); ?>
+--FILE--
+<?php
+	require_once('fvt.inc');
+	class Test extends FVTTest
+	{
+		public function runTest()
+		{
+			$this->connect();
 
-    $argv = $_SERVER['argv'];
-    $argc = $_SERVER['argc'];
+			try {
+				/* Drop the test table, in case it exists */
+				$drop   = 'DROP TABLE animals';
+				$result = $this->db->exec( $drop );
+			} catch( Exception $e ){}
 
-    if( $argc < 3 ){
-        print_usage( $argv[0] );
-    }
+			/* Create the test table */
+			$create = 'CREATE TABLE animals (id INTEGER)';
+			$result = $this->db->exec( $create );
 
+			$null          = NULL;
+			$empty_string0 = "";
+			$empty_string1 = "";
+			$int_string    = "0";
 
-    if( strcasecmp(trim($argv[1]), "informix")==0 ){
-        $namespace = "informix";
-		$namespaceUP = "INFORMIX";
-        $ifDefStr = "DB2";
-        $defStr   = "INFORMIX";
-    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
-        $namespace = "db2";
-		$namespaceUP = "DB2";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "DB2";
-    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
-        $namespace = "ibm";
-                $namespaceUP = "IBM";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "IBM";
-    }else {
-        print_usage( $argv[0] );
-    }
-    $ifdef_toggle = true;
+			$sql  = "INSERT INTO animals VALUES ( :mynull0 ) ";
+			$stmt = $this->db->prepare ( $sql );
+			$stmt->bindParam ( ":mynull0" , $null );
+			$stmt->execute();
+			$stmt = $this->db->query( "SELECT * FROM animals" );
+			$res  = $stmt->fetch( PDO::FETCH_BOTH );
+			$rows = $res[0];
+			print "Null contents: $rows\n";
 
-    for( $i=2;$i<$argc;$i++ ){
-        $lines = file( $argv[$i] );
-        for( $j=0;$j<count($lines);$j++ ){
-            $line = trim($lines[$j]);
+			$delete = 'DELETE FROM animals';
+			$result = $this->db->exec( $delete );
 
-            if( strcmp($line,"IF_$ifDefStr")==0 ){
-                $ifdef_toggle = false;
-                continue;
-            }
-            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
-                $ifdef_toggle = true;
-                continue;
-            }else if( 
-                strcmp($line,'IF_INFORMIX') == 0 || 
-                strcmp($line,'ENDIF_INFORMIX') == 0 || 
-                strcmp($line,'IF_DB2') == 0 || 
-                strcmp($line,'ENDIF_DB2') == 0 ){
-                continue;
-            }
-                
-            if( $ifdef_toggle ){
-                $line = $lines[$j];
-                $mline = $line;
-                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
-                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
-                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
-                print $mline;
-            }
-        }
-    }
+			$sql  = "INSERT INTO animals VALUES ( :mynull1 ) ";
+			$stmt = $this->db->prepare ( $sql );
+			$stmt->bindParam ( ":mynull1" , $null, PDO::PARAM_INT );
+			$stmt->execute();
+			$stmt = $this->db->query( "SELECT * FROM animals" );
+			$res  = $stmt->fetch( PDO::FETCH_BOTH );
+			$rows = $res[0];
+			print "Null contents with int specified: $rows\n";
+
+			$delete = 'DELETE FROM animals';
+			$result = $this->db->exec( $delete );
+
+			$sql  = "INSERT INTO animals VALUES ( :myemptystring0 ) ";
+			$stmt = $this->db->prepare ( $sql );
+			$stmt->bindParam ( ":myemptystring0" , $empty_string0);
+			$stmt->execute();
+			$stmt = $this->db->query( "SELECT * FROM animals" );
+			$res  = $stmt->fetch( PDO::FETCH_BOTH );
+			$rows = $res[0];
+			print "Empty string contents: $rows\n";
+
+			$delete = 'DELETE FROM animals';
+			$result = $this->db->exec( $delete );
+
+			$sql  = "INSERT INTO animals VALUES ( :myemptystring1 ) ";
+			$stmt = $this->db->prepare ( $sql );
+			$stmt->bindParam ( ":myemptystring1" , $empty_string1, PDO::PARAM_INT );
+			$stmt->execute();
+			$stmt = $this->db->query( "SELECT * FROM animals" );
+			$res  = $stmt->fetch( PDO::FETCH_BOTH );
+			$rows = $res[0];
+			print "Empty string contents with int specified: $rows\n";
+
+			$delete = 'DELETE FROM animals';
+			$result = $this->db->exec( $delete );
+
+			$sql  = "INSERT INTO animals VALUES ( :myintstring0 ) ";
+			$stmt = $this->db->prepare ( $sql );
+			$stmt->bindParam ( ":myintstring0" , $int_string );
+			$stmt->execute();
+			$stmt = $this->db->query( "SELECT * FROM animals" );
+			$res  = $stmt->fetch( PDO::FETCH_BOTH );
+			$rows = $res[0];
+			print "Int string contents: $rows\n";
+
+			$delete = 'DELETE FROM animals';
+			$result = $this->db->exec( $delete );
+
+			$sql  = "INSERT INTO animals VALUES ( :myintstring1 ) ";
+			$stmt = $this->db->prepare ( $sql );
+			$stmt->bindParam ( ":myintstring1" , $int_string, PDO::PARAM_INT );
+			$stmt->execute();
+			$stmt = $this->db->query( "SELECT * FROM animals" );
+			$res  = $stmt->fetch( PDO::FETCH_BOTH );
+			$rows = $res[0];
+			print "Int string contents with int specified: $rows\n";
+
+			print "done\n";
+		}
+	}
+
+	$testcase = new Test();
+	$testcase->runTest();
 ?>
+--EXPECT--
+Null contents: 
+Null contents with int specified: 
+Empty string contents: 
+Empty string contents with int specified: 
+Int string contents: 0
+Int string contents with int specified: 0
+done

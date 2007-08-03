@@ -1,65 +1,175 @@
-<?
-    function print_usage( $name ){
-        print "Usage: php $name (informix|db2|ibm) <file>+\n";
-        exit;
-    }
+--TEST--
+pdo_ibm: Scrollable cursor; retrieve negative row
+--SKIPIF--
+<?php require_once('skipif.inc'); ?>
+--FILE--
+<?php
+	require_once('fvt.inc');
+	class Test extends FVTTest
+	{
+		public function runTest()
+		{
+			$this->connect();
+			$this->prepareDB();
 
-    $argv = $_SERVER['argv'];
-    $argc = $_SERVER['argc'];
+			$stmt = $this->db->prepare( "SELECT * FROM animals" , array(PDO::ATTR_CURSOR, PDO::CURSOR_SCROLL) );
+			$stmt->execute();
+			var_dump( $stmt->fetchAll() );
+			$stmt->execute();
+			try{
+				$row = $stmt->fetch( PDO::FETCH_BOTH , PDO::FETCH_ORI_ABS , -1 );
+				var_dump( $row );
+			}catch( PDOException $e ){
+				$info = $stmt->errorInfo();
+				if( $info[1] == -99999 )
+				{
+					print "Cannot retrieve negative row\n";
+				}
+				else
+				{
+					print $e . "\n";
+				}
+			}
+		}
+	}
 
-    if( $argc < 3 ){
-        print_usage( $argv[0] );
-    }
-
-
-    if( strcasecmp(trim($argv[1]), "informix")==0 ){
-        $namespace = "informix";
-		$namespaceUP = "INFORMIX";
-        $ifDefStr = "DB2";
-        $defStr   = "INFORMIX";
-    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
-        $namespace = "db2";
-		$namespaceUP = "DB2";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "DB2";
-    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
-        $namespace = "ibm";
-                $namespaceUP = "IBM";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "IBM";
-    }else {
-        print_usage( $argv[0] );
-    }
-    $ifdef_toggle = true;
-
-    for( $i=2;$i<$argc;$i++ ){
-        $lines = file( $argv[$i] );
-        for( $j=0;$j<count($lines);$j++ ){
-            $line = trim($lines[$j]);
-
-            if( strcmp($line,"IF_$ifDefStr")==0 ){
-                $ifdef_toggle = false;
-                continue;
-            }
-            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
-                $ifdef_toggle = true;
-                continue;
-            }else if( 
-                strcmp($line,'IF_INFORMIX') == 0 || 
-                strcmp($line,'ENDIF_INFORMIX') == 0 || 
-                strcmp($line,'IF_DB2') == 0 || 
-                strcmp($line,'ENDIF_DB2') == 0 ){
-                continue;
-            }
-                
-            if( $ifdef_toggle ){
-                $line = $lines[$j];
-                $mline = $line;
-                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
-                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
-                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
-                print $mline;
-            }
-        }
-    }
+	$testcase = new Test();
+	$testcase->runTest();
 ?>
+--EXPECT--
+array(7) {
+  [0]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "0"
+    [0]=>
+    string(1) "0"
+    ["BREED"]=>
+    string(3) "cat"
+    [1]=>
+    string(3) "cat"
+    ["NAME"]=>
+    string(16) "Pook            "
+    [2]=>
+    string(16) "Pook            "
+    ["WEIGHT"]=>
+    string(4) "3.20"
+    [3]=>
+    string(4) "3.20"
+  }
+  [1]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "1"
+    [0]=>
+    string(1) "1"
+    ["BREED"]=>
+    string(3) "dog"
+    [1]=>
+    string(3) "dog"
+    ["NAME"]=>
+    string(16) "Peaches         "
+    [2]=>
+    string(16) "Peaches         "
+    ["WEIGHT"]=>
+    string(5) "12.30"
+    [3]=>
+    string(5) "12.30"
+  }
+  [2]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "2"
+    [0]=>
+    string(1) "2"
+    ["BREED"]=>
+    string(5) "horse"
+    [1]=>
+    string(5) "horse"
+    ["NAME"]=>
+    string(16) "Smarty          "
+    [2]=>
+    string(16) "Smarty          "
+    ["WEIGHT"]=>
+    string(6) "350.00"
+    [3]=>
+    string(6) "350.00"
+  }
+  [3]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "3"
+    [0]=>
+    string(1) "3"
+    ["BREED"]=>
+    string(9) "gold fish"
+    [1]=>
+    string(9) "gold fish"
+    ["NAME"]=>
+    string(16) "Bubbles         "
+    [2]=>
+    string(16) "Bubbles         "
+    ["WEIGHT"]=>
+    string(4) "0.10"
+    [3]=>
+    string(4) "0.10"
+  }
+  [4]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "4"
+    [0]=>
+    string(1) "4"
+    ["BREED"]=>
+    string(10) "budgerigar"
+    [1]=>
+    string(10) "budgerigar"
+    ["NAME"]=>
+    string(16) "Gizmo           "
+    [2]=>
+    string(16) "Gizmo           "
+    ["WEIGHT"]=>
+    string(4) "0.20"
+    [3]=>
+    string(4) "0.20"
+  }
+  [5]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "5"
+    [0]=>
+    string(1) "5"
+    ["BREED"]=>
+    string(4) "goat"
+    [1]=>
+    string(4) "goat"
+    ["NAME"]=>
+    string(16) "Rickety Ride    "
+    [2]=>
+    string(16) "Rickety Ride    "
+    ["WEIGHT"]=>
+    string(4) "9.70"
+    [3]=>
+    string(4) "9.70"
+  }
+  [6]=>
+  array(8) {
+    ["ID"]=>
+    string(1) "6"
+    [0]=>
+    string(1) "6"
+    ["BREED"]=>
+    string(5) "llama"
+    [1]=>
+    string(5) "llama"
+    ["NAME"]=>
+    string(16) "Sweater         "
+    [2]=>
+    string(16) "Sweater         "
+    ["WEIGHT"]=>
+    string(6) "150.00"
+    [3]=>
+    string(6) "150.00"
+  }
+}
+Cannot retrieve negative row
