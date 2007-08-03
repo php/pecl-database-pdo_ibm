@@ -1,142 +1,65 @@
---TEST--
-pdo_ibm: Get Column meta data.
---SKIPIF--
-<?php require_once('skipif.inc'); ?>
---FILE--
-<?php
-	require_once('fvt.inc');
-	class Test extends FVTTest {
-		public function runTest() {
-			$this->connect();
-			$this->prepareDB();
-			$sql = "SELECT * FROM animals";
-			$stmt = $this->db->query($sql);
-			$meta = $stmt->getColumnMeta(0);
-			var_dump( $meta );
-			$meta = $stmt->getColumnMeta(1);
-			var_dump( $meta );
-			$meta = $stmt->getColumnMeta(2);
-			var_dump( $meta );
-			$meta = $stmt->getColumnMeta(3);
-			var_dump( $meta );
-			try {
-				$meta = $stmt->getColumnMeta(6);
-				var_dump( $meta );
-			} catch( Exception $e ) {
-				print "Error: " . $stmt->errorCode() . "\n";
-			}
-			try{
-				$meta = $stmt->getColumnMeta(-1);
-				var_dump( $meta );
-			} catch( Exception $e ) {
-				print "Error: " . $stmt->errorCode() . "\n";
-			}
-		}
-	}
+<?
+    function print_usage( $name ){
+        print "Usage: php $name (informix|db2|ibm) <file>+\n";
+        exit;
+    }
 
-	$testcase = new Test();
-	$testcase->runTest();
+    $argv = $_SERVER['argv'];
+    $argc = $_SERVER['argc'];
+
+    if( $argc < 3 ){
+        print_usage( $argv[0] );
+    }
+
+
+    if( strcasecmp(trim($argv[1]), "informix")==0 ){
+        $namespace = "informix";
+		$namespaceUP = "INFORMIX";
+        $ifDefStr = "DB2";
+        $defStr   = "INFORMIX";
+    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
+        $namespace = "db2";
+		$namespaceUP = "DB2";
+        $ifDefStr = "INFORMIX";
+        $defStr   = "DB2";
+    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
+        $namespace = "ibm";
+                $namespaceUP = "IBM";
+        $ifDefStr = "INFORMIX";
+        $defStr   = "IBM";
+    }else {
+        print_usage( $argv[0] );
+    }
+    $ifdef_toggle = true;
+
+    for( $i=2;$i<$argc;$i++ ){
+        $lines = file( $argv[$i] );
+        for( $j=0;$j<count($lines);$j++ ){
+            $line = trim($lines[$j]);
+
+            if( strcmp($line,"IF_$ifDefStr")==0 ){
+                $ifdef_toggle = false;
+                continue;
+            }
+            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
+                $ifdef_toggle = true;
+                continue;
+            }else if( 
+                strcmp($line,'IF_INFORMIX') == 0 || 
+                strcmp($line,'ENDIF_INFORMIX') == 0 || 
+                strcmp($line,'IF_DB2') == 0 || 
+                strcmp($line,'ENDIF_DB2') == 0 ){
+                continue;
+            }
+                
+            if( $ifdef_toggle ){
+                $line = $lines[$j];
+                $mline = $line;
+                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
+                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
+                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
+                print $mline;
+            }
+        }
+    }
 ?>
---EXPECT--
-array(8) {
-  ["scale"]=>
-  int(0)
-  ["table"]=>
-  string(7) "ANIMALS"
-  ["native_type"]=>
-  string(7) "INTEGER"
-  ["flags"]=>
-  array(3) {
-    ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(false)
-    ["auto_increment"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(2) "ID"
-  ["len"]=>
-  int(11)
-  ["precision"]=>
-  int(0)
-  ["pdo_type"]=>
-  int(2)
-}
-array(8) {
-  ["scale"]=>
-  int(0)
-  ["table"]=>
-  string(7) "ANIMALS"
-  ["native_type"]=>
-  string(7) "VARCHAR"
-  ["flags"]=>
-  array(3) {
-    ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(true)
-    ["auto_increment"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(5) "BREED"
-  ["len"]=>
-  int(32)
-  ["precision"]=>
-  int(0)
-  ["pdo_type"]=>
-  int(2)
-}
-array(8) {
-  ["scale"]=>
-  int(0)
-  ["table"]=>
-  string(7) "ANIMALS"
-  ["native_type"]=>
-  string(4) "CHAR"
-  ["flags"]=>
-  array(3) {
-    ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(true)
-    ["auto_increment"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(4) "NAME"
-  ["len"]=>
-  int(16)
-  ["precision"]=>
-  int(0)
-  ["pdo_type"]=>
-  int(2)
-}
-array(8) {
-  ["scale"]=>
-  int(2)
-  ["table"]=>
-  string(7) "ANIMALS"
-  ["native_type"]=>
-  string(7) "DECIMAL"
-  ["flags"]=>
-  array(3) {
-    ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(false)
-    ["auto_increment"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(6) "WEIGHT"
-  ["len"]=>
-  int(9)
-  ["precision"]=>
-  int(2)
-  ["pdo_type"]=>
-  int(2)
-}
-Error: HY097
-Error: 42P10

@@ -1,89 +1,65 @@
-<?php
-	abstract class FVTTest
-	{
-		public $db = null;
-		public $dsn = null;
-		public $user = null;
-		public $pass = null;
+<?
+    function print_usage( $name ){
+        print "Usage: php $name (informix|db2|ibm) <file>+\n";
+        exit;
+    }
 
-		public function __construct( $_dsn = null , $_user = null , $_pass = null )
-		{
-			if( $_dsn == null )
-			{
-				$this->dsn = getenv('PDOTEST_DSN');
-			}
-			else
-			{
-				$this->dsn = $_dsn;
-			}
+    $argv = $_SERVER['argv'];
+    $argc = $_SERVER['argc'];
 
-			if( $_user == null )
-			{
-				$this->user = getenv('PDOTEST_USER');
-			}
-			else
-			{
-				$this->user = $_user;
-			}
+    if( $argc < 3 ){
+        print_usage( $argv[0] );
+    }
 
-			if( $_pass == null )
-			{
-				$this->pass = getenv('PDOTEST_PASS');
-			}
-			else
-			{
-				$this->pass = $_pass;
-			}
-		}
 
-		public function connect($autoCommit=true)
-		{
-			$this->db = new PDO($this->dsn,$this->user,$this->pass,array( PDO::ATTR_AUTOCOMMIT => $autoCommit ));
-			$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			$this->db->setAttribute(PDO::ATTR_CASE, PDO::CASE_UPPER);
-			$this->db->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, true);
-			return $this->db;
-		}
-        
-		public function prepareDB()
-		{
-			try {
-				/* Drop the test table, in case it exists */
-				$drop = 'DROP TABLE animals';
-				$result = $this->db->exec( $drop );
-			} catch( Exception $e ){}
+    if( strcasecmp(trim($argv[1]), "informix")==0 ){
+        $namespace = "informix";
+		$namespaceUP = "INFORMIX";
+        $ifDefStr = "DB2";
+        $defStr   = "INFORMIX";
+    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
+        $namespace = "db2";
+		$namespaceUP = "DB2";
+        $ifDefStr = "INFORMIX";
+        $defStr   = "DB2";
+    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
+        $namespace = "ibm";
+                $namespaceUP = "IBM";
+        $ifDefStr = "INFORMIX";
+        $defStr   = "IBM";
+    }else {
+        print_usage( $argv[0] );
+    }
+    $ifdef_toggle = true;
 
-			/* Create the test table */
-			$create = 'CREATE TABLE animals (id INTEGER, breed VARCHAR(32), name CHAR(16), weight DECIMAL(7,2))';
-			$result = $this->db->exec( $create );
+    for( $i=2;$i<$argc;$i++ ){
+        $lines = file( $argv[$i] );
+        for( $j=0;$j<count($lines);$j++ ){
+            $line = trim($lines[$j]);
 
-			/* Populate the test table */
-			$animals = array(
-					array(0, 'cat', 'Pook', 3.2),
-					array(1, 'dog', 'Peaches', 12.3),
-					array(2, 'horse', 'Smarty', 350.0),
-					array(3, 'gold fish', 'Bubbles', 0.1),
-					array(4, 'budgerigar', 'Gizmo', 0.2),
-					array(5, 'goat', 'Rickety Ride', 9.7),
-					array(6, 'llama', 'Sweater', 150)
-			);
-
-			$insert = 'INSERT INTO animals (id, breed, name, weight) VALUES (?, ?, ?, ?)';
-			$stmt = $this->db->prepare( $insert );
-			if ($stmt)
-			{
-				foreach ($animals as $animal)
-				{
-					$result = $stmt->execute($animal);
-				}
-			}
-
-			/*	Create test view
-				$result = $this->db->exec('CREATE VIEW anime_cat AS
-					SELECT name, breed FROM animals
-					WHERE id = 0'); */
-		}
-
-		abstract public function runTest();
-	} 
+            if( strcmp($line,"IF_$ifDefStr")==0 ){
+                $ifdef_toggle = false;
+                continue;
+            }
+            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
+                $ifdef_toggle = true;
+                continue;
+            }else if( 
+                strcmp($line,'IF_INFORMIX') == 0 || 
+                strcmp($line,'ENDIF_INFORMIX') == 0 || 
+                strcmp($line,'IF_DB2') == 0 || 
+                strcmp($line,'ENDIF_DB2') == 0 ){
+                continue;
+            }
+                
+            if( $ifdef_toggle ){
+                $line = $lines[$j];
+                $mline = $line;
+                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
+                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
+                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
+                print $mline;
+            }
+        }
+    }
 ?>

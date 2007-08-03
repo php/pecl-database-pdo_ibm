@@ -1,55 +1,65 @@
---TEST--
-pdo_ibm: Test error conditions through non-existent tables
---SKIPIF--
-<?php require_once('skipif.inc'); ?>
---FILE--
-<?php
-	require_once('fvt.inc');
-	class Test extends FVTTest
-	{
-		public function runTest()
-		{
-			$this->connect();
-			$sql = "CREATE TABLE testError(" .
-	   			    "id INTEGER," .
-	       			"data VARCHAR(50)," .
-	       			"attachment VARCHAR(50)," .
-	       			"about VARCHAR(50))";
+<?
+    function print_usage( $name ){
+        print "Usage: php $name (informix|db2|ibm) <file>+\n";
+        exit;
+    }
 
-			try {
-				$stmt = $this->db->prepare($sql);
-				$stmt->execute();
-			} catch (PDOException $pe) {
-				echo $pe->getMessage();
-			}
+    $argv = $_SERVER['argv'];
+    $argc = $_SERVER['argc'];
 
-			$this->db->exec("DROP TABLE testError");
-			$sql = "SELECT id FROM FINAL TABLE(INSERT INTO testError(data,about,attachment)values(?,?,?))";
+    if( $argc < 3 ){
+        print_usage( $argv[0] );
+    }
 
-			try {
-				$stmt = $this->db->prepare($sql);
-				$stmt->execute();
-			}	catch (PDOException $pe) {
-				echo "Error code:\n";
-				print_r($this->db->errorCode());
-				echo "\n";
-				echo "Error info:\n";
-				print_r($this->db->errorInfo());
-			}
-		}
-	}
 
-	$testcase = new Test();
-	$testcase->runTest();
+    if( strcasecmp(trim($argv[1]), "informix")==0 ){
+        $namespace = "informix";
+		$namespaceUP = "INFORMIX";
+        $ifDefStr = "DB2";
+        $defStr   = "INFORMIX";
+    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
+        $namespace = "db2";
+		$namespaceUP = "DB2";
+        $ifDefStr = "INFORMIX";
+        $defStr   = "DB2";
+    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
+        $namespace = "ibm";
+                $namespaceUP = "IBM";
+        $ifDefStr = "INFORMIX";
+        $defStr   = "IBM";
+    }else {
+        print_usage( $argv[0] );
+    }
+    $ifdef_toggle = true;
+
+    for( $i=2;$i<$argc;$i++ ){
+        $lines = file( $argv[$i] );
+        for( $j=0;$j<count($lines);$j++ ){
+            $line = trim($lines[$j]);
+
+            if( strcmp($line,"IF_$ifDefStr")==0 ){
+                $ifdef_toggle = false;
+                continue;
+            }
+            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
+                $ifdef_toggle = true;
+                continue;
+            }else if( 
+                strcmp($line,'IF_INFORMIX') == 0 || 
+                strcmp($line,'ENDIF_INFORMIX') == 0 || 
+                strcmp($line,'IF_DB2') == 0 || 
+                strcmp($line,'ENDIF_DB2') == 0 ){
+                continue;
+            }
+                
+            if( $ifdef_toggle ){
+                $line = $lines[$j];
+                $mline = $line;
+                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
+                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
+                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
+                print $mline;
+            }
+        }
+    }
 ?>
---EXPECTF--
-Error code:
-42S02
-Error info:
-Array
-(
-    [0] => 42S02
-    [1] => -204
-    [2] => [IBM][CLI Driver][%s] SQL0204N  "%s" is an undefined name.  SQLSTATE=42704
- (%s[-204] at %s)
-)
