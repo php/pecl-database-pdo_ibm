@@ -30,14 +30,36 @@ pdo_ibm: Test error conditions through faulty SQL
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
---EXPECTF--
-Error code:
+IF_DB2
+--EXPECTREGEX--
+(Error code:
 42601
 Error info:
 Array
+\(
+    \[0\] => 42601
+    \[1\] => -104
+    \[2\] => \[IBM\]\[CLI Driver\]\[.+\] SQL0104N  An unexpected token "employee" was found following "astname, bonus, FROM"\.  Expected tokens may include:  "FROM"\.  SQLSTATE=42601
+ \(.+\[-104\] at .+\)
+\)|Error code:
+42000
+Error info:
+Array
+\(
+    \[0\] => 42000
+    \[1\] => -201
+    \[2\] => \[IBM\]\[CLI Driver\]\[.+\] A syntax error has occurred\. \(.+\[-201\] at .+\)
+\))
+ENDIF_DB2
+IF_INFORMIX
+--EXPECTF--
+Error code:
+42000
+Error info:
+Array
 (
-    [0] => 42601
-    [1] => -104
-    [2] => [IBM][CLI Driver][%s] SQL0104N  An unexpected token "employee" was found following "astname, bonus, FROM".  Expected tokens may include:  "FROM".  SQLSTATE=42601
- (%s[-104] at %s)
+    [0] => 42000
+    [1] => -201
+    [2] => [Informix][Informix ODBC Driver][Informix]A syntax error has occurred. (SQLPrepare[-201] at %s)
 )
+ENDIF_INFORMIX

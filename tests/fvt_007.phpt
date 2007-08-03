@@ -35,9 +35,18 @@ pdo_ibm: Test error conditions
 	$testcase->runTest();
 ?>
 --EXPECT--
+IF_DB2
 Array
 (
     [DATA] => 5.82903696263954E-002
     [0] => 5.82903696263954E-002
 )
+ENDIF_DB2
+IF_INFORMIX
+Array
+(
+    [DATA] => 0.0582903696263954
+    [0] => 0.0582903696263954
+)
+ENDIF_INFORMIX
 

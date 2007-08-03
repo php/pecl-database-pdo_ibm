@@ -56,9 +56,15 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 		case SQL_LONGVARBINARY:
 		case SQL_VARBINARY:
 		case SQL_BINARY:
+IF_DB2
 		case SQL_BLOB:
 		case SQL_CLOB:
 		case SQL_XML:
+ENDIF_DB2
+IF_INFORMIX
+		case SQL_INFX_UDT_BLOB:
+		case SQL_INFX_UDT_CLOB:
+ENDIF_INFORMIX
 			ctype = SQL_C_BINARY;
 			break;
 	}
@@ -187,6 +193,28 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 		/* get the statement specifics */
 		stmt_res = (stmt_handle *) stmt->driver_data;
 
+IF_INFORMIX
+		/* checks the server version for correct SQL column meta call */
+		if (stmt_res->server_ver >= 94) {
+			/*
+			* NB:  The PDO parameter numbers are origin zero, but the
+			* SQLDescribeParam() ones start with 1.
+			*/
+			rc = SQLDescribeParam((SQLHSTMT) stmt_res->hstmt,
+					(SQLUSMALLINT) param->paramno + 1,
+					&param_res->data_type,
+					&param_res->param_size, &param_res->scale, &param_res->nullable);
+			/* Free the memory if SQLDescribeParam failed */
+			if (rc == SQL_ERROR) {
+				efree(param_res);
+				param_res = NULL;
+			}
+			check_stmt_error(rc, "SQLDescribeParam");
+		} else {
+			param_res->data_type = SQL_C_CHAR;
+		}
+ENDIF_INFORMIX
+IF_DB2
 		/*
 		* NB:  The PDO parameter numbers are origin zero, but the
 		* SQLDescribeParam() ones start with 1.
@@ -199,6 +227,7 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 			param_res = NULL;
 		}
 		check_stmt_error(rc, "SQLDescribeParam");
+ENDIF_DB2
 
 		/* only attach this if we succeed */
 		param->driver_data = param_res;
@@ -213,9 +242,15 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 			* data, not as char data.
 			*/
 			case SQL_BINARY:
+IF_DB2
 			case SQL_BLOB:
 			case SQL_CLOB:
 			case SQL_XML:
+ENDIF_DB2
+IF_INFORMIX
+			case SQL_INFX_UDT_BLOB:
+			case SQL_INFX_UDT_CLOB:
+ENDIF_INFORMIX
 			case SQL_VARBINARY:
 			case SQL_LONGVARBINARY:
 				param_res->ctype = SQL_C_BINARY;
@@ -430,12 +465,21 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 				/* transfer this as character data. */
 				param_res->ctype = SQL_C_CHAR;
 			}
+IF_DB2
 			if (param_res->data_type == SQL_BLOB ||
 				param_res->data_type == SQL_XML ||
 				param_res->data_type == SQL_CLOB) {
 				/* transfer this as binary data. */
 				param_res->ctype = SQL_C_BINARY;
 			}
+ENDIF_DB2
+IF_INFORMIX
+			if (param_res->data_type == SQL_INFX_UDT_BLOB ||
+				param_res->data_type == SQL_INFX_UDT_CLOB) {
+				/* transfer this as binary data. */
+				param_res->ctype = SQL_C_BINARY;
+			}
+ENDIF_INFORMIX
 
 			/* indicate we're going to transfer the data at exec time. */
 			param_res->transfer_length = SQL_DATA_AT_EXEC;
@@ -590,9 +634,15 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 		case SQL_LONGVARBINARY:
 		case SQL_VARBINARY:
 		case SQL_BINARY:
+IF_DB2
 		case SQL_BLOB:
 		case SQL_CLOB:
 		case SQL_XML:
+ENDIF_DB2
+IF_INFORMIX
+		case SQL_INFX_UDT_BLOB:
+		case SQL_INFX_UDT_CLOB:
+ENDIF_INFORMIX
 			{
 				/* we're going to need to do getdata calls to retrieve these */
 				col_res->out_length = 0;
@@ -808,8 +858,22 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 		}
 	}
 
+IF_DB2
 	/* Set the last serial id inserted */
-	record_last_insert_id(stmt->dbh, stmt_res->hstmt);
+	rc = record_last_insert_id(stmt, stmt->dbh, stmt_res->hstmt TSRMLS_CC);
+	if( rc == FALSE )
+	{
+		return FALSE;
+	}
+ENDIF_DB2
+IF_INFORMIX
+	/* Set the last serial id inserted */
+	rc = record_last_insert_id(stmt->dbh, stmt_res->hstmt TSRMLS_CC);
+	if( rc == SQL_ERROR )
+	{
+		return FALSE;
+	}
+ENDIF_INFORMIX
 
 	/* we can turn off the cleanup flag now */
 	stmt_res->executing = 0;
@@ -1219,6 +1283,60 @@ static int ibm_stmt_set_attribute(
 	}
 }
 
+IF_DB2
+/* This function updates the last_insert_id value of the connection handle,
+* when a row with serial type column inserted in IDS.
+*/
+int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC)
+{
+	int rc;
+	long int returnValue;
+	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+	char id[ MAX_IDENTITY_DIGITS ] = "";
+	char server[MAX_DBMS_IDENTIFIER_NAME];
+
+	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
+	check_dbh_error(rc, "SQLGetInfo");
+	if( strncmp( server, "IDS", 3 ) == 0 )
+	{
+		rc = SQLGetStmtAttr( (SQLHSTMT)hstmt, SQL_ATTR_GET_GENERATED_VALUE, (SQLPOINTER)id, 
+									MAX_IDENTITY_DIGITS, NULL );
+
+		/* If this function is being called from ibm_handle_doer() after direct exec of an 
+		* sql stmt, we have not have a pdo_stmt_t handler for the stmt, and NULL is being passed.
+		* In this case we do not have to free pdo_stmt_t handler.  
+		*/
+		if( stmt != NULL )
+		{
+			check_stmt_error(rc, "SQLGetStmtAttr");
+		}
+		else
+		{
+			if (rc == SQL_ERROR) 
+			{
+				/*
+				* We raise the error before freeing the handle so that
+				* we catch the proper error record.
+				*/
+				raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
+					"SQLGetStmtAttr", __FILE__, __LINE__ TSRMLS_CC);
+				SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+				return FALSE;
+			}
+		}
+		returnValue = strtol( id, NULL, 10 );
+
+		/* Do not update the last_insert_id value if the insert statement does not have a serial type column
+		or when queries other than insert is being executed. */
+		if( returnValue !=0 )
+		{
+			conn_res->last_insert_id = returnValue;
+		}
+	}
+	return TRUE;
+}
+ENDIF_DB2
+IF_INFORMIX
 int record_last_insert_id(pdo_dbh_t * dbh, SQLHANDLE hstmt TSRMLS_DC)
 {
 	SQLINTEGER diag_func_type;
@@ -1234,10 +1352,17 @@ int record_last_insert_id(pdo_dbh_t * dbh, SQLHANDLE hstmt TSRMLS_DC)
 	}
 	if (diag_func_type == SQL_DIAG_INSERT)
 	{
-	conn_res->last_insert_id = 0;
+		rc = SQLGetStmtAttr(hstmt, SQL_GET_SERIAL_VALUE, &conn_res->last_insert_id, SQL_IS_INTEGER, NULL);
+
+		if(rc == SQL_ERROR)
+		{
+			conn_res->last_insert_id = 0;
+			return SQL_ERROR;
+		}
 	}
 	return TRUE;
 }
+ENDIF_INFORMIX
 
 struct pdo_stmt_methods ibm_stmt_methods = {
 	ibm_stmt_dtor,

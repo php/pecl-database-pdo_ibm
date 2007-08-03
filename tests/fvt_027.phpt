@@ -1,65 +1,54 @@
-<?
-    function print_usage( $name ){
-        print "Usage: php $name (informix|db2|ibm) <file>+\n";
-        exit;
-    }
+--TEST--
+pdo_ibm: Testing fetchColumn with different modes and options
+--SKIPIF--
+<?php require_once('skipif.inc'); ?>
+--FILE--
+<?php
+	require_once('fvt.inc');
+	class Test extends FVTTest {
+		public function runTest() {
+			$this->connect();
+			$this->prepareDB();
+			$sql = "SELECT * FROM animals WHERE id > 0";
 
-    $argv = $_SERVER['argv'];
-    $argc = $_SERVER['argc'];
+			$stmt = $this->db->prepare($sql);
+			$stmt->execute();
+			while( $value = $stmt->fetchColumn() ) {
+				print "The column value is: " . $value . "\n";
+			}
 
-    if( $argc < 3 ){
-        print_usage( $argv[0] );
-    }
+			$stmt = $this->db->prepare($sql);
+			$stmt->execute();
+			while( $value = $stmt->fetchColumn( 1 ) ) {
+				print "The column value is: " . $value . "\n";
+			}
 
+			$stmt = $this->db->prepare($sql);
+			$stmt->execute();
+			while( $value = $stmt->fetchColumn( -1 ) ) {
+				print "The column value is: " . $value . "\n";
+			}
 
-    if( strcasecmp(trim($argv[1]), "informix")==0 ){
-        $namespace = "informix";
-		$namespaceUP = "INFORMIX";
-        $ifDefStr = "DB2";
-        $defStr   = "INFORMIX";
-    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
-        $namespace = "db2";
-		$namespaceUP = "DB2";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "DB2";
-    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
-        $namespace = "ibm";
-                $namespaceUP = "IBM";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "IBM";
-    }else {
-        print_usage( $argv[0] );
-    }
-    $ifdef_toggle = true;
-
-    for( $i=2;$i<$argc;$i++ ){
-        $lines = file( $argv[$i] );
-        for( $j=0;$j<count($lines);$j++ ){
-            $line = trim($lines[$j]);
-
-            if( strcmp($line,"IF_$ifDefStr")==0 ){
-                $ifdef_toggle = false;
-                continue;
-            }
-            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
-                $ifdef_toggle = true;
-                continue;
-            }else if( 
-                strcmp($line,'IF_INFORMIX') == 0 || 
-                strcmp($line,'ENDIF_INFORMIX') == 0 || 
-                strcmp($line,'IF_DB2') == 0 || 
-                strcmp($line,'ENDIF_DB2') == 0 ){
-                continue;
-            }
-                
-            if( $ifdef_toggle ){
-                $line = $lines[$j];
-                $mline = $line;
-                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
-                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
-                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
-                print $mline;
-            }
-        }
-    }
+			$stmt = $this->db->prepare($sql);
+			$stmt->execute();
+			while( $value = $stmt->fetchColumn( 7 ) ) {
+				print "The column value is: " . $value . "\n";
+			}
+		}
+	}
+	$testcase = new Test();
+	$testcase->runTest();
 ?>
+--EXPECT--
+The column value is: 1
+The column value is: 2
+The column value is: 3
+The column value is: 4
+The column value is: 5
+The column value is: 6
+The column value is: dog
+The column value is: horse
+The column value is: gold fish
+The column value is: budgerigar
+The column value is: goat
+The column value is: llama

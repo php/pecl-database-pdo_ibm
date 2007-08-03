@@ -34,14 +34,47 @@ pdo_ibm: Test error conditions
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
+IF_DB2
+--EXPECTREGEX--
+(Error Code: 42S22
+Array
+\(
+    \[0\] => 42S22
+    \[1\] => -206
+    \[2\] => \[IBM\]\[CLI Driver\]\[.+\] SQL0206N  "COLNOTEXIST" is not valid in the context where it is used\.  SQLSTATE=42703
+ \(.+\)
+\)
+
+Error Code: 00000
+Array
+\(
+    \[0\] => 00000
+    \[1\] => 0
+    \[2\] =>  \(\(null\)\[0\] at \(null\):0\)
+\)|Error Code: IX000
+Array
+\(
+    \[0\] => IX000
+    \[1\] => -217
+    \[2\] => \[IBM\]\[CLI Driver\]\[.+\] Column \(colnotexist\) not found in any table in the query \(or SLV is undefined\)\. \(.+
+\)
+
+Error Code: 00000
+Array
+\(
+    \[0\] => 00000
+    \[1\] => 0
+    \[2\] =>  \(\(null\)\[0\] at \(null\):0\)
+\))
+ENDIF_DB2
+IF_INFORMIX
 --EXPECTF--
 Error Code: 42S22
 Array
 (
     [0] => 42S22
-    [1] => -206
-    [2] => [IBM][CLI Driver][%s] SQL0206N  "COLNOTEXIST" is not valid in the context where it is used.  SQLSTATE=42703
- (%s
+    [1] => -217
+    [2] => [Informix][Informix ODBC Driver][Informix]Column (colnotexist) not found in any table in the query (or SLV is undefined). (%s
 )
 
 Error Code: 00000
@@ -51,4 +84,5 @@ Array
     [1] => 0
     [2] =>  ((null)[0] at (null):0)
 )
+ENDIF_INFORMIX
 

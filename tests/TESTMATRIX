@@ -1,0 +1,83 @@
+Driver exposed function                        Purpose                         FVT's
+--------------------------------+-----------------------------------+--------------------
+ibm_handle_closer          | close connection                  |
+ibm_handle_preparer        | prepare statement                 |   fvt_031
+    -> bind column              |                                   |   pdo_015
+    -> bind param               |                                   |   pdo_021,pdo_024
+    -> bind value               |                                   |   pdo_028
+ibm_handle_doer            | query / execute / #rows affected  |   fvt_002,fvt_010,fvt_011,fvt_012,fvt_014
+ibm_handle_begin           | begin transaction                 |   pdo_017
+ibm_handle_commit          | commit transaction                |
+    -> with AUTOCOMMIT = 0      |                                   |   fvt_023
+    -> with AUTOCOMMIT = 1,begin|                                   |   fvt_020
+                               -+-                                 -+-
+ibm_handle_rollback        | rollback transaction              |   
+    -> with AUTOCOMMIT = 0      |                                   |   fvt_021
+    -> with AUTOCOMMIT = 1,begin|                                   |   pdo_017
+                               -+-                                 -+-
+ibm_handle_get_attribute   | get attributes                    |   fvt_020,fvt_021
+    -> ATTR_AUTOCOMMIT          |                                   |
+    -> ATTR_PREFETCH            | (NO IMPL)                         |
+    -> ATTR_TIMEOUT             | (NO IMPL)                         |
+    -> ATTR_SERVER_VERSION      | (NO IMPL)  <--                    |
+    -> ATTR_CLIENT_VERSION      |                                   |
+    -> ATTR_SERVER_INFO         | (NO IMPL)                         |
+    -> ATTR_CONNECTION_STATUS   | (NO IMPL)                         |
+    -> ATTR_PERSISTENT          | (NO IMPL)                         |
+    -> ATTR_FETCH_CATALOG_NAMES | (NO IMPL)                         |
+    -> ATTR_FETCH_TABLE_NAMES   | (NO IMPL)                         |
+                               -+-                                 -+-
+ibm_handle_set_attribute   | set attributes  (NO IMPL)         |   fvt_020,fvt_021
+    -> ATTR_AUTOCOMMIT          |                                   |
+    -> ATTR_PREFETCH            |                                   |
+    -> ATTR_TIMEOUT             |                                   |
+    -> ATTR_PERSISTENT          |                                   |
+    -> ATTR_FETCH_CATALOG_NAMES |                                   |
+    -> ATTR_FETCH_TABLE_NAMES   |                                   |
+                               -+-                                 -+-
+ibm_handle_factory         | open connection                   |   fvt_001,fvt_003,fvt_004
+================================|===================================|==================
+ibm_stmt_dtor              | close statement                   |
+ibm_stmt_executer          | execute                           |   fvt_031
+    -> LOB as stream            |                                   |   bug_34630
+    -> LOB as string            |                                   |   
+    -> other simple datatypes   |                                   |   pdo_021,pdo_024
+                               -+-                                 -+-
+ibm_stmt_fetcher           | fetch                             |   
+    -> Forward Only             |                                   |   pdo_020,fvt_031
+    -> FETCH_ORI_FIRST          |                                   |   fvt_031
+    -> FETCH_ORI_LAST           |                                   |   fvt_031
+    -> FETCH_ORI_NEXT           |                                   |   fvt_031
+    -> FETCH_ORI_PRIOR          |                                   |   fvt_031
+    -> FETCH_ORI_ABS            |                                   |   fvt_013,fvt_031
+    -> FETCH_ORI_REL            |                                   |   fvt_031
+                               -+-                                 -+-
+ibm_stmt_describer         | fetch                             |   
+ibm_stmt_get_col           | fetch                             |   pdo_012,pdo_013,pdo_019
+    -> FETCH_BOUND              |                                   |   pdo_016,pdo_016a
+    -> FETCH_ASSOC              |                                   |   pdo_001
+    -> FETCH_NAMED              |                                   |
+    -> FETCH_NUM                |                                   |   pdo_002
+    -> FETCH_BOTH               |                                   |   pdo_003,fvt_030
+    -> FETCH_OBJ                |                                   |   pdo_004
+    -> FETCH_COLUMN             |                                   |   pdo_015
+    -> FETCH_CLASS              |                                   |   pdo_005
+    -> FETCH_GROUP              |                                   |   pdo_006
+    -> FETCH_UNIQUE             |                                   |   pdo_007,pdo_008
+    -> FETCH_CLASSTYPE          |                                   |   pdo_009,pdo_010
+    -> FETCH_FUNC               |                                   |   pdo_011
+    -> FETCH_INTO               |                                   |   pdo_025
+    -> FETCH_LAZY               |                                   |   pdo_027
+                               -+-                                 -+-
+ibm_stmt_param_hook        | bound parameters/columns          |
+ibm_stmt_set_attribute     | sets attributes                   |
+    -> ATTR_CURSOR_NAME         |                                   |
+    -> ATTR_CURSOR              |                                   |
+                               -+-                                 -+-
+ibm_stmt_get_attribute     | gets attributes                   |
+    -> ATTR_CURSOR_NAME         |                                   |     
+    -> ATTR_CURSOR              |                                   |
+                               -+-                                 -+-
+ibm_stmt_get_column_meta   | column meta data                  |   pdo_022(skip)
+ibm_stmt_next_rowset       | next row set                      |
+

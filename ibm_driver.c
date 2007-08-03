@@ -306,6 +306,22 @@ static long ibm_handle_doer(
 		}
 	}
 
+IF_DB2
+	/* Set the last inserted id */
+	rc = record_last_insert_id( NULL, dbh, hstmt TSRMLS_CC);
+	if( rc == FALSE )
+	{
+		return -1;
+	}
+ENDIF_DB2
+IF_INFORMIX
+	/* Set the last serial id inserted */
+	rc = record_last_insert_id(dbh, hstmt TSRMLS_CC);
+	if( rc == SQL_ERROR )
+	{
+		return -1;
+	}
+ENDIF_INFORMIX
 	/* this is a one-shot deal, so make sure we free the statement handle */
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	return rowCount;
@@ -384,6 +400,78 @@ static int ibm_handle_set_attribute(
 	}
 }
 
+IF_DB2
+/* fetch the last inserted id */
+static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
+{
+	char *last_id = emalloc( MAX_IDENTITY_DIGITS );
+	int rc = 0;
+	char *sql;
+	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+	SQLHANDLE hstmt;
+	SQLUINTEGER out_length;
+	char server[MAX_DBMS_IDENTIFIER_NAME];
+
+	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
+	check_dbh_error(rc, "SQLGetInfo");
+	
+	if( strncmp( server, "DB2", 3 ) == 0 )
+	{
+		/* get a new statement handle */
+		strcpy( last_id, "0" );
+		rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &hstmt);
+		check_dbh_error(rc, "SQLAllocHandle");
+		sql = "SELECT IDENTITY_VAL_LOCAL() FROM SYSIBM.SYSDUMMY1";
+		rc = SQLExecDirect(hstmt, (SQLCHAR *) sql, strlen(sql));
+		if (rc == SQL_ERROR) {
+			/*
+			* We raise the error before freeing the handle so that
+			* we catch the proper error record.
+			*/
+			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
+				"SQLExecDirect", __FILE__, __LINE__ TSRMLS_CC);
+			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+
+			return FALSE;
+		}
+
+		rc = SQLBindCol(hstmt, 1, SQL_C_CHAR, last_id, MAX_IDENTITY_DIGITS, &out_length);
+		if (rc == SQL_ERROR) {
+			/*
+			* We raise the error before freeing the handle so that
+			* we catch the proper error record.
+			*/
+			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
+				"SQLBindCol", __FILE__, __LINE__ TSRMLS_CC);
+			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+
+			return FALSE;
+		}
+		/* go fetch it. */
+		rc = SQLFetch(hstmt);
+		if (rc == SQL_ERROR) {
+			/*
+			* We raise the error before freeing the handle so that
+			* we catch the proper error record.
+			*/
+			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
+				"SQLFetch", __FILE__, __LINE__ TSRMLS_CC);
+			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+
+			return FALSE;
+		}
+		/* this is a one-shot deal, so make sure we free the statement handle */
+		*len = strlen(last_id);
+		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+		return last_id;
+	}
+
+	sprintf(last_id, "%d", conn_res->last_insert_id);
+	*len = strlen(last_id);
+	return last_id;
+}
+ENDIF_DB2
+IF_INFORMIX
 /* fetch the last inserted serial id */
 static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
 {
@@ -395,7 +483,9 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned
 	*len = strlen(id);
 
 	return id;
+
 }
+ENDIF_INFORMIX
 
 /* fetch the supplemental error material */
 static int ibm_handle_fetch_error(
@@ -504,6 +594,10 @@ static int ibm_handle_get_attribute(
 	zval *return_value
 	TSRMLS_DC)
 {
+	char server[MAX_DBMS_IDENTIFIER_NAME];
+	int rc;
+	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+
 	switch (attr) {
 		case PDO_ATTR_CLIENT_VERSION:
 			ZVAL_STRING(return_value, MODULE_RELEASE, 1);
@@ -512,10 +606,18 @@ static int ibm_handle_get_attribute(
 		case PDO_ATTR_AUTOCOMMIT:
 			ZVAL_BOOL(return_value, dbh->auto_commit);
 			return TRUE;
+
+		case PDO_ATTR_SERVER_INFO:
+			rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
+			check_dbh_error(rc, "SQLGetInfo");
+			ZVAL_STRING(return_value, server, 1);
+			return TRUE;
+
 	}
 	return FALSE;
 }
 
+IF_DB2
 static int ibm_handle_check_liveness(
 	pdo_dbh_t *dbh
 	TSRMLS_DC)
@@ -536,6 +638,7 @@ static int ibm_handle_check_liveness(
 	return dead_flag == SQL_CD_FALSE ? SUCCESS : FAILURE;
 
 }
+ENDIF_DB2
 
 static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_closer,
@@ -549,7 +652,12 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_lastInsertID,
 	ibm_handle_fetch_error,
 	ibm_handle_get_attribute,
+IF_DB2
 	ibm_handle_check_liveness,
+ENDIF_DB2
+IF_INFORMIX
+	NULL,				/* check_liveness  */
+ENDIF_INFORMIX
 	NULL				/* get_driver_methods */
 };
 
@@ -647,6 +755,18 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		check_dbh_error(rc, "SQLConnect");
 	}
 
+IF_INFORMIX
+	/*
+	 * Set NeedODBCTypesOnly=1 because we dont support
+	 * Smart Large Objects in PDO yet
+	 */
+	rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_INFX_ATTR_LO_AUTOMATIC,
+			(SQLPOINTER) SQL_TRUE, SQL_NTS);
+	check_dbh_error(rc, "SQLSetConnectAttr");
+	rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_INFX_ATTR_ODBC_TYPES_ONLY,
+			(SQLPOINTER) SQL_TRUE, SQL_NTS);
+	check_dbh_error(rc, "SQLSetConnectAttr");
+ENDIF_INFORMIX
 
 	/* if we're in auto commit mode, set the connection attribute. */
 	if (dbh->auto_commit != 0) {

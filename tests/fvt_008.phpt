@@ -11,10 +11,10 @@ pdo_ibm: Test error conditions through non-existent tables
 		{
 			$this->connect();
 			$sql = "CREATE TABLE testError(" .
-	   			    "id INTEGER," .
-	       			"data VARCHAR(50)," .
-	       			"attachment VARCHAR(50)," .
-	       			"about VARCHAR(50))";
+				"id INTEGER," .
+				"data VARCHAR(50)," .
+				"attachment VARCHAR(50)," .
+				"about VARCHAR(50))";
 
 			try {
 				$stmt = $this->db->prepare($sql);
@@ -42,6 +42,28 @@ pdo_ibm: Test error conditions through non-existent tables
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
+IF_DB2
+--EXPECTREGEX--
+(Error code:
+42S02
+Error info:
+Array
+\(
+    \[0\] => 42S02
+    \[1\] => -204
+    \[2\] => \[IBM\]\[CLI Driver\]\[.+\] SQL0204N  ".+" is an undefined name\.  SQLSTATE=42704
+ \(.+\[-204\] at .+\)
+\))|(Error code:
+42S22
+Error info:
+Array
+\(
+    \[0\] => 42S22
+    \[1\] => -206
+    \[2\] => \[IBM\]\[CLI Driver\]\[.+\] The specified table \(informix\.testerror\) is not in the database\. \(.+\[-206\] at .+\)
+\))
+ENDIF_DB2
+IF_INFORMIX
 --EXPECTF--
 Error code:
 42S02
@@ -49,7 +71,8 @@ Error info:
 Array
 (
     [0] => 42S02
-    [1] => -204
-    [2] => [IBM][CLI Driver][%s] SQL0204N  "%s" is an undefined name.  SQLSTATE=42704
- (%s[-204] at %s)
+    [1] => -206
+    [2] => [Informix][Informix ODBC Driver][Informix]The specified table (informix.testerror) is not in the database. (SQLPrepare[-206] at %s)
 )
+ENDIF_INFORMIX
+

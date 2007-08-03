@@ -18,7 +18,20 @@ pdo_ibm: Insert/select clob/blob columns with binding to local variable or strea
 			} catch( Exception $e ){}
 
 			/* Create the test table */
-			$create = 'CREATE TABLE animals (id INTEGER, my_clob clob, my_blob blob)';
+			$server_info = $this->db->getAttribute(PDO::ATTR_SERVER_INFO);
+IF_DB2
+			if( strncmp( $server_info, "DB2", 3 ) != 0 )
+			{
+				$create = 'CREATE TABLE animals (id INTEGER, my_clob text, my_blob byte)';
+			}
+			else
+			{
+				$create = 'CREATE TABLE animals (id INTEGER, my_clob clob, my_blob blob)';
+			}
+ENDIF_DB2
+IF_INFORMIX
+			$create = 'CREATE TABLE animals (id INTEGER, my_clob text, my_blob byte)';
+ENDIF_INFORMIX
 			$res = $this->db->exec( $create );
 
 			$stmt = $this->db->prepare('insert into animals (id,my_clob,my_blob) values (:id,:my_clob,:my_blob)');
@@ -62,27 +75,33 @@ pdo_ibm: Insert/select clob/blob columns with binding to local variable or strea
 				var_dump( $blob );
 			}
 
-			try {
-				/* Drop the XML test table, in case it exists */
-				$drop = 'DROP TABLE xmlTest';
-				$result = $this->db->exec( $drop );
-			} catch( Exception $e ){}
+IF_DB2
 
-			/* Create the XML test table */
-			$create = 'CREATE TABLE xmlTest (id INTEGER, my_xml XML)';
-			$res = $this->db->exec( $create );
+			if( strncmp( $server_info, "DB2", 3 ) == 0 )
+			{
+				try {
+					/* Drop the XML test table, in case it exists */
+					$drop = 'DROP TABLE xmlTest';
+					$result = $this->db->exec( $drop );
+				} catch( Exception $e ){}
 
-			$stmt = $this->db->prepare('INSERT INTO xmlTest (id,my_xml) VALUES (:id,:my_xml)'); $xml = "<TEST><function><xml/></function></TEST>"; $stmt->bindValue( ':id' , 0 ); $stmt->bindParam( ':my_xml' , $xml , PDO::PARAM_LOB , strlen($xml) );
-			$stmt->execute();
+				/* Create the XML test table */
+				$create = 'CREATE TABLE xmlTest (id INTEGER, my_xml XML)';
+				$res = $this->db->exec( $create );
 
-			$stmt = $this->db->prepare( 'select id,my_xml from xmlTest' );
-			$stmt->bindColumn( 1 , $id );
-			$stmt->bindColumn( 2 , $my_xml );
-			$res = $stmt->execute();
-			while ($stmt->fetch(PDO::FETCH_BOUND)) {
-				echo $id . "\n";
-				echo $my_xml . "\n";
+				$stmt = $this->db->prepare('INSERT INTO xmlTest (id,my_xml) VALUES (:id,:my_xml)'); $xml = "<TEST><function><xml/></function></TEST>"; $stmt->bindValue( ':id' , 0 ); $stmt->bindParam( ':my_xml' , $xml , PDO::PARAM_LOB , strlen($xml) );
+				$stmt->execute();
+
+				$stmt = $this->db->prepare( 'select id,my_xml from xmlTest' );
+				$stmt->bindColumn( 1 , $id );
+				$stmt->bindColumn( 2 , $my_xml );
+				$res = $stmt->execute();
+				while ($stmt->fetch(PDO::FETCH_BOUND)) {
+					echo $id . "\n";
+					echo $my_xml . "\n";
+				}
 			}
+ENDIF_DB2
 
 			print "done\n";
 		}
@@ -91,6 +110,69 @@ pdo_ibm: Insert/select clob/blob columns with binding to local variable or strea
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
+IF_DB2
+--EXPECTREGEX--
+inserting from php variable
+array\(1\) \{
+  \[0\]=>
+  array\(6\) \{
+    \["ID"\]=>
+    string\(1\) "0"
+    \[0\]=>
+    string\(1\) "0"
+    \["MY_CLOB"\]=>
+    string\(15\) "test clob data
+"
+    \[1\]=>
+    string\(15\) "test clob data
+"
+    \["MY_BLOB"\]=>
+    string\([0-9]+\).+
+    \[2\]=>
+    string\([0-9]+\).+
+  \}
+\}
+inserting from php file stream
+array\(1\) \{
+  \[0\]=>
+  array\(6\) \{
+    \["ID"\]=>
+    string\(1\) "1"
+    \[0\]=>
+    string\(1\) "1"
+    \["MY_CLOB"\]=>
+    string\([0-9]+\) "this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+"
+    \[1\]=>
+    string\([0-9]+\) "this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+"
+    \["MY_BLOB"\]=>
+    string\([0-9]+\).+
+    \[2\]=>
+    string\([0-9]+\).+
+  \}
+\}
+string\(1\) "1"
+string\([0-9]+\) "this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.  this iss clob data\.
+"
+string\([0-9]+\).+
+0
+(<\?xml version="1\.0" encoding="UTF-8" \?><TEST><function><xml\/><\/function><\/TEST>)|()
+done
+ENDIF_DB2
+IF_INFORMIX
 --EXPECTF--
 inserting from php variable
 array(1) {
@@ -148,7 +230,5 @@ this iss clob data.  this iss clob data.  this iss clob data.  this iss clob dat
 this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.  this iss clob data.
 "
 string(%d)%s
-0
-<?xml version="1.0" encoding="UTF-8" ?><TEST><function><xml/></function></TEST>
 done
-
+ENDIF_INFORMIX

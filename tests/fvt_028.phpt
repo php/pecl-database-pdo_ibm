@@ -1,65 +1,146 @@
-<?
-    function print_usage( $name ){
-        print "Usage: php $name (informix|db2|ibm) <file>+\n";
-        exit;
-    }
+--TEST--
+pdo_ibm: Test the execution of a basic stored procedure
+--SKIPIF--
+<?php require_once('skipif.inc'); ?>
+--FILE--
+<?php
+	require_once('fvt.inc');
+	class Test extends FVTTest {
+		public function runTest() {
+			$this->connect();
+			$this->prepareDB();
+			try{
+				$result = $this->db->exec("DROP PROCEDURE SP_Example");
+			} catch( Exception $e ){}
 
-    $argv = $_SERVER['argv'];
-    $argc = $_SERVER['argc'];
+			$server_info = $this->db->getAttribute(PDO::ATTR_SERVER_INFO);
+			$create = "";
+			if( strncmp( $server_info, "DB2", 3 ) == 0 )
+			{
+$create = <<<ENDPROC
+  CREATE PROCEDURE SP_Example ()
+  RESULT SETS 3
+  LANGUAGE SQL
+  BEGIN
+    DECLARE c1 CURSOR WITH RETURN FOR
+      SELECT name, id
+      FROM animals
+      ORDER BY name;
 
-    if( $argc < 3 ){
-        print_usage( $argv[0] );
-    }
+    OPEN c1;
+  END
+ENDPROC;
+			}
+			else if( strncmp( $server_info, "IDS", 3 ) == 0 )
+			{
+$create = <<<ENDPROC2
+CREATE PROCEDURE SP_Example ()
+ RETURNING char(16), int;
 
+  DEFINE animalName char(16);
+  DEFINE intvalue int;
 
-    if( strcasecmp(trim($argv[1]), "informix")==0 ){
-        $namespace = "informix";
-		$namespaceUP = "INFORMIX";
-        $ifDefStr = "DB2";
-        $defStr   = "INFORMIX";
-    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
-        $namespace = "db2";
-		$namespaceUP = "DB2";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "DB2";
-    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
-        $namespace = "ibm";
-                $namespaceUP = "IBM";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "IBM";
-    }else {
-        print_usage( $argv[0] );
-    }
-    $ifdef_toggle = true;
+  FOREACH
+    SELECT name, id
+    INTO animalName, intvalue
+    FROM animals
+    ORDER BY name
+    RETURN animalName,intvalue;
+  END FOREACH;
 
-    for( $i=2;$i<$argc;$i++ ){
-        $lines = file( $argv[$i] );
-        for( $j=0;$j<count($lines);$j++ ){
-            $line = trim($lines[$j]);
+  END PROCEDURE
+ENDPROC2;
+			}
+			$result = $this->db->exec($create);
 
-            if( strcmp($line,"IF_$ifDefStr")==0 ){
-                $ifdef_toggle = false;
-                continue;
-            }
-            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
-                $ifdef_toggle = true;
-                continue;
-            }else if( 
-                strcmp($line,'IF_INFORMIX') == 0 || 
-                strcmp($line,'ENDIF_INFORMIX') == 0 || 
-                strcmp($line,'IF_DB2') == 0 || 
-                strcmp($line,'ENDIF_DB2') == 0 ){
-                continue;
-            }
-                
-            if( $ifdef_toggle ){
-                $line = $lines[$j];
-                $mline = $line;
-                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
-                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
-                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
-                print $mline;
-            }
-        }
-    }
+			/* EXECUTE THE STORED PROCEDURE */
+			$stmt = $this->db->query('CALL SP_Example()');
+
+			/* FIRST RESULT SET */
+			while ($row = $stmt->fetch()) {
+				var_dump($row);
+			}
+
+		}
+	}
+	$testcase = new Test();
+	$testcase->runTest();
 ?>
+--EXPECTREGEX--
+(array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Bubbles         "
+  \[0\]=>
+  string\(16\) "Bubbles         "
+  \["ID"\]=>
+  string\(1\) "3"
+  \[1\]=>
+  string\(1\) "3"
+\}
+array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Gizmo           "
+  \[0\]=>
+  string\(16\) "Gizmo           "
+  \["ID"\]=>
+  string\(1\) "4"
+  \[1\]=>
+  string\(1\) "4"
+\}
+array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Peaches         "
+  \[0\]=>
+  string\(16\) "Peaches         "
+  \["ID"\]=>
+  string\(1\) "1"
+  \[1\]=>
+  string\(1\) "1"
+\}
+array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Pook            "
+  \[0\]=>
+  string\(16\) "Pook            "
+  \["ID"\]=>
+  string\(1\) "0"
+  \[1\]=>
+  string\(1\) "0"
+\}
+array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Rickety Ride    "
+  \[0\]=>
+  string\(16\) "Rickety Ride    "
+  \["ID"\]=>
+  string\(1\) "5"
+  \[1\]=>
+  string\(1\) "5"
+\}
+array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Smarty          "
+  \[0\]=>
+  string\(16\) "Smarty          "
+  \["ID"\]=>
+  string\(1\) "2"
+  \[1\]=>
+  string\(1\) "2"
+\}
+array\(4\) \{
+  \["NAME"\]=>
+  string\(16\) "Sweater         "
+  \[0\]=>
+  string\(16\) "Sweater         "
+  \["ID"\]=>
+  string\(1\) "6"
+  \[1\]=>
+  string\(1\) "6"
+\})|(array\(3\) \{
+  \[1\]=>
+  string\(16\) "Bubbles         "
+  \[2\]=>
+  string\(1\) "3"
+  \[3\]=>
+  string\(1\) "3"
+\})

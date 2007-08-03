@@ -1,65 +1,94 @@
-<?
-    function print_usage( $name ){
-        print "Usage: php $name (informix|db2|ibm) <file>+\n";
-        exit;
-    }
+--TEST--
+pdo_ibm: Test the setting of different options
+--SKIPIF--
+<?php require_once('skipif.inc'); ?>
+--FILE--
+<?php
+	require_once('fvt.inc');
+	class Test extends FVTTest
+	{
+		public function runTest()
+		{
+			/* Connect */
+			$this->connect();
 
-    $argv = $_SERVER['argv'];
-    $argc = $_SERVER['argc'];
+			/* Set up */
+			try {
+				$this->db->exec("DROP TABLE test");
+			} catch (Exception $e){}
+			$this->db->exec("CREATE TABLE test (id INTEGER)");
+			$this->db->exec("INSERT INTO test values (1)");
+			$this->db->exec("INSERT INTO test values (2)");
+			$this->db->exec("INSERT INTO test values (3)");
+			$this->db->exec("INSERT INTO test values (4)");
+			$this->db->exec("INSERT INTO test values (5)");
 
-    if( $argc < 3 ){
-        print_usage( $argv[0] );
-    }
+			/* Test ATTR_AUTOCOMMIT */
+			$this->db->setAttribute(PDO::ATTR_AUTOCOMMIT, false);
+			$this->db->beginTransaction();
+			$stmt = $this->db->query( "SELECT count(*) FROM test" );
+			$res = $stmt->fetch( PDO::FETCH_NUM );
+			echo $res[0]."\n";
+			$this->db->exec( "DELETE FROM test" );
+			$stmt = $this->db->query( "SELECT count(*) FROM test" );
+			$res = $stmt->fetch( PDO::FETCH_NUM );
+			echo $res[0]."\n";
+			$this->db->rollBack();
+			$stmt = $this->db->query( "SELECT count(*) FROM test" );
+			$res = $stmt->fetch( PDO::FETCH_NUM );
+			echo $res[0]."\n";
 
+			/* Test ATTR_ERRMODE */
+			$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			try {
+				$this->db->exec("INSERT INTO nontest values (6)");
+			} catch (Exception $e) {
+				echo "Failed: " . $e->getMessage() . "\n";
+			}
 
-    if( strcasecmp(trim($argv[1]), "informix")==0 ){
-        $namespace = "informix";
-		$namespaceUP = "INFORMIX";
-        $ifDefStr = "DB2";
-        $defStr   = "INFORMIX";
-    }else if( strcasecmp(trim($argv[1]), "db2")==0 ){
-        $namespace = "db2";
-		$namespaceUP = "DB2";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "DB2";
-    }else if( strcasecmp(trim($argv[1]), "ibm")==0 ){
-        $namespace = "ibm";
-                $namespaceUP = "IBM";
-        $ifDefStr = "INFORMIX";
-        $defStr   = "IBM";
-    }else {
-        print_usage( $argv[0] );
-    }
-    $ifdef_toggle = true;
+			/* Test ATTR_CASE */
+			$this->db->setAttribute(PDO::ATTR_CASE, PDO::CASE_UPPER);
+			$stmt = $this->db->query( "SELECT id FROM test" );
+			$res = $stmt->fetch();
+			var_dump( $res );
+			$this->db->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
+			$stmt = $this->db->query( "SELECT id FROM test" );
+			$res = $stmt->fetch();
+			var_dump( $res );
 
-    for( $i=2;$i<$argc;$i++ ){
-        $lines = file( $argv[$i] );
-        for( $j=0;$j<count($lines);$j++ ){
-            $line = trim($lines[$j]);
+			/* Test ATTR_PERSISTENT */
+			$op = array(PDO::ATTR_PERSISTENT => true);
+			$pdb = new PDO($this->dsn, $this->user, $this->pass, $op);
+			var_dump($pdb);
+			$pdb = null;
+			$pdb = new PDO($this->dsn, $this->user, $this->pass, $op);
+			var_dump($pdb);
+			$pdb = null;
+		}
+	}
 
-            if( strcmp($line,"IF_$ifDefStr")==0 ){
-                $ifdef_toggle = false;
-                continue;
-            }
-            else if( strcmp($line,"ENDIF_$ifDefStr")==0 ){
-                $ifdef_toggle = true;
-                continue;
-            }else if( 
-                strcmp($line,'IF_INFORMIX') == 0 || 
-                strcmp($line,'ENDIF_INFORMIX') == 0 || 
-                strcmp($line,'IF_DB2') == 0 || 
-                strcmp($line,'ENDIF_DB2') == 0 ){
-                continue;
-            }
-                
-            if( $ifdef_toggle ){
-                $line = $lines[$j];
-                $mline = $line;
-                $mline = ereg_replace( 'NAMESPACEUP' , $namespaceUP, $mline );
-                $mline = ereg_replace( 'NAMESPACE' , $namespace, $mline );
-                $mline = ereg_replace( 'PDO_IBM' , 'PDO_' . $defStr, $mline );
-                print $mline;
-            }
-        }
-    }
+	$testcase = new Test();
+	$testcase->runTest();
 ?>
+--EXPECTF--
+5
+0
+5
+Failed: %s
+array(2) {
+  ["ID"]=>
+  string(1) "1"
+  [0]=>
+  string(1) "1"
+}
+array(2) {
+  ["id"]=>
+  string(1) "1"
+  [0]=>
+  string(1) "1"
+}
+object(PDO)#%d (0) {
+}
+object(PDO)#%d (0) {
+}
+

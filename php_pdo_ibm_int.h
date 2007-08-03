@@ -22,8 +22,13 @@
 #ifndef PHP_PDO_IBM_INT_H
 #define PHP_PDO_IBM_INT_H
 
+IF_INFORMIX
+#include "infxcli.h"
+ENDIF_INFORMIX
 
+IF_DB2
 #include "sqlcli1.h"
+ENDIF_DB2
 
 #define MAX_OPTION_LEN 10
 #define MAX_ERR_MSG_LEN (SQL_MAX_MESSAGE_LENGTH + SQL_SQLSTATE_SIZE + 1)
@@ -32,6 +37,29 @@
 #ifndef SQL_XML
 #define SQL_XML -370
 #endif
+
+/* Maximum length of the name of the DBMS being accessed */
+#define MAX_DBMS_IDENTIFIER_NAME 256
+
+IF_DB2
+/* This is used in last_insert_id.
+ We allocate a buffer of size 32 as per recommendations from the CLI IDS team */
+#define MAX_IDENTITY_DIGITS 32
+ENDIF_DB2
+
+#ifndef SQL_ATTR_GET_GENERATED_VALUE
+#define SQL_ATTR_GET_GENERATED_VALUE 2583
+#endif
+
+IF_DB2
+/* This function is called after executing a stmt for recording lastInsertId */
+int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
+ENDIF_DB2
+IF_INFORMIX
+/* This function is called after executing a stmt for recording lastInsertId */
+int record_last_insert_id( pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
+ENDIF_INFORMIX
+
 
 /* error handling functions and macros. */
 void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle, SQLSMALLINT hType, char *tag, char *file, int line TSRMLS_DC);
