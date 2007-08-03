@@ -17,18 +17,14 @@
  </maintainers>
 
  <release>
-  <version>1.1.1</version>
-  <date>2007-06-13</date>
+  <version>1.2.0</version>
+  <date>2007-08-03</date>
   <license>Apache License 2.0</license>
   <state>stable</state>
   <notes>
-    New feature: quote function supported
-    New feature: set_attribute feature supported
-    Fix for internal defect: bindParam crash
-    Fixed Pecl defect 10398: statement->execute is not throw exception
-    Fixed config.w32 regarding compile issue on Windows
-    Fix for internal defect: exec function not returning success/failure when no rows need be returned
-    Fix for internal defect: fix for segfault when using bad SQL
+    New Feature: Added support for lastInsertId() method
+    New Feature: Added support for PDO::ATTR_SERVER_INFO connection attribute
+    Improved unit test coverage for DB2 and IDS 11
   </notes>
   <configureoptions>
    <configureoption name="with-pdo-ibm" prompt="DB2 install directory location?" />
@@ -76,6 +72,8 @@
     <file name="fvt_023.phpt" role="test" />
     <file name="fvt_030.phpt" role="test" />
     <file name="fvt_031.phpt" role="test" />
+    <file name="fvt_038.phpt" role="test" />
+    <file name="fvt_040.phpt" role="test" />
     <file name="fvt_49872.phpt" role="test" />
    </dir>
   </filelist>
