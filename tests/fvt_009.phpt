@@ -30,7 +30,6 @@ pdo_ibm: Test error conditions through faulty SQL
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
-IF_DB2
 --EXPECTREGEX--
 (Error code:
 42601
@@ -50,16 +49,3 @@ Array
     \[1\] => -201
     \[2\] => \[IBM\]\[CLI Driver\]\[.+\] A syntax error has occurred\. \(.+\[-201\] at .+\)
 \))
-ENDIF_DB2
-IF_INFORMIX
---EXPECTF--
-Error code:
-42000
-Error info:
-Array
-(
-    [0] => 42000
-    [1] => -201
-    [2] => [Informix][Informix ODBC Driver][Informix]A syntax error has occurred. (SQLPrepare[-201] at %s)
-)
-ENDIF_INFORMIX

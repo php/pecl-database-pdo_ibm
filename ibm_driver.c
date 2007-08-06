@@ -306,22 +306,12 @@ static long ibm_handle_doer(
 		}
 	}
 
-IF_DB2
 	/* Set the last inserted id */
 	rc = record_last_insert_id( NULL, dbh, hstmt TSRMLS_CC);
 	if( rc == FALSE )
 	{
 		return -1;
 	}
-ENDIF_DB2
-IF_INFORMIX
-	/* Set the last serial id inserted */
-	rc = record_last_insert_id(dbh, hstmt TSRMLS_CC);
-	if( rc == SQL_ERROR )
-	{
-		return -1;
-	}
-ENDIF_INFORMIX
 	/* this is a one-shot deal, so make sure we free the statement handle */
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	return rowCount;
@@ -400,7 +390,6 @@ static int ibm_handle_set_attribute(
 	}
 }
 
-IF_DB2
 /* fetch the last inserted id */
 static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
 {
@@ -470,22 +459,6 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned
 	*len = strlen(last_id);
 	return last_id;
 }
-ENDIF_DB2
-IF_INFORMIX
-/* fetch the last inserted serial id */
-static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
-{
-	char *id = emalloc(20);
-	int rc = 0;
-	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
-
-	sprintf(id, "%d", conn_res->last_insert_id);
-	*len = strlen(id);
-
-	return id;
-
-}
-ENDIF_INFORMIX
 
 /* fetch the supplemental error material */
 static int ibm_handle_fetch_error(
@@ -617,7 +590,6 @@ static int ibm_handle_get_attribute(
 	return FALSE;
 }
 
-IF_DB2
 static int ibm_handle_check_liveness(
 	pdo_dbh_t *dbh
 	TSRMLS_DC)
@@ -638,7 +610,6 @@ static int ibm_handle_check_liveness(
 	return dead_flag == SQL_CD_FALSE ? SUCCESS : FAILURE;
 
 }
-ENDIF_DB2
 
 static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_closer,
@@ -652,12 +623,7 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_lastInsertID,
 	ibm_handle_fetch_error,
 	ibm_handle_get_attribute,
-IF_DB2
 	ibm_handle_check_liveness,
-ENDIF_DB2
-IF_INFORMIX
-	NULL,				/* check_liveness  */
-ENDIF_INFORMIX
 	NULL				/* get_driver_methods */
 };
 
@@ -755,18 +721,6 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		check_dbh_error(rc, "SQLConnect");
 	}
 
-IF_INFORMIX
-	/*
-	 * Set NeedODBCTypesOnly=1 because we dont support
-	 * Smart Large Objects in PDO yet
-	 */
-	rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_INFX_ATTR_LO_AUTOMATIC,
-			(SQLPOINTER) SQL_TRUE, SQL_NTS);
-	check_dbh_error(rc, "SQLSetConnectAttr");
-	rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_INFX_ATTR_ODBC_TYPES_ONLY,
-			(SQLPOINTER) SQL_TRUE, SQL_NTS);
-	check_dbh_error(rc, "SQLSetConnectAttr");
-ENDIF_INFORMIX
 
 	/* if we're in auto commit mode, set the connection attribute. */
 	if (dbh->auto_commit != 0) {

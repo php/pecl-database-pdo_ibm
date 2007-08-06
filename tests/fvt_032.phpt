@@ -58,14 +58,7 @@ pdo_ibm: Check error codes after a failed execution
 Begin
 Execute
 Exception occured
-IF_INFORMIX
-22018
--11106
-[Informix][Informix ODBC Driver]Invalid character value for cast specification. (SQLExecute[-11106] at %s
-ENDIF_INFORMIX
-IF_DB2
 22005
 -99999
 [IBM][CLI Driver] CLI0112E  Error in assignment. SQLSTATE=22005 (SQLExecute[-99999] at %s
-ENDIF_DB2
 

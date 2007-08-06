@@ -35,17 +35,9 @@ pdo_ibm: Check error code.
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
-IF_DB2
 --EXPECTREGEX--
 (PDOStatement::errorCode\(\): 42S02
 PDOStatement::errorCode\(\): 42S22
 PDOStatement::errorCode\(\): 42S22)|(PDOStatement::errorCode\(\): 42S22
 PDOStatement::errorCode\(\): IX000
 PDOStatement::errorCode\(\): IX000)
-ENDIF_DB2
-IF_INFORMIX
---EXPECTF--
-PDOStatement::errorCode(): 42S02
-PDOStatement::errorCode(): 42S22
-PDOStatement::errorCode(): 42S22
-ENDIF_INFORMIX

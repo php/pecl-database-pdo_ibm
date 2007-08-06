@@ -18,12 +18,7 @@ pdo_ibm: Insert and retrieve a very large clob file.
 			} catch( Exception $e ){}
 
 			/* Create the test table */
-IF_INFORMIX
-			$create = 'CREATE TABLE animals (id INTEGER, my_clob text)';
-ENDIF_INFORMIX
-IF_DB2
 			$create = 'CREATE TABLE animals (id INTEGER, my_clob clob)';
-ENDIF_DB2
 			$result = $this->db->exec( $create );
 
             $fp = fopen( dirname(__FILE__) . "/large_clob.dat" , "r" );

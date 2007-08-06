@@ -39,7 +39,6 @@ pdo_ibm: Check error condition when given null connection parameters
 	$testcase->runTest();
 ?>
 --EXPECTF--
-IF_DB2
 Connection Failed
 invalid data source name
 
@@ -49,14 +48,3 @@ SQLSTATE=08001, SQL%sonnect: -30082 [%s][%s] SQL30082N  Security processing fail
 Connection Failed
 SQLSTATE=08001, SQL%sonnect: -30082 [%s][%s] SQL30082N  Security processing failed with reason "%d" ("%s").  SQLSTATE=08001
 
-ENDIF_DB2
-IF_INFORMIX
-Connection Failed
-invalid data source name
-
-Connection Failed
-SQLSTATE=28000, SQL%sonnect: -951 [%s][%s][Informix]Incorrect password or user %s is not known on the database server.
-Connection Failed
-SQLSTATE=28000, SQL%sonnect: -951 [%s][%s][Informix]Incorrect password or user %s is not known on the database server.
-
-ENDIF_INFORMIX

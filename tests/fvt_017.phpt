@@ -18,12 +18,7 @@ pdo_ibm: Insert and retrieve a very large file.
 			} catch( Exception $e ){}
 
 			/* Create the test table */
-IF_INFORMIX
-			$create = 'CREATE TABLE animals (id INTEGER, my_blob byte)';
-ENDIF_INFORMIX
-IF_DB2
 			$create = 'CREATE TABLE animals (id INTEGER, my_blob blob)';
-ENDIF_DB2
 			$result = $this->db->exec( $create );
 
             $fp = fopen( dirname(__FILE__) . "/large_blob.dat" , "rb" );

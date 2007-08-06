@@ -34,7 +34,6 @@ pdo_ibm: Test error conditions
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
-IF_DB2
 --EXPECTREGEX--
 (Error Code: 42S22
 Array
@@ -66,23 +65,4 @@ Array
     \[1\] => 0
     \[2\] =>  \(\(null\)\[0\] at \(null\):0\)
 \))
-ENDIF_DB2
-IF_INFORMIX
---EXPECTF--
-Error Code: 42S22
-Array
-(
-    [0] => 42S22
-    [1] => -217
-    [2] => [Informix][Informix ODBC Driver][Informix]Column (colnotexist) not found in any table in the query (or SLV is undefined). (%s
-)
-
-Error Code: 00000
-Array
-(
-    [0] => 00000
-    [1] => 0
-    [2] =>  ((null)[0] at (null):0)
-)
-ENDIF_INFORMIX
 

@@ -22,12 +22,7 @@
 #ifndef PHP_PDO_IBM_H
 #define PHP_PDO_IBM_H
 
-IF_DB2
 #define MODULE_RELEASE "1.1.0"
-ENDIF_DB2
-IF_INFORMIX
-#define MODULE_RELEASE "1.1.0"
-ENDIF_INFORMIX
 
 extern zend_module_entry pdo_ibm_module_entry;
 #define phpext_pdo_ibm_ptr &pdo_ibm_module_entry

@@ -42,7 +42,6 @@ pdo_ibm: Test error conditions through non-existent tables
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
-IF_DB2
 --EXPECTREGEX--
 (Error code:
 42S02
@@ -62,17 +61,4 @@ Array
     \[1\] => -206
     \[2\] => \[IBM\]\[CLI Driver\]\[.+\] The specified table \(informix\.testerror\) is not in the database\. \(.+\[-206\] at .+\)
 \))
-ENDIF_DB2
-IF_INFORMIX
---EXPECTF--
-Error code:
-42S02
-Error info:
-Array
-(
-    [0] => 42S02
-    [1] => -206
-    [2] => [Informix][Informix ODBC Driver][Informix]The specified table (informix.testerror) is not in the database. (SQLPrepare[-206] at %s)
-)
-ENDIF_INFORMIX
 

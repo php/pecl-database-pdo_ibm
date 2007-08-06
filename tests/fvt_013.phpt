@@ -21,12 +21,7 @@ pdo_ibm: Scrollable cursor; retrieve negative row
 				var_dump( $row );
 			}catch( PDOException $e ){
 				$info = $stmt->errorInfo();
-IF_INFORMIX
-				if( $info[1] == -11086 )
-ENDIF_INFORMIX
-IF_DB2
 				if( $info[1] == -99999 )
-ENDIF_DB2
 				{
 					print "Cannot retrieve negative row\n";
 				}
