@@ -17,11 +17,12 @@
  </maintainers>
 
  <release>
-  <version>1.2.0</version>
-  <date>2007-08-03</date>
+  <version>1.2.1</version>
+  <date>2007-08-06</date>
   <license>Apache License 2.0</license>
   <state>stable</state>
   <notes>
+    Minor release to fix formatting and remove generic non-PDO_IBM code
     New Feature: Added support for lastInsertId() method
     New Feature: Added support for PDO::ATTR_SERVER_INFO connection attribute
     Improved unit test coverage for DB2 and IDS 11
