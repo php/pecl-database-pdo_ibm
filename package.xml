@@ -17,12 +17,12 @@
  </maintainers>
 
  <release>
-  <version>1.2.2</version>
-  <date>2007-09-06</date>
+  <version>1.2.3</version>
+  <date>2007-09-14</date>
   <license>Apache License 2.0</license>
   <state>stable</state>
   <notes>
-    Defect fixes for large objects when dealing with nulls and empty strings
+    Rolled back fix for selecting LOB with an empty string("")
   </notes>
   <configureoptions>
    <configureoption name="with-pdo-ibm" prompt="DB2 install directory location?" />
@@ -64,7 +64,6 @@
     <file name="fvt_016.phpt" role="test" />
     <file name="fvt_017.phpt" role="test" />
     <file name="fvt_017b.phpt" role="test" />
-    <file name="fvt_017c.phpt" role="test" />
     <file name="fvt_020.phpt" role="test" />
     <file name="fvt_021.phpt" role="test" />
     <file name="fvt_022.phpt" role="test" />
