@@ -68,17 +68,11 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 
 	if (readBytes == -1)	/*For NULL CLOB/BLOB values */
 	   return (size_t) readBytes;
-	if (readBytes > count) {
-	   if (col_res->data_type == SQL_LONGVARCHAR)	
-		/* Dont return the NULL at end of CLOB buffer */
-		   readBytes = count - 1;
-	   else
-		   readBytes = count;
-	} else if (readBytes == 0 && rc != SQL_NO_DATA_FOUND) {
-		if (buf != NULL)
-			strcpy(buf, "");
-		readBytes = 1;
-	}
+   if (readBytes > count)
+   if (col_res->data_type == SQL_LONGVARCHAR)   /*Dont return the NULL at end of CLOB buffer */
+      readBytes = count - 1;
+   else
+      readBytes = count;
 	return (size_t) readBytes;
 }
 
