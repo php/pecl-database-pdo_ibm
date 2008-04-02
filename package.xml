@@ -17,12 +17,12 @@
  </maintainers>
 
  <release>
-  <version>1.2.3</version>
-  <date>2007-09-14</date>
+  <version>1.2.4</version>
+  <date>2008-04-02</date>
   <license>Apache License 2.0</license>
   <state>stable</state>
   <notes>
-    Rolled back fix for selecting LOB with an empty string("")
+    Adding test cases. 
   </notes>
   <configureoptions>
    <configureoption name="with-pdo-ibm" prompt="DB2 install directory location?" />
@@ -64,12 +64,25 @@
     <file name="fvt_016.phpt" role="test" />
     <file name="fvt_017.phpt" role="test" />
     <file name="fvt_017b.phpt" role="test" />
+    <file name="fvt_017c.phpt" role="test" />
+    <file name="fvt_018.phpt" role="test" />
+    <file name="fvt_019.phpt" role="test" />
     <file name="fvt_020.phpt" role="test" />
     <file name="fvt_021.phpt" role="test" />
     <file name="fvt_022.phpt" role="test" />
     <file name="fvt_023.phpt" role="test" />
+    <file name="fvt_024.phpt" role="test" />
+    <file name="fvt_025.phpt" role="test" />
+    <file name="fvt_026.phpt" role="test" />
+    <file name="fvt_027.phpt" role="test" />
+    <file name="fvt_028.phpt" role="test" />
     <file name="fvt_030.phpt" role="test" />
     <file name="fvt_031.phpt" role="test" />
+    <file name="fvt_032.phpt" role="test" />
+    <file name="fvt_033.phpt" role="test" />
+    <file name="fvt_034.phpt" role="test" />
+    <file name="fvt_035.phpt" role="test" />
+    <file name="fvt_036.phpt" role="test" />
     <file name="fvt_038.phpt" role="test" />
     <file name="fvt_040.phpt" role="test" />
     <file name="fvt_49872.phpt" role="test" />
