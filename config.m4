@@ -12,7 +12,7 @@ if test "$PHP_PDO_IBM" != "no"; then
   AC_MSG_CHECKING(Looking for DB2 CLI libraries)
   for i in $SEARCH_PATH ; do
     AC_MSG_CHECKING([     in $i])
-    if test -r $i/libdb2.so || test -r $i/libdb2.a || test -r $i/libdb400.a ; then
+    if test -r $i/libdb2.so || test -r $i/libdb2.a || test -r $i/libdb400.a || test -r $i/libdb2.dylib; then
       LIB_DIR="$i/"
       AC_MSG_RESULT(found)
       break
@@ -20,7 +20,7 @@ if test "$PHP_PDO_IBM" != "no"; then
       AC_MSG_RESULT()
     fi
     AC_MSG_CHECKING([     in $i/lib64])
-    if test -r $i/lib64/libdb2.so || test -r $i/lib64/libdb2.a || test -r $i/lib64/libdb400.a ; then
+    if test -r $i/lib64/libdb2.so || test -r $i/lib64/libdb2.a || test -r $i/lib64/libdb400.a || test -r $i/lib64/libdb2.dylib ; then
       LIB_DIR="$i/lib64/"
       AC_MSG_RESULT(found)
       break
@@ -28,7 +28,7 @@ if test "$PHP_PDO_IBM" != "no"; then
       AC_MSG_RESULT()
     fi
     AC_MSG_CHECKING([     in $i/lib32])
-    if test -r $i/lib32/libdb2.so || test -r $i/lib32/libdb2.a || test -r $i/lib32/libdb400.a ; then
+    if test -r $i/lib32/libdb2.so || test -r $i/lib32/libdb2.a || test -r $i/lib32/libdb400.a || test -r $i/lib32/libdb2.dylib ; then
       LIB_DIR="$i/lib32/"
       AC_MSG_RESULT(found)
       break
@@ -36,7 +36,7 @@ if test "$PHP_PDO_IBM" != "no"; then
       AC_MSG_RESULT()
     fi
     AC_MSG_CHECKING([     in $i/lib])
-    if test -r $i/lib/libdb2.so || test -r $i/lib/libdb2.a || test -r $i/lib/libdb400.a ; then
+    if test -r $i/lib/libdb2.so || test -r $i/lib/libdb2.a || test -r $i/lib/libdb400.a || test -r $i/lib/libdb2.dylib ; then
       LIB_DIR="$i/lib/"
       AC_MSG_RESULT(found)
       break
