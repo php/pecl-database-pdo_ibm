@@ -66,13 +66,16 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 	rc = SQLGetData(stmt_res->hstmt, data->colno + 1, ctype, buf, count, &readBytes);
 	check_stmt_error(rc, "SQLGetData");
 
-	if (readBytes == -1)	/*For NULL CLOB/BLOB values */
-	   return (size_t) readBytes;
-   if (readBytes > count)
-   if (col_res->data_type == SQL_LONGVARCHAR)   /*Dont return the NULL at end of CLOB buffer */
-      readBytes = count - 1;
-   else
-      readBytes = count;
+	if (readBytes == -1) {	/*For NULL CLOB/BLOB values */
+		return (size_t) readBytes;
+	}
+	if (readBytes > count) {
+		if (col_res->data_type == SQL_LONGVARCHAR) {  /*Dont return the NULL at end of CLOB buffer */
+			readBytes = count - 1;
+		} else {
+			readBytes = count;
+		}
+	}
 	return (size_t) readBytes;
 }
 
@@ -817,8 +820,7 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 
 	/* Set the last serial id inserted */
 	rc = record_last_insert_id(stmt, stmt->dbh, stmt_res->hstmt TSRMLS_CC);
-	if( rc == FALSE )
-	{
+	if( rc == FALSE ) {
 		return FALSE;
 	}
 
@@ -1027,11 +1029,12 @@ static int ibm_stmt_get_col(
 
 	if (col_res->returned_type == PDO_PARAM_LOB) {
 		php_stream *stream = create_lob_stream(stmt, stmt_res, colno TSRMLS_CC);	/* already opened */
-	if (stream != NULL)
-		*ptr = (char *) stream;
-	else
-		*ptr = NULL;
-	*len = 0;
+		if (stream != NULL) {
+			*ptr = (char *) stream;
+		} else {
+			*ptr = NULL;
+		}
+		*len = 0;
 	}
 	/* see if this is a null value */
 	else if (col_res->out_length == SQL_NULL_DATA) {
@@ -1246,8 +1249,7 @@ int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TS
 
 	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
 	check_dbh_error(rc, "SQLGetInfo");
-	if( strncmp( server, "IDS", 3 ) == 0 )
-	{
+	if( strncmp( server, "IDS", 3 ) == 0 ) {
 		rc = SQLGetStmtAttr( (SQLHSTMT)hstmt, SQL_ATTR_GET_GENERATED_VALUE, (SQLPOINTER)id, 
 									MAX_IDENTITY_DIGITS, NULL );
 
@@ -1255,14 +1257,10 @@ int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TS
 		* sql stmt, we have not have a pdo_stmt_t handler for the stmt, and NULL is being passed.
 		* In this case we do not have to free pdo_stmt_t handler.  
 		*/
-		if( stmt != NULL )
-		{
+		if( stmt != NULL ) {
 			check_stmt_error(rc, "SQLGetStmtAttr");
-		}
-		else
-		{
-			if (rc == SQL_ERROR) 
-			{
+		} else {
+			if (rc == SQL_ERROR) { 
 				/*
 				* We raise the error before freeing the handle so that
 				* we catch the proper error record.
@@ -1277,8 +1275,7 @@ int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TS
 
 		/* Do not update the last_insert_id value if the insert statement does not have a serial type column
 		or when queries other than insert is being executed. */
-		if( returnValue !=0 )
-		{
+		if( returnValue !=0 ) {
 			conn_res->last_insert_id = returnValue;
 		}
 	}

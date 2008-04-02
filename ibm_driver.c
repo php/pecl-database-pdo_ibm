@@ -308,8 +308,7 @@ static long ibm_handle_doer(
 
 	/* Set the last inserted id */
 	rc = record_last_insert_id( NULL, dbh, hstmt TSRMLS_CC);
-	if( rc == FALSE )
-	{
+	if( rc == FALSE ) {
 		return -1;
 	}
 	/* this is a one-shot deal, so make sure we free the statement handle */
