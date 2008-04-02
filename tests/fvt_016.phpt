@@ -105,7 +105,7 @@ pdo_ibm: Insert integer by binding an empty string, a NULL, and an integer strin
 --EXPECT--
 Null contents: 
 Null contents with int specified: 
-Empty string contents: 
+Empty string contents: 0
 Empty string contents with int specified: 
 Int string contents: 0
 Int string contents with int specified: 0
