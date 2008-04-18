@@ -65,7 +65,7 @@ zend_module_entry pdo_ibm_module_entry =
 	PHP_RSHUTDOWN(pdo_ibm),	/* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(pdo_ibm),
 #if ZEND_MODULE_API_NO >= 20010901
-	MODULE_RELEASE,	/* Replace with version number for your extension */
+	PDO_IBM_VERSION,	/* Replace with version number for your extension */
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -147,6 +147,7 @@ PHP_MINFO_FUNCTION(pdo_ibm)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "pdo_ibm support", "enabled");
+	php_info_print_table_row(2, "Module release", PDO_IBM_VERSION);
 	php_info_print_table_end();
 
 	/* Remove comments if you have entries in php.ini
