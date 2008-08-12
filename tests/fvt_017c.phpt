@@ -24,9 +24,11 @@ pdo_ibm: Select LOBs, including null and 0-length
 
             $data = array (
                 array(1, 'this is the clob that never ends...',
-                         'this is the blob that never ends...'),
-                array(2, null,null),
-                array(3,'','')
+                         'this is the blob that never ends...')
+				,
+                array(2, null,null)
+				,
+				array(3,'','')
             );
 
 			$stmt = $this->db->prepare('insert into animals (id,my_clob,my_blob) values (?,?,?)');
@@ -81,3 +83,4 @@ bool(false)
 string(1) "3"
 bool(false)
 done
+

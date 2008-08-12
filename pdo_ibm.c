@@ -28,6 +28,7 @@
 #include "ext/standard/info.h"
 #include "pdo/php_pdo_driver.h"
 #include "php_pdo_ibm.h"
+#include "php_pdo_ibm_int.h"
 
 /* If you declare any globals in php_pdo_ibm.h uncomment this:
 ZEND_DECLARE_MODULE_GLOBALS(pdo_ibm)
@@ -104,6 +105,10 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 	ZEND_INIT_MODULE_GLOBALS(pdo_ibm, php_pdo_ibm_init_globals, NULL);
 	REGISTER_INI_ENTRIES();
 	*/
+
+	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_USE_TRUSTED_CONTEXT", (long)PDO_SQL_ATTR_USE_TRUSTED_CONTEXT);
+	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_USERID", (long)PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID);	
+	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_PASSWORD", (long)PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD);
 	
 	php_pdo_register_driver(&pdo_ibm_driver);
 	return TRUE;  

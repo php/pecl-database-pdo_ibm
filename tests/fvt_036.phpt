@@ -74,7 +74,7 @@ pdo_ibm: Test the setting of different options
 5
 0
 5
-Failed: %s
+Failed: %a
 array(2) {
   ["ID"]=>
   string(1) "1"

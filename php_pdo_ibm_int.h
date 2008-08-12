@@ -44,6 +44,20 @@
 #define SQL_ATTR_GET_GENERATED_VALUE 2583
 #endif
 
+/* Trusted Context has been introduced after DB2 v9 */
+#ifndef SQL_ATTR_USE_TRUSTED_CONTEXT
+#define SQL_ATTR_USE_TRUSTED_CONTEXT 2561
+#define SQL_ATTR_TRUSTED_CONTEXT_USERID 2562
+#define SQL_ATTR_TRUSTED_CONTEXT_PASSWORD 2563
+#endif
+
+/* Variables for Trusted Context */
+enum {
+	PDO_SQL_ATTR_USE_TRUSTED_CONTEXT = SQL_ATTR_USE_TRUSTED_CONTEXT,                /* use to turn on trustext context mode */
+	PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID,                                            /* Setting Trusted userID */
+	PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD                                           /* Setting password for Trusted User */
+};
+
 /* This function is called after executing a stmt for recording lastInsertId */
 int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
 

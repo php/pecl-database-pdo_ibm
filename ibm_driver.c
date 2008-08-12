@@ -169,7 +169,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 static void current_error_state(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
-	printf("Handling error %s (%s[%ld] at %s:%d)\n",
+	printf("Handling error %s (%s[%d] at %s:%d)\n",
 		conn_res->error_data.err_msg,		/* an associated message */
 		conn_res->error_data.failure_name,	/* the routine name */
 		conn_res->error_data.sqlcode,		/* native error code of the failure */
@@ -384,6 +384,19 @@ static int ibm_handle_set_attribute(
 			}
 			return TRUE;
 			break;
+		case PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_TRUSTED_CONTEXT_USERID,
+				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+
+		case PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_TRUSTED_CONTEXT_PASSWORD,
+				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
 		default:
 			return FALSE;
 	}
@@ -469,7 +482,12 @@ static int ibm_handle_fetch_error(
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 	char suppliment[512];
 
-	sprintf(suppliment, "%s (%s[%ld] at %s:%d)", conn_res->error_data.err_msg,	/*  an associated message */
+	if(conn_res->error_data.failure_name == NULL && conn_res->error_data.filename == NULL) {
+		conn_res->error_data.filename="(null)";
+		conn_res->error_data.failure_name="(null)";
+	}
+
+	sprintf(suppliment, "%s (%s[%d] at %s:%d)", conn_res->error_data.err_msg,	/*  an associated message */
 		conn_res->error_data.failure_name,	/*  the routine name */
 		conn_res->error_data.sqlcode,		/*  native error code of the failure */
 		conn_res->error_data.filename,		/*  source file of the reported error */
@@ -566,9 +584,10 @@ static int ibm_handle_get_attribute(
 	zval *return_value
 	TSRMLS_DC)
 {
-	char server[MAX_DBMS_IDENTIFIER_NAME];
+	char value[MAX_DBMS_IDENTIFIER_NAME];
 	int rc;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+	SQLINTEGER tc_flag;
 
 	switch (attr) {
 		case PDO_ATTR_CLIENT_VERSION:
@@ -580,9 +599,23 @@ static int ibm_handle_get_attribute(
 			return TRUE;
 
 		case PDO_ATTR_SERVER_INFO:
-			rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
+			rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)value, MAX_DBMS_IDENTIFIER_NAME, NULL);
 			check_dbh_error(rc, "SQLGetInfo");
-			ZVAL_STRING(return_value, server, 1);
+			ZVAL_STRING(return_value, value, 1);
+			return TRUE;
+
+		case PDO_SQL_ATTR_USE_TRUSTED_CONTEXT:
+			rc = SQLGetConnectAttr(conn_res->hdbc, SQL_ATTR_USE_TRUSTED_CONTEXT, (SQLPOINTER) &tc_flag, 0, NULL);
+			check_dbh_error(rc, "SQLGetInfo");
+			if(tc_flag == SQL_TRUE) {
+				ZVAL_BOOL(return_value, tc_flag);
+				return TRUE;
+			}
+			
+		case PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID:
+			rc = SQLGetConnectAttr(conn_res->hdbc, SQL_ATTR_TRUSTED_CONTEXT_USERID, (SQLPOINTER)value, MAX_DBMS_IDENTIFIER_NAME, NULL);
+			check_dbh_error(rc, "SQLGetInfo");
+			ZVAL_STRING(return_value, value, 1);
 			return TRUE;
 
 	}
@@ -657,6 +690,45 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	rc = SQLAllocHandle(SQL_HANDLE_DBC, conn_res->henv, &(conn_res->hdbc));
 	check_dbh_error(rc, "SQLAllocHandle");
 
+	/*
+	* Checking if trusted context attribute is eabled or not.
+	* Setting Trusted Context attribute before making connection, if enabled.
+	*/
+
+	if (driver_options != NULL) {
+		int i = 0;
+		ulong num_idx;
+		char *opt_key;
+		zval **data;
+		long option_num = 0;
+		char *option_str = NULL;
+
+		int numOpts = zend_hash_num_elements(Z_ARRVAL_P(driver_options));
+		zend_hash_internal_pointer_reset(Z_ARRVAL_P(driver_options));
+
+		for ( i = 0; i < numOpts; i++) {
+			
+			zend_hash_get_current_key(Z_ARRVAL_P(driver_options), &opt_key, &num_idx, 1);
+			zend_hash_get_current_data(Z_ARRVAL_P(driver_options), (void**)&data);
+			
+			if (Z_TYPE_PP(data) == IS_STRING) {
+				option_str = Z_STRVAL_PP(data);
+			} else {
+				option_num = Z_LVAL_PP(data);
+			}
+
+			if(num_idx == PDO_SQL_ATTR_USE_TRUSTED_CONTEXT) {
+				if (option_num == SQL_TRUE) {
+					rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_USE_TRUSTED_CONTEXT, SQL_TRUE, SQL_IS_INTEGER);
+					check_dbh_error(rc, "SQLSetConnectAttr");
+					break;
+				}
+			}
+			zend_hash_move_forward(Z_ARRVAL_P(driver_options));
+			continue;
+		}
+	}
+		
 	/*
 	* NB:  We don't have any specific driver options we support at this time, so
 	* we don't need to do any option parsing. If the string contains a =, then

@@ -372,9 +372,9 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 			if (Z_TYPE_P(curr->parameter) == IS_NULL
 					|| (is_num && Z_STRVAL_P(curr->parameter) != NULL
 					&& (Z_STRVAL_P(curr->parameter) == '\0'))) {     
-				if ((param_res->data_type != SQL_BLOB) &&
-   	  			 (param_res->data_type != SQL_CLOB))
-				   param_res->ctype = SQL_C_LONG;
+				if ((param_res->data_type != SQL_BLOB) && (param_res->data_type != SQL_CLOB)) {
+					param_res->ctype = SQL_C_CHAR;
+				}
 				param_res->param_size = 0;
 				param_res->scale = 0;
 				curr->max_value_len = 0;
@@ -730,35 +730,36 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 	*/
 	rc = SQLExecute((SQLHSTMT) stmt_res->hstmt);
 	check_stmt_error(rc, "SQLExecute");
+	
 	/*
 	* Now check if we have indirectly bound parameters. If we do,
 	* then we need to push the data for those parameters into the
 	* processing pipe.
 	*/
-
-	if (rc == SQL_NEED_DATA) {
+	if(rc == SQL_NEED_DATA)
+	{
 		struct pdo_bound_param_data *param;
-
 		/*
 		* Get the associated parameter data.  The bind process should have
 		* stored a pointer to the parameter control block, so we identify
 		* which one needs data from that.
 		*/
-		param = 0;
-		rc = SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param);
-		check_stmt_error(rc, "SQLParamData");
-		while (rc == SQL_NEED_DATA) {
-		/*
-		* OK, we have a LOB.  This is either in string form, in
-		* which case we can supply it directly, or is a PHP stream.
-		* If it is a stream, then the type is IS_RESOURCE, and we
-		* need to pump the data in a buffer at a time.
-		*/
+		while ((SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param)) == SQL_NEED_DATA) {
+	
+			/*
+			* OK, we have a LOB.  This is either in string form, in
+			* which case we can supply it directly, or is a PHP stream.
+			* If it is a stream, then the type is IS_RESOURCE, and we
+			* need to pump the data in a buffer at a time.
+			*/
 			if (Z_TYPE_P(param->parameter) != IS_RESOURCE) {
+				convert_to_string(param->parameter);
 				rc = SQLPutData(stmt_res->hstmt, Z_STRVAL_P(param->parameter),
 						Z_STRLEN_P(param->parameter));
 				check_stmt_error(rc, "SQLPutData");
-			} else {
+				continue;
+			}
+			else {
 				/*
 				* The LOB is a stream.  This better still be good, else we
 				* can't supply the data.
@@ -777,8 +778,7 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 					check_stmt_allocation(stmt_res->lob_buffer,
 						"stmt_execute", "Unable to allocate parameter data buffer");
 				}
-
-				/* read a buffer at a time and push into the execution pipe. */
+					/* read a buffer at a time and push into the execution pipe. */
 				for (;;) {
 					len = php_stream_read(stm, stmt_res->lob_buffer, LOB_BUFFER_SIZE);
 					if (len == 0) {
@@ -789,32 +789,29 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 					check_stmt_error(rc, "SQLPutData");
 				}
 			}
-
-			param = 0;
-			rc = SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param);
-			check_stmt_error(rc, "SQLParamData");
+		}
+		/* Free any LOB buffer we might have */
+		if (stmt_res->lob_buffer != NULL) {
+			efree(stmt_res->lob_buffer);
 		}
 	}
-
-	/* Free any LOB buffer we might have */
-	if (stmt_res->lob_buffer != NULL) {
-		efree(stmt_res->lob_buffer);
-	}
-
-	/*
-	*  Now set the rowcount field in the statement.  This will be the
-	* number of rows affected by the SQL statement, not the number of
-	* rows in the result set.
-	*/
-	rc = SQLRowCount(stmt_res->hstmt, &rowCount);
-	check_stmt_error(rc, "SQLRowCount");
-	/* store the affected rows information. */
-	stmt->row_count = rowCount;
-
-	/* Is this the first time we've executed this statement? */
-	if (!stmt->executed) {
-		if (stmt_allocate_column_descriptors(stmt TSRMLS_CC) == FALSE) {
-			return FALSE;
+	else
+	{
+		/*
+		*  Now set the rowcount field in the statement.  This will be the
+		* number of rows affected by the SQL statement, not the number of
+		* rows in the result set.
+		*/
+		rc = SQLRowCount(stmt_res->hstmt, &rowCount);
+		check_stmt_error(rc, "SQLRowCount");
+		/* store the affected rows information. */
+		stmt->row_count = rowCount;
+	
+		/* Is this the first time we've executed this statement? */
+		if (!stmt->executed) {
+			if (stmt_allocate_column_descriptors(stmt TSRMLS_CC) == FALSE) {
+				return FALSE;
+			}
 		}
 	}
 

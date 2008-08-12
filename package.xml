@@ -17,12 +17,14 @@
  </maintainers>
 
  <release>
-  <version>1.2.4</version>
-  <date>2008-04-18</date>
+  <version>1.2.5</version>
+  <date>2008-08-12</date>
   <license>Apache License 2.0</license>
   <state>stable</state>
   <notes>
-    Adding test cases. 
+	  Adding trusted context support.
+	  Bug of SEGV when execute is used with bind_param on parameter markers BLOB/CLOB type fixed.
+	  Updating test cases.
   </notes>
   <configureoptions>
    <configureoption name="with-pdo-ibm" prompt="DB2 install directory location?" />
@@ -85,6 +87,7 @@
     <file name="fvt_038.phpt" role="test" />
     <file name="fvt_040.phpt" role="test" />
     <file name="fvt_49872.phpt" role="test" />
+    <file name="fvt_trusted_context.phpt" role="test" />
    </dir>
   </filelist>
  </release>

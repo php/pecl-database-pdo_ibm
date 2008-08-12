@@ -54,5 +54,5 @@ inserting from file stream
 succesful
 runnign query
 string(1) "0"
-string(4966) %s
+string(4966) %a
 done
