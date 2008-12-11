@@ -124,7 +124,7 @@ The id is: 5 Breed is: goat
 Result in row : 1
 The id is: 6 Breed is: llama
 Result in row : 1
-object(animalObj)#%d (4) {
+object(animalObj)#4 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -134,7 +134,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(9) "gold fish"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#4 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -144,7 +144,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(10) "budgerigar"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#4 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -154,7 +154,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(4) "goat"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#4 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -164,7 +164,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(5) "llama"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#3 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -174,7 +174,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(3) "cat"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#8 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -184,7 +184,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(3) "dog"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#3 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -194,7 +194,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(5) "horse"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#8 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -204,7 +204,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(9) "gold fish"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#3 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -214,7 +214,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(10) "budgerigar"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#8 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -224,7 +224,7 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(4) "goat"
 }
-object(animalObj)#%d (4) {
+object(animalObj)#3 (4) {
   ["id"]=>
   NULL
   ["breed"]=>
@@ -234,49 +234,49 @@ object(animalObj)#%d (4) {
   ["BREED"]=>
   string(5) "llama"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#6 (2) {
   ["ID"]=>
   string(1) "0"
   ["BREED"]=>
   string(3) "cat"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#3 (2) {
   ["ID"]=>
   string(1) "1"
   ["BREED"]=>
   string(3) "dog"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#6 (2) {
   ["ID"]=>
   string(1) "2"
   ["BREED"]=>
   string(5) "horse"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#3 (2) {
   ["ID"]=>
   string(1) "3"
   ["BREED"]=>
   string(9) "gold fish"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#6 (2) {
   ["ID"]=>
   string(1) "4"
   ["BREED"]=>
   string(10) "budgerigar"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#3 (2) {
   ["ID"]=>
   string(1) "5"
   ["BREED"]=>
   string(4) "goat"
 }
-object(stdClass)#%d (2) {
+object(stdClass)#6 (2) {
   ["ID"]=>
   string(1) "6"
   ["BREED"]=>
   string(5) "llama"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
@@ -284,7 +284,7 @@ object(PDORow)#%d (3) {
   ["BREED"]=>
   string(3) "cat"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
@@ -292,7 +292,7 @@ object(PDORow)#%d (3) {
   ["BREED"]=>
   string(3) "dog"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
@@ -300,7 +300,7 @@ object(PDORow)#%d (3) {
   ["BREED"]=>
   string(5) "horse"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
@@ -308,7 +308,7 @@ object(PDORow)#%d (3) {
   ["BREED"]=>
   string(9) "gold fish"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
@@ -316,7 +316,7 @@ object(PDORow)#%d (3) {
   ["BREED"]=>
   string(10) "budgerigar"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>
@@ -324,7 +324,7 @@ object(PDORow)#%d (3) {
   ["BREED"]=>
   string(4) "goat"
 }
-object(PDORow)#%d (3) {
+object(PDORow)#7 (3) {
   ["queryString"]=>
   string(29) "SELECT id, breed FROM animals"
   ["ID"]=>

@@ -14,8 +14,8 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
-  |                                                                      |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier,  |
+  | Ambrish Bhargava                                                     |
   +----------------------------------------------------------------------+
 */
 
@@ -44,6 +44,8 @@
 #define SQL_ATTR_GET_GENERATED_VALUE 2583
 #endif
 
+#ifndef PASE /* i5/OS no support trusted */
+
 /* Trusted Context has been introduced after DB2 v9 */
 #ifndef SQL_ATTR_USE_TRUSTED_CONTEXT
 #define SQL_ATTR_USE_TRUSTED_CONTEXT 2561
@@ -57,6 +59,8 @@ enum {
 	PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID,                                            /* Setting Trusted userID */
 	PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD                                           /* Setting password for Trusted User */
 };
+
+#endif /* PASE */
 
 /* This function is called after executing a stmt for recording lastInsertId */
 int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
@@ -152,6 +156,12 @@ typedef struct {
 	SQLSMALLINT nullable;				/* the nullable flag */
 	SQLSMALLINT scale;					/* the scale value */
 	SQLUINTEGER out_length;				/* the transfered data length. Filled in by a fetch */
+	SQLINTEGER  lob_loc;
+	SQLINTEGER  loc_ind;
+	SQLINTEGER  loc_type;
+	SQLUINTEGER lob_data_length;
+	SQLUINTEGER lob_data_offset; /* fetched blob part*/   
+	char        *lob_data;        
 	column_data_value data;				/* the transferred data */
 } column_data;
 

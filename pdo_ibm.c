@@ -15,7 +15,7 @@
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
   | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
-  |                                                                      |
+  | Ambrish Bhargava                                                     |
   +----------------------------------------------------------------------+
 */
 
@@ -31,8 +31,8 @@
 #include "php_pdo_ibm_int.h"
 
 /* If you declare any globals in php_pdo_ibm.h uncomment this:
-ZEND_DECLARE_MODULE_GLOBALS(pdo_ibm)
 */
+ZEND_DECLARE_MODULE_GLOBALS(pdo_ibm)
 
 /* True global resources - no need for thread safety here */
 static int le_pdo_ibm;
@@ -88,28 +88,26 @@ PHP_INI_END()
 
 /* {{{ php_pdo_ibm_init_globals
  */
-/* Uncomment this function if you have INI entries
 static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 {
-		pdo_ibm_globals->global_value = 0;
-		pdo_ibm_globals->global_string = NULL;
+		pdo_ibm_globals->is_i5os_classic = 1;
 }
-*/
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(pdo_ibm)
 {
-	/* If you have INI entries, uncomment these lines
 	ZEND_INIT_MODULE_GLOBALS(pdo_ibm, php_pdo_ibm_init_globals, NULL);
+	/* If you have INI entries, uncomment these lines
 	REGISTER_INI_ENTRIES();
 	*/
 
+#ifndef PASE /* i5/OS no support trusted */
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_USE_TRUSTED_CONTEXT", (long)PDO_SQL_ATTR_USE_TRUSTED_CONTEXT);
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_USERID", (long)PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID);	
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_PASSWORD", (long)PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD);
-	
+#endif	
 	php_pdo_register_driver(&pdo_ibm_driver);
 	return TRUE;  
 }

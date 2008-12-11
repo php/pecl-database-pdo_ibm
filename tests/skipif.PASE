@@ -1,0 +1,23 @@
+fvt_006.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_007.phpt|PASE|V5|V6|i5 diff float to string round vs LUW|
+fvt_008.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_009.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_013.phpt|PASE|V5|V6|i5 .10 vs LUW 0.10 and i5 -225 vs LUW -99999|
+fvt_015.phpt|PASE|V5|V6|i5 XML viper not supported|
+fvt_016.phpt|PASE|V5|V6|i5 query INTEGER "" is 0 vs LUW query INTEGER "" is ""|
+fvt_017.phpt|PASE|V5|V6|i5 bind after execute vs LUW bind before execute|
+fvt_017b.phpt|PASE|V5|V6|i5 bind after execute vs LUW bind before execute|
+fvt_023.phpt|PASE|V5|V6|i5 connect OptimizeAutoCommit=0 not allowed|
+fvt_024.phpt|PASE|V5|V6|test case improvement|
+fvt_025.phpt|PASE|V5|V6|i5 different meta data no table vs LUW|
+fvt_026.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_028.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_031.phpt|PASE|V5|V6|i5 connect EnableScrollableCursors=1 not allowed|
+fvt_032.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_034.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_033.phpt|PASE|V5|V6|i5 fvt.inc modified for connect|
+fvt_036.phpt|PASE|V5|V6|i5 different error msg vs LUW|
+fvt_038.phpt|PASE|V5|V6|test case improvement|
+fvt_040.phpt|PASE|V5|V6|test case improvement|
+fvt_49872.phpt|PASE|V5|V6|i5 (null) missing vs LUW|
+fvt_trusted_context.phpt|PASE|V5|V6|i5 no trusted support|

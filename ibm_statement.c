@@ -15,7 +15,7 @@
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
   | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
-  |                                                                      |
+  | Ambrish Bhargava                                                     |
   +----------------------------------------------------------------------+
 */
 
@@ -31,12 +31,101 @@
 #include "php_pdo_ibm.h"
 #include "php_pdo_ibm_int.h"
 
+#ifdef PASE
+# define SQL_LEN_DATA_AT_EXEC(length) length
+#else 
+# if !defined(SQL_LEN_DATA_AT_EXEC) && !defined(SQL_LEN_DATA_AT_EXEC_OFFSET)
+#  define SQL_LEN_DATA_AT_EXEC_OFFSET  (-100)
+#  define SQL_LEN_DATA_AT_EXEC(length) (-(length)+SQL_LEN_DATA_AT_EXEC_OFFSET)
+# endif
+#endif
+
+#ifdef PASE 
+/* i5/OS V6R1 introduced incompatible change at the compile level
+ * adding from v6r1 sqlcli.h to allow one binary for
+ * v5r3, v5r4, v6r1+
+ */
+#define  SQL_BINARY_V6          -2
+#define  SQL_VARBINARY_V6       -3
+#define  SQL_C_BINARY_V6	SQL_BINARY_V6
+
+#define SQL_ATTR_INFO_USERID         10103
+#define SQL_ATTR_INFO_WRKSTNNAME     10104
+#define SQL_ATTR_INFO_APPLNAME       10105
+#define SQL_ATTR_INFO_ACCTSTR        10106
+#endif /* PASE */
+
 struct lob_stream_data
 {
 	stmt_handle *stmt_res;
 	pdo_stmt_t *stmt;
 	int colno;
 };
+
+#ifdef PASE
+static int get_lob_length(pdo_stmt_t *stmt, column_data *col_res)
+{
+	SQLRETURN rc = 0;
+	SQLHANDLE new_hstmt;
+	conn_handle *conn_res = (conn_handle *)stmt->dbh->driver_data; 
+
+	rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &new_hstmt);
+	if (rc != SQL_SUCCESS) {
+		return rc;
+	}
+
+	rc = SQLGetLength((SQLHSTMT)new_hstmt, 
+			col_res->loc_type,
+			col_res->lob_loc, 
+			&col_res->lob_data_length,
+			&col_res->loc_ind);  
+
+	check_stmt_error(rc, "SQLGetLength");
+	
+	if (rc != SQL_SUCCESS) {
+		col_res->lob_data_length=0;
+	}
+
+	SQLFreeHandle(SQL_HANDLE_STMT, new_hstmt);
+	return rc;
+}
+static int get_lob_substring(pdo_stmt_t *stmt, column_data *col_res,
+			SQLSMALLINT ctype, SQLINTEGER *out_length)
+{
+	SQLRETURN rc = 0;
+	SQLHANDLE new_hstmt;
+	conn_handle *conn_res = (conn_handle *)stmt->dbh->driver_data; 
+	
+	*out_length=0;
+	col_res->lob_data_offset = 0; 
+	col_res->lob_data[col_res->lob_data_length]='\0';
+
+	rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &new_hstmt);
+	if (rc != SQL_SUCCESS) {
+		return rc;
+	}
+	
+	rc = SQLGetSubString(
+		(SQLHSTMT)new_hstmt, 
+		col_res->loc_type,
+		col_res->lob_loc, 
+		1, 
+		col_res->lob_data_length, 
+		ctype,
+		col_res->lob_data, 
+		col_res->lob_data_length+1, 
+		out_length, 
+		&col_res->loc_ind);
+		
+	check_stmt_error(rc, "SQLGetSubString");
+
+	col_res->lob_data[col_res->lob_data_length]='\0';
+	
+	
+	SQLFreeHandle(SQL_HANDLE_STMT, new_hstmt);
+	return rc;
+}
+#endif
 
 size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
@@ -47,25 +136,71 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 	pdo_stmt_t *stmt = data->stmt;
 	int ctype = 0;
 	SQLRETURN rc = 0;
+	long sLength;
 
 	switch (col_res->data_type) {
 		default:
+#ifndef PASE
 		case SQL_LONGVARCHAR:
+#else /* i5os string type required for the ascii->ebcdic conversion */
+		case SQL_CLOB:
+		case SQL_DBCLOB:
+#endif
 			ctype = SQL_C_CHAR;
 			break;
+#ifndef PASE
 		case SQL_LONGVARBINARY:
+#endif
+#ifdef PASE /* i5/OS incompatible v6r1 change */
+		case SQL_VARBINARY_V6:
+		case SQL_BINARY_V6:
+#endif /* PASE */
 		case SQL_VARBINARY:
 		case SQL_BINARY:
 		case SQL_BLOB:
+#ifndef PASE
 		case SQL_CLOB:
+#endif
 		case SQL_XML:
+#ifdef PASE /* i5/OS V6R1 incompatible change */
+			if (PDO_IBM_G(is_i5os_classic)){
 			ctype = SQL_C_BINARY;
+			} else {
+			ctype = SQL_C_BINARY_V6;
+			}
+#else
+			ctype = SQL_C_BINARY;
+#endif /* not PASE */
 			break;
 	}
 
-	rc = SQLGetData(stmt_res->hstmt, data->colno + 1, ctype, buf, count, &readBytes);
-	check_stmt_error(rc, "SQLGetData");
+#ifdef PASE  
+	if (buf == NULL) {
+		rc = get_lob_length(stmt, col_res);
+		if (rc != SQL_ERROR && col_res->lob_data_length > 0) {
+			col_res->lob_data = emalloc(col_res->lob_data_length+1);
+			rc = get_lob_substring(stmt, col_res, ctype, &readBytes);
+		}
+	} else {
+		readBytes = MIN(count,  col_res->lob_data_length - col_res->lob_data_offset);
+		if (readBytes > 0) {
+			memcpy( buf, col_res->lob_data + col_res->lob_data_offset, readBytes); 
+			col_res->lob_data_offset +=readBytes;
+		}
+	} 
 
+	if (readBytes <= 0) { 
+		readBytes = -1;
+		if (buf != NULL) {
+			/* EOF reached */
+			stream->eof = 1;
+		}
+	}
+#else
+
+	rc = SQLGetData(stmt_res->hstmt, data->colno + 1, ctype, buf, count, &readBytes);
+     
+	check_stmt_error(rc, "SQLGetData");
 	if (readBytes == -1) {	/*For NULL CLOB/BLOB values */
 		return (size_t) readBytes;
 	}
@@ -76,6 +211,7 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 			readBytes = count;
 		}
 	}
+#endif
 	return (size_t) readBytes;
 }
 
@@ -146,6 +282,10 @@ static void stmt_free_column_descriptors(pdo_stmt_t *stmt TSRMLS_DC)
 			 */
 			if (stmt_res->columns[i].returned_type == PDO_PARAM_STR) {
 				efree(stmt_res->columns[i].data.str_val);
+			}
+
+			if (stmt_res->columns[i].returned_type == PDO_PARAM_LOB) {
+				efree(stmt_res->columns[i].lob_data);
 			}
 		}
 
@@ -220,13 +360,29 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 			* The binary forms need to be transferred as binary
 			* data, not as char data.
 			*/
+#ifdef PASE /* i5/OS incompatible v6r1 change */
+			case SQL_VARBINARY_V6:
+			case SQL_BINARY_V6:
+#endif /* PASE */
 			case SQL_BINARY:
 			case SQL_BLOB:
+#ifndef PASE /* i5/OS CLOB is char not binary (default) */
 			case SQL_CLOB:
+#endif
 			case SQL_XML:
 			case SQL_VARBINARY:
+#ifndef PASE
 			case SQL_LONGVARBINARY:
+#endif
+#ifdef PASE /* i5/OS V6R1 incompatible change */
+				if (PDO_IBM_G(is_i5os_classic)){
 				param_res->ctype = SQL_C_BINARY;
+				} else {
+				param_res->ctype = SQL_C_BINARY_V6;
+				}
+#else
+				param_res->ctype = SQL_C_BINARY;
+#endif /* not PASE */
 				break;
 
 			/*
@@ -258,6 +414,9 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	param_node *param_res = NULL;
 	SQLSMALLINT inputOutputType;
+#ifdef PASE
+        char *data_buf = NULL;
+#endif
 
 	/* make sure we have current description information. */
 	if (stmt_get_parameter_info(stmt, curr TSRMLS_CC) == FALSE) {
@@ -303,6 +462,10 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 		* directly,
 		*/
 			if (param_res->ctype == SQL_C_LONG) {
+#ifdef PASE /* i5/OS SQLBindParameter null issues */
+			    if (Z_TYPE_P(curr->parameter) == IS_NULL)
+				convert_to_long(curr->parameter);
+#endif /* PASE */
 				if (Z_TYPE_P(curr->parameter) == IS_NULL) {
 					/* null value was found */
 					param_res->transfer_length = SQL_NULL_DATA;
@@ -319,6 +482,11 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 					check_stmt_error(rc, "SQLBindParameter");
 					return TRUE;
 				} else {
+#ifdef PASE /* i5/OS SQLBindParameter string ptr to null byte issues */
+                                        if (Z_TYPE_P(curr->parameter) == IS_STRING
+                                        && !strcmp(curr->parameter->value.str.val, ""))
+				          convert_to_long(curr->parameter);
+#endif /* PASE */
 					convert_to_string(curr->parameter);
 					if (!strcmp(curr->parameter->value.str.val, "")) {
 						/* empty string was found */
@@ -366,15 +534,32 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 			*/
 			if (param_res->ctype == SQL_C_LONG) {
 				/* change this to a character type */
+#ifdef PASE /* i5/OS SQLBindParameter string ptr to null byte issues */
+			        if (!strcmp(curr->parameter->value.str.val, ""))
+				    convert_to_long(curr->parameter);
+#endif /* PASE */
 				param_res->ctype = SQL_C_CHAR;
 				is_num = 1;
 			}
+#ifdef PASE /* i5/OS SQLBindParameter null issues */
+			if ((param_res->data_type == SQL_CLOB
+			     || param_res->data_type == SQL_DBCLOB)
+			    && Z_TYPE_P(curr->parameter) == IS_NULL)
+				convert_to_string(curr->parameter);
+#endif /* PASE */
 			if (Z_TYPE_P(curr->parameter) == IS_NULL
-					|| (is_num && Z_STRVAL_P(curr->parameter) != NULL
-					&& (Z_STRVAL_P(curr->parameter) == '\0'))) {     
-				if ((param_res->data_type != SQL_BLOB) && (param_res->data_type != SQL_CLOB)) {
-					param_res->ctype = SQL_C_CHAR;
-				}
+				|| (is_num && Z_STRVAL_P(curr->parameter) != NULL
+				&& (Z_STRVAL_P(curr->parameter) == '\0'))) {     
+#ifdef PASE /* i5/OS DBCLOB */
+				if (param_res->data_type != SQL_BLOB &&
+				    param_res->data_type != SQL_CLOB &&
+				    param_res->data_type != SQL_DBCLOB)
+					param_res->ctype = SQL_C_LONG;
+#else
+				if (param_res->data_type != SQL_BLOB &&
+				    param_res->data_type != SQL_CLOB)
+					param_res->ctype = SQL_C_LONG;
+#endif /* PASE */
 				param_res->param_size = 0;
 				param_res->scale = 0;
 				curr->max_value_len = 0;
@@ -440,15 +625,40 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 				/* transfer this as character data. */
 				param_res->ctype = SQL_C_CHAR;
 			}
+#ifndef PASE
 			if (param_res->data_type == SQL_BLOB ||
-				param_res->data_type == SQL_XML ||
-				param_res->data_type == SQL_CLOB) {
+					param_res->data_type == SQL_XML ||
+					param_res->data_type == SQL_CLOB) {
 				/* transfer this as binary data. */
 				param_res->ctype = SQL_C_BINARY;
 			}
-
+#else
+			if (param_res->data_type == SQL_CLOB
+			|| param_res->data_type == SQL_DBCLOB) {
+				param_res->ctype = SQL_C_CHAR;
+			} else {
+				if (PDO_IBM_G(is_i5os_classic)){
+				param_res->ctype = SQL_C_BINARY;
+				} else {
+				param_res->ctype = SQL_C_BINARY_V6;
+				}
+			}
+#endif
 			/* indicate we're going to transfer the data at exec time. */
+#ifndef PASE	
 			param_res->transfer_length = SQL_DATA_AT_EXEC;
+#else
+			if (Z_TYPE_P(curr->parameter) == IS_RESOURCE) {
+				param_res->transfer_length = SQL_DATA_AT_EXEC;
+				data_buf = (char *)curr;
+			} else {   
+				param_res->transfer_length = SQL_LEN_DATA_AT_EXEC(Z_STRLEN_P(curr->parameter));     
+				/* get the pointer to the string data */
+				data_buf = Z_STRVAL_P(curr->parameter);
+				/* to cause a conversion to ebcdic */ 
+			}
+#endif
+
 
 			/*
 			* We can't bind LOBs at this point...we process all
@@ -459,15 +669,20 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 			* at that time by using SQLParamData(), and we can
 			* then process the request.
 			*/
+
 			rc = SQLBindParameter(stmt_res->hstmt, curr->paramno + 1,
 					inputOutputType, param_res->ctype,
 					param_res->data_type,
 					param_res->param_size, param_res->scale,
-					(SQLPOINTER) curr, 4096,
+#ifndef PASE	
+				         (SQLPOINTER) curr,
+#else
+                                         (SQLPOINTER) data_buf,  
+#endif
+                                        4096,
 					&param_res->transfer_length);
 			check_stmt_error(rc, "SQLBindParameter");
 			return TRUE;
-
 		/* this is an unknown type */
 		default:
 			RAISE_IBM_STMT_ERROR( "IM001", "SQLBindParameter", "Unknown parameter type" );
@@ -515,12 +730,14 @@ static int stmt_parameter_pre_execute(pdo_stmt_t *stmt, struct pdo_bound_param_d
 				* Yes, we're able to give the statement some
 				* hints about the size.
 				*/
+#ifndef PASE
 				param_res->transfer_length = SQL_LEN_DATA_AT_EXEC(sb.sb.st_size);
+#endif			
 			} else {
 				/*
-				* Still unknown...we'll have to do everything
-				* at execute size.
-				*/
+				 * Still unknown...we'll have to do everything
+				 * at execute size.
+				 */
 				param_res->transfer_length = SQL_LEN_DATA_AT_EXEC(0);
 			}
 		} else {
@@ -596,25 +813,61 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 	col = &stmt->columns[colno];
 
 	switch (col_res->data_type) {
+#ifndef PASE
 		case SQL_LONGVARCHAR:
 		case SQL_LONGVARBINARY:
 		case SQL_VARBINARY:
 		case SQL_BINARY:
+#endif
 		case SQL_BLOB:
 		case SQL_CLOB:
+#ifdef PASE /* i5 DBCLOB locator */
+		case SQL_DBCLOB:
+#else 
 		case SQL_XML:
+#endif /* PASE */
 			{
 				/* we're going to need to do getdata calls to retrieve these */
 				col_res->out_length = 0;
 				/* and this is returned as a stream */
 				col_res->returned_type = PDO_PARAM_LOB;
 				col->param_type = PDO_PARAM_LOB;
+				col_res->lob_loc = 0;
+				if(col_res->data_type == SQL_CLOB) {
+					col_res->loc_type = SQL_CLOB_LOCATOR;
+#ifdef PASE /* i5 DBCLOB locator */
+				} else if(col_res->data_type == SQL_DBCLOB) {
+					col_res->loc_type = SQL_DBCLOB_LOCATOR;
+#endif /* PASE */
+				} else {
+					col_res->loc_type = SQL_BLOB_LOCATOR;  
+				}
+
+				col_res->loc_ind = 0; 
+				col_res->lob_data_length = 0;
+				col_res->lob_data_offset = 0; 
+				col_res->lob_data = NULL;   
+				rc = SQLBindCol( (SQLHSTMT) stmt_res->hstmt,
+						(SQLUSMALLINT) (colno + 1),
+						col_res->loc_type,
+						&col_res->lob_loc,
+						4, 
+						&col_res->loc_ind); 
 			}
 			break;
 		/*
 		* A form we need to force into a string value...
 		* this includes any unknown types
 		*/
+#ifdef PASE
+		case SQL_VARBINARY:
+		case SQL_BINARY:
+		case SQL_XML:
+#endif
+#ifdef PASE /* i5/OS incompatible v6r1 change */
+		case SQL_VARBINARY_V6:
+		case SQL_BINARY_V6:
+#endif /* PASE */
 		case SQL_CHAR:
 		case SQL_VARCHAR:
 		case SQL_TYPE_TIME:
@@ -730,36 +983,35 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 	*/
 	rc = SQLExecute((SQLHSTMT) stmt_res->hstmt);
 	check_stmt_error(rc, "SQLExecute");
-	
 	/*
 	* Now check if we have indirectly bound parameters. If we do,
 	* then we need to push the data for those parameters into the
 	* processing pipe.
 	*/
-	if(rc == SQL_NEED_DATA)
-	{
+
+	if (rc == SQL_NEED_DATA) {
 		struct pdo_bound_param_data *param;
+
 		/*
 		* Get the associated parameter data.  The bind process should have
 		* stored a pointer to the parameter control block, so we identify
 		* which one needs data from that.
 		*/
-		while ((SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param)) == SQL_NEED_DATA) {
-	
-			/*
-			* OK, we have a LOB.  This is either in string form, in
-			* which case we can supply it directly, or is a PHP stream.
-			* If it is a stream, then the type is IS_RESOURCE, and we
-			* need to pump the data in a buffer at a time.
-			*/
+		param = 0;
+		rc = SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param);
+		check_stmt_error(rc, "SQLParamData");
+		while (rc == SQL_NEED_DATA) {
+		/*
+		* OK, we have a LOB.  This is either in string form, in
+		* which case we can supply it directly, or is a PHP stream.
+		* If it is a stream, then the type is IS_RESOURCE, and we
+		* need to pump the data in a buffer at a time.
+		*/
 			if (Z_TYPE_P(param->parameter) != IS_RESOURCE) {
-				convert_to_string(param->parameter);
 				rc = SQLPutData(stmt_res->hstmt, Z_STRVAL_P(param->parameter),
 						Z_STRLEN_P(param->parameter));
 				check_stmt_error(rc, "SQLPutData");
-				continue;
-			}
-			else {
+			} else {
 				/*
 				* The LOB is a stream.  This better still be good, else we
 				* can't supply the data.
@@ -778,7 +1030,8 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 					check_stmt_allocation(stmt_res->lob_buffer,
 						"stmt_execute", "Unable to allocate parameter data buffer");
 				}
-					/* read a buffer at a time and push into the execution pipe. */
+
+				/* read a buffer at a time and push into the execution pipe. */
 				for (;;) {
 					len = php_stream_read(stm, stmt_res->lob_buffer, LOB_BUFFER_SIZE);
 					if (len == 0) {
@@ -789,29 +1042,32 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 					check_stmt_error(rc, "SQLPutData");
 				}
 			}
-		}
-		/* Free any LOB buffer we might have */
-		if (stmt_res->lob_buffer != NULL) {
-			efree(stmt_res->lob_buffer);
+
+			param = 0;
+			rc = SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param);
+			check_stmt_error(rc, "SQLParamData");
 		}
 	}
-	else
-	{
-		/*
-		*  Now set the rowcount field in the statement.  This will be the
-		* number of rows affected by the SQL statement, not the number of
-		* rows in the result set.
-		*/
-		rc = SQLRowCount(stmt_res->hstmt, &rowCount);
-		check_stmt_error(rc, "SQLRowCount");
-		/* store the affected rows information. */
-		stmt->row_count = rowCount;
-	
-		/* Is this the first time we've executed this statement? */
-		if (!stmt->executed) {
-			if (stmt_allocate_column_descriptors(stmt TSRMLS_CC) == FALSE) {
-				return FALSE;
-			}
+
+	/* Free any LOB buffer we might have */
+	if (stmt_res->lob_buffer != NULL) {
+		efree(stmt_res->lob_buffer);
+	}
+
+	/*
+	*  Now set the rowcount field in the statement.  This will be the
+	* number of rows affected by the SQL statement, not the number of
+	* rows in the result set.
+	*/
+	rc = SQLRowCount(stmt_res->hstmt, &rowCount);
+	check_stmt_error(rc, "SQLRowCount");
+	/* store the affected rows information. */
+	stmt->row_count = rowCount;
+
+	/* Is this the first time we've executed this statement? */
+	if (!stmt->executed) {
+		if (stmt_allocate_column_descriptors(stmt TSRMLS_CC) == FALSE) {
+			return FALSE;
 		}
 	}
 
@@ -839,6 +1095,14 @@ static int ibm_stmt_fetcher(
 	SQLSMALLINT direction = SQL_FETCH_NEXT;
 	int rc = 0;
 
+#ifdef PASE /* i5/OS problem with SQL_FETCH out_length */
+	int i;
+
+	for (i = 0; i < stmt->column_count; i++) {
+		stmt_res->columns[i].out_length = 0;
+	}
+#endif
+
 	/* convert the PDO orientation information to the SQL one */
 	switch (ori) {
 		case PDO_FETCH_ORI_NEXT:
@@ -861,8 +1125,19 @@ static int ibm_stmt_fetcher(
 			break;
 	}
 
-	/* go fetch it. */
-	rc = SQLFetchScroll(stmt_res->hstmt, direction, (SQLINTEGER) offset);
+#ifdef PASE /* i5/OS problem with SQL_FETCH_ABSOLUTE */
+	if (direction == SQL_FETCH_ABSOLUTE) {
+		rc = SQLFetchScroll((SQLHSTMT)stmt_res->hstmt, SQL_FETCH_FIRST, (SQLINTEGER)offset);
+		if (offset > 1 && (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)) {
+			rc = SQLFetchScroll((SQLHSTMT)stmt_res->hstmt, SQL_FETCH_RELATIVE, (SQLINTEGER)offset - 1);
+		}
+	} else {
+		rc = SQLFetchScroll((SQLHSTMT)stmt_res->hstmt, direction, (SQLINTEGER)offset);
+	}
+#else
+	rc = SQLFetchScroll((SQLHSTMT)stmt_res->hstmt, direction, (SQLINTEGER)offset);
+#endif
+
 	check_stmt_error(rc, "SQLFetchScroll");
 
 	/*
@@ -963,14 +1238,35 @@ static int ibm_stmt_describer(
 
 	/* get the column descriptor information */
 	int rc = SQLDescribeCol((SQLHSTMT)stmt_res->hstmt, (SQLSMALLINT)(colno + 1 ),
-			tmp_name, BUFSIZ, &col_res->namelen, &col_res->data_type, &col_res->data_size,
+			tmp_name, BUFSIZ, &col_res->namelen, &col_res->data_type, 
+			&col_res->data_size,
 			&col_res->scale, &col_res->nullable);
 	check_stmt_error(rc, "SQLDescribeCol");
 
+#ifndef PASE
 	rc = SQLColAttribute(stmt_res->hstmt, colno+1, SQL_DESC_DISPLAY_SIZE,
 			NULL, 0, NULL, &col_res->data_size);
 	check_stmt_error(rc, "SQLColAttribute");
-
+#else
+	rc = SQLColAttributes((SQLHSTMT)stmt_res->hstmt,(SQLSMALLINT)colno+1,SQL_DESC_DISPLAY_SIZE,
+	                NULL,0,NULL,&col_res->data_size);
+	check_stmt_error(rc, "SQLColAttributes");
+#endif
+#ifdef PASE /* i5/OS size changes for "common" converts to string */
+	switch (col_res->data_type) {
+	        /* BIGINT 9223372036854775807  (2^63-1) string convert */
+		case SQL_BIGINT: 
+		case SQL_SMALLINT:
+		case SQL_INTEGER:
+		case SQL_REAL:
+		case SQL_FLOAT:
+		case SQL_DOUBLE:
+		    col_res->data_size = 20;
+		    break;
+		default:
+		    break;
+	}
+#endif /* PASE */
 	/*
 	* Make sure we get a name properly.  If the name is too long for our
 	* buffer (which in theory should never happen), allocate a longer one
@@ -1031,13 +1327,29 @@ static int ibm_stmt_get_col(
 		} else {
 			*ptr = NULL;
 		}
-		*len = 0;
+		*len = 0; 
 	}
 	/* see if this is a null value */
 	else if (col_res->out_length == SQL_NULL_DATA) {
 		/* return this as a real null */
 		*ptr = NULL;
 		*len = 0;
+	}
+	/* see if length is SQL_NTS ("count the length yourself"-value) */
+	else if (col_res->out_length == SQL_NTS) {
+		if (col_res->data.str_val && col_res->data.str_val[0] != '\0') {
+			/* it's not an empty string */
+			*ptr = col_res->data.str_val;
+			*len = strlen(col_res->data.str_val);
+		} else if (col_res->data.str_val && col_res->data.str_val[0] == '\0') {
+			/* it's an empty string */
+			*ptr = col_res->data.str_val;
+			*len = 0;
+		} else {
+			/* it's NULL */
+			*ptr = NULL;
+			*len = 0;
+		}
 	}
 	/* string type...very common */
 	else if (col_res->returned_type == PDO_PARAM_STR) {
@@ -1054,9 +1366,7 @@ static int ibm_stmt_get_col(
 }
 
 /* step to the next result set of the query. */
-static int ibm_stmt_next_rowset(
-	pdo_stmt_t *stmt
-	TSRMLS_DC)
+static int ibm_stmt_next_rowset(pdo_stmt_t *stmt TSRMLS_DC)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 
@@ -1103,7 +1413,11 @@ static int ibm_stmt_get_column_meta(
 
 #define ATTRIBUTEBUFFERSIZE 256
 	char attribute_buffer[ATTRIBUTEBUFFERSIZE];
+#ifdef PASE /* i5/OS SQLColAttributes not small int */
+	SQLINTEGER length;
+#else 
 	SQLSMALLINT length;
+#endif
 	SQLINTEGER numericAttribute;
 	zval *flags;
 
@@ -1122,6 +1436,7 @@ static int ibm_stmt_get_column_meta(
 	add_assoc_long(return_value, "scale", col_res->scale);
 
 	/* see if we can retrieve the table name  */
+#ifndef PASE
 	if (SQLColAttribute (stmt_res->hstmt, colno + 1, SQL_DESC_BASE_TABLE_NAME,
 			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
 			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
@@ -1133,32 +1448,44 @@ static int ibm_stmt_get_column_meta(
 			add_assoc_stringl(return_value, "table", attribute_buffer, length, 1);
 		}
 	}
+#endif
 	/* see if we can retrieve the type name */
+#ifndef PASE
 	if (SQLColAttribute(stmt_res->hstmt, colno + 1, SQL_DESC_TYPE_NAME,
 			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
 			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
 		add_assoc_stringl(return_value, "native_type", attribute_buffer, length, 1);
 	}
+#else
+	if (SQLColAttributes(stmt_res->hstmt, colno + 1, SQL_DESC_TYPE_NAME,
+			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, (SQLPOINTER)&length,
+			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
+		add_assoc_stringl(return_value, "native_type", attribute_buffer, length, 1);
+	}
+#endif
 
 	MAKE_STD_ZVAL(flags);
 	array_init(flags);
 	add_assoc_bool(flags, "not_null", !col_res->nullable);
 
 	/* see if we can retrieve the unsigned attribute */
+#ifndef PASE
 	if (SQLColAttribute(stmt_res->hstmt, colno + 1, SQL_DESC_UNSIGNED,
 			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
 			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
 		add_assoc_bool(flags, "unsigned", numericAttribute == SQL_TRUE);
 	}
+#endif
 
 	/* see if we can retrieve the autoincrement attribute */
+#ifndef PASE
 	if (SQLColAttribute (stmt_res->hstmt, colno + 1, SQL_DESC_AUTO_UNIQUE_VALUE,
 			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
 			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
 		add_assoc_bool(flags, "auto_increment",
 		numericAttribute == SQL_TRUE);
 	}
-
+#endif
 
 	/* add the flags to the result bundle. */
 	add_assoc_zval(return_value, "flags", flags);

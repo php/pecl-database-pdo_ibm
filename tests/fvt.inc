@@ -38,7 +38,7 @@
 
 		public function connect($autoCommit=true)
 		{
-			$this->db = new PDO($this->dsn,$this->user,$this->pass,array( PDO::ATTR_AUTOCOMMIT => $autoCommit ));
+			$this->db = new PDO($this->dsn, $this->user, $this->pass, array( PDO::ATTR_AUTOCOMMIT => $autoCommit ));
 			$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 			$this->db->setAttribute(PDO::ATTR_CASE, PDO::CASE_UPPER);
 			$this->db->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, true);
@@ -77,13 +77,63 @@
 					$result = $stmt->execute($animal);
 				}
 			}
+		}
 
-			/*	Create test view
-				$result = $this->db->exec('CREATE VIEW anime_cat AS
-					SELECT name, breed FROM animals
-					WHERE id = 0'); */
+		public function allowViperXML() {
+			$server_info = $this->db->getAttribute( PDO::ATTR_SERVER_INFO );
+			// DB2 LUW returns "DB2" (maybe?)
+			// i5/OS DB2 returns "AS." or "QSQ" (AS400?)
+			if(strncmp($server_info,"DB2",3)==0) return True; 
+      			return False;
 		}
 
 		abstract public function runTest();
 	} 
+
+// added for select test running
+// based on machine type and release
+class TestSkip extends FVTTest {
+	public function runTest() {
+		$this->connect();
+		try {
+			$dbms_name = $this->db->getAttribute(PDO::ATTR_SERVER_INFO);
+			if ($dbms_name == "QSQ" || $dbms_name == "AS") {
+				$dbms_ver = $this->db->getAttribute(PDO::ATTR_SERVER_VERSION);
+				if ($dbms_ver > "06000") {
+					$rel = "V6";
+				}
+				else {
+					$rel = "V5";
+				}
+				// PASE test_xxx_V5V6.phpt
+				if (eregi("V6|V5", $_SERVER["PHP_SELF"])) {
+					if (!eregi($rel, $_SERVER["PHP_SELF"])) {
+						die('skip');
+					}
+				}
+				// check the skipif.PASE
+				else {
+					$result = file_get_contents("skipif.PASE");
+					for ($line = strtok($result, "\n"); $line; $line = strtok("\n")) {
+						$pos = strpos($line, "PASE");
+						if ($pos && strpos($line, "|$rel|")){
+							$check = substr($line, 1, $pos-6);
+							if (strpos($_SERVER["PHP_SELF"], $check)) {
+								die('skip');
+							}
+						}
+					}
+				}
+			}
+			else {
+				if (eregi("V5|V6", $_SERVER["PHP_SELF"])) die('skip');
+			}
+		} catch (PDOException $pe) {  
+			if (eregi("V5|V6", $_SERVER["PHP_SELF"])) die('skip');
+		}
+	}
+}
+$testcase = new TestSkip();
+$testcase->runTest();
+
 ?>
