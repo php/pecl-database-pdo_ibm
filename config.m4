@@ -57,15 +57,15 @@ if test "$PHP_PDO_IBM" != "no"; then
 
   AC_MSG_CHECKING([for PDO includes])
   if test -f $abs_srcdir/include/php/ext/pdo/php_pdo_driver.h; then
-    pdo_inc_path=$abs_srcdir/ext
+    pdo_cv_inc_path=$abs_srcdir/ext
   elif test -f $abs_srcdir/ext/pdo/php_pdo_driver.h; then
-    pdo_inc_path=$abs_srcdir/ext
+    pdo_cv_inc_path=$abs_srcdir/ext
   elif test -f $prefix/include/php/ext/pdo/php_pdo_driver.h; then
-    pdo_inc_path=$prefix/include/php/ext
+    pdo_cv_inc_path=$prefix/include/php/ext
   else
     AC_MSG_ERROR([Cannot find php_pdo_driver.h.])
   fi
-  AC_MSG_RESULT($pdo_inc_path)
+  AC_MSG_RESULT($pdo_cv_inc_path)
 
   dnl Don't forget to add additional source files here
   php_pdo_ibm_sources_core="pdo_ibm.c ibm_driver.c ibm_statement.c"
@@ -79,7 +79,7 @@ if test "$PHP_PDO_IBM" != "no"; then
       CPPFLAGS="$CPPFLAGS -D__H_LOCALEDEF";;
   esac
 
-  PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_inc_path)
+  PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_cv_inc_path)
 
   ifdef([PHP_ADD_EXTENSION_DEP],
   [
