@@ -14,7 +14,7 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier,  |
   | Ambrish Bhargava                                                     |
   +----------------------------------------------------------------------+
 */
@@ -22,7 +22,7 @@
 #ifndef PHP_PDO_IBM_H
 #define PHP_PDO_IBM_H
 
-#define PDO_IBM_VERSION "1.3.0"
+#define PDO_IBM_VERSION "1.3.1"
 
 extern zend_module_entry pdo_ibm_module_entry;
 #define phpext_pdo_ibm_ptr &pdo_ibm_module_entry
@@ -48,9 +48,9 @@ PHP_FUNCTION(confirm_pdo_ibm_compiled);	/* For testing, remove later. */
 /* 
 	Declare any global variables you may need between the BEGIN
 	and END macros here: 
-*/    
+*/
 ZEND_BEGIN_MODULE_GLOBALS(pdo_ibm)
-        int is_i5os_classic;             /* 1 == v5r4-; 0 == v6r1+; */
+	int is_i5os_classic;             /* 1 == v5r4-; 0 == v6r1+; */
 ZEND_END_MODULE_GLOBALS(pdo_ibm)
 
 
@@ -72,6 +72,5 @@ ZEND_END_MODULE_GLOBALS(pdo_ibm)
 #endif
 
 ZEND_EXTERN_MODULE_GLOBALS(pdo_ibm)
-
 
 #endif	/* PHP_PDO_IBM_H */

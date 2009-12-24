@@ -14,7 +14,7 @@
   | implied. See the License for the specific language governing         |
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier   |
+  | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier,  |
   | Ambrish Bhargava                                                     |
   +----------------------------------------------------------------------+
 */
@@ -51,23 +51,34 @@ function_entry pdo_ibm_functions[] =
 };
 /* }}} */
 
+/* {{{ pdo_ibm_deps
+ */
+#if ZEND_MODULE_API_NO >= 20041225
+static zend_module_dep pdo_ibm_deps[] = {
+	ZEND_MOD_REQUIRED("pdo")
+	{NULL, NULL, NULL}
+};
+#endif
+/* }}} */
+
 /* {{{ pdo_ibm_module_entry
  */
 zend_module_entry pdo_ibm_module_entry =
 {
-#if ZEND_MODULE_API_NO >= 20010901
+#if ZEND_MODULE_API_NO >= 20041225
+	STANDARD_MODULE_HEADER_EX, NULL,
+	pdo_ibm_deps,
+#else
 	STANDARD_MODULE_HEADER,
 #endif
 	"pdo_ibm",
 	pdo_ibm_functions,
 	PHP_MINIT(pdo_ibm),
 	PHP_MSHUTDOWN(pdo_ibm),
-	PHP_RINIT(pdo_ibm),	/* Replace with NULL if there's nothing to do at request start */
-	PHP_RSHUTDOWN(pdo_ibm),	/* Replace with NULL if there's nothing to do at request end */
+	PHP_RINIT(pdo_ibm),        /* Replace with NULL if there's nothing to do at request start */
+	PHP_RSHUTDOWN(pdo_ibm),    /* Replace with NULL if there's nothing to do at request end */
 	PHP_MINFO(pdo_ibm),
-#if ZEND_MODULE_API_NO >= 20010901
-	PDO_IBM_VERSION,	/* Replace with version number for your extension */
-#endif
+	PDO_IBM_VERSION,   /* Replace with version number for your extension */
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
@@ -90,7 +101,7 @@ PHP_INI_END()
  */
 static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 {
-		pdo_ibm_globals->is_i5os_classic = 1;
+        pdo_ibm_globals->is_i5os_classic = 1;
 }
 /* }}} */
 
@@ -107,7 +118,8 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_USE_TRUSTED_CONTEXT", (long)PDO_SQL_ATTR_USE_TRUSTED_CONTEXT);
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_USERID", (long)PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID);	
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_PASSWORD", (long)PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD);
-#endif	
+#endif
+	
 	php_pdo_register_driver(&pdo_ibm_driver);
 	return TRUE;  
 }

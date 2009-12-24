@@ -45,13 +45,12 @@
 #endif
 
 #ifndef PASE /* i5/OS no support trusted */
-
 /* Trusted Context has been introduced after DB2 v9 */
 #ifndef SQL_ATTR_USE_TRUSTED_CONTEXT
 #define SQL_ATTR_USE_TRUSTED_CONTEXT 2561
 #define SQL_ATTR_TRUSTED_CONTEXT_USERID 2562
 #define SQL_ATTR_TRUSTED_CONTEXT_PASSWORD 2563
-#endif
+#endif /* SQL_ATTR_USE_TRUSTED_CONTEXT */
 
 /* Variables for Trusted Context */
 enum {
@@ -59,7 +58,6 @@ enum {
 	PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID,                                            /* Setting Trusted userID */
 	PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD                                           /* Setting password for Trusted User */
 };
-
 #endif /* PASE */
 
 /* This function is called after executing a stmt for recording lastInsertId */
@@ -160,8 +158,8 @@ typedef struct {
 	SQLINTEGER  loc_ind;
 	SQLINTEGER  loc_type;
 	SQLUINTEGER lob_data_length;
-	SQLUINTEGER lob_data_offset; /* fetched blob part*/   
-	char        *lob_data;        
+	SQLUINTEGER lob_data_offset; /* fetched blob part*/
+	char        *lob_data;
 	column_data_value data;				/* the transferred data */
 } column_data;
 

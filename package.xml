@@ -21,11 +21,11 @@ Universal Database, IBM Cloudscape, and Apache Derby databases.
   <email>opendev@us.ibm.com</email>
   <active>yes</active>
  </lead>
- <date>2009-11-06</date>
+ <date>2009-12-24</date>
  <time>12:23:36</time>
  <version>
-  <release>1.3.0</release>
-  <api>1.3.0</api>
+  <release>1.3.1</release>
+  <api>1.3.1</api>
  </version>
  <stability>
   <release>stable</release>
@@ -33,9 +33,7 @@ Universal Database, IBM Cloudscape, and Apache Derby databases.
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-Adding support for V6R1 i-Series systems.
-Switch various BINARY/CHAR mismatch bind types for ASCII/EBCDIC.
-DBCLOB added for i5 meta data, etc.
+	 Problem related to dynamic loading is fixed.
  </notes>
  <contents>
   <dir name="/">
