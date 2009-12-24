@@ -33,7 +33,7 @@ Universal Database, IBM Cloudscape, and Apache Derby databases.
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-	 Problem related to dynamic loading is fixed.
+Problem related to dynamic loading is fixed.
  </notes>
  <contents>
   <dir name="/">
