@@ -455,6 +455,35 @@ static int ibm_handle_set_attribute(
 			return TRUE;
 			break;
 #endif
+
+		/* Set Client Info */
+		case PDO_SQL_ATTR_INFO_USERID:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_USERID,
+				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+
+		case PDO_SQL_ATTR_INFO_ACCTSTR:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_ACCTSTR,
+				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+			
+		case PDO_SQL_ATTR_INFO_APPLNAME:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_APPLNAME,
+				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+
+		case PDO_SQL_ATTR_INFO_WRKSTNNAME:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_WRKSTNNAME,
+				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
 		default:
 			return FALSE;
 	}
@@ -548,13 +577,22 @@ static int ibm_handle_fetch_error(
 		conn_res->error_data.filename="(null)";
 		conn_res->error_data.failure_name="(null)";
 	}
-
-	sprintf(suppliment, "%s (%s[%d] at %s:%d)", conn_res->error_data.err_msg,	/*  an associated message */
-		conn_res->error_data.failure_name,	/*  the routine name */
-		conn_res->error_data.sqlcode,		/*  native error code of the failure */
-		conn_res->error_data.filename,		/*  source file of the reported error */
-		conn_res->error_data.lineno);		/*  location of the reported error */
-
+	if(conn_res->error_data.isam_err_msg[0] != '\0') {
+		sprintf(suppliment, "%s (%s[%d] at %s:%d) ISAM: %s", 
+			conn_res->error_data.err_msg,		/*  an associated message */
+			conn_res->error_data.failure_name,	/*  the routine name */
+			conn_res->error_data.sqlcode,		/*  native error code of the failure */
+			conn_res->error_data.filename,		/*  source file of the reported error */
+			conn_res->error_data.lineno,		/*  location of the reported error */
+			conn_res->error_data.isam_err_msg);	/*  ISAM Error message */
+	} else {
+		sprintf(suppliment, "%s (%s[%d] at %s:%d)", 
+			conn_res->error_data.err_msg,		/*  an associated message */
+			conn_res->error_data.failure_name,	/*  the routine name */
+			conn_res->error_data.sqlcode,		/*  native error code of the failure */
+			conn_res->error_data.filename,		/*  source file of the reported error */
+			conn_res->error_data.lineno);		/*  location of the reported error */
+	}
 	/*
 	 * Now add the error information.  These need to be added
 	 * in a specific order
@@ -650,6 +688,13 @@ static int ibm_handle_get_attribute(
 	int rc;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	SQLINTEGER tc_flag;
+
+	char info_user_id[USERID_LEN];
+	char info_acctstr[ACCTSTR_LEN];
+	char info_appl_name[APPLNAME_LEN];
+	char info_wrkstn_name[WRKSTNNAME_LEN];
+	int length;
+
 #ifdef PASE /* i5/os release dependent check */
 	unsigned char server_info[30];
 	SQLSMALLINT server_len = 0;
@@ -697,6 +742,47 @@ static int ibm_handle_get_attribute(
 			ZVAL_STRING(return_value, value, 1);
 			return TRUE;
 #endif
+
+		/* Get Client Info */
+		case PDO_SQL_ATTR_INFO_USERID:
+			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_USERID, 
+					(SQLPOINTER) info_user_id, USERID_LEN, &length);
+			check_dbh_error(rc, "SQLGetInfo");
+			if(length < USERID_LEN) {
+				info_user_id[length] = '\0';
+			}
+			ZVAL_STRING(return_value, info_user_id, 1);
+			return TRUE;
+			
+		case PDO_SQL_ATTR_INFO_ACCTSTR:
+			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_ACCTSTR, 
+					(SQLPOINTER) info_acctstr, ACCTSTR_LEN, &length);
+			check_dbh_error(rc, "SQLGetInfo");
+			if(length < ACCTSTR_LEN) {
+				info_acctstr[length] = '\0';
+			}
+			ZVAL_STRING(return_value, info_acctstr, 1);
+			return TRUE;
+			
+		case PDO_SQL_ATTR_INFO_APPLNAME:
+			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_APPLNAME, 
+					(SQLPOINTER) info_appl_name, APPLNAME_LEN, &length);
+			check_dbh_error(rc, "SQLGetInfo");
+			if(length < APPLNAME_LEN) {
+				info_appl_name[length] = '\0';
+			}
+			ZVAL_STRING(return_value, info_appl_name, 1);
+			return TRUE;
+			
+		case PDO_SQL_ATTR_INFO_WRKSTNNAME:
+			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_WRKSTNNAME, 
+					(SQLPOINTER) info_wrkstn_name, WRKSTNNAME_LEN, &length);
+			check_dbh_error(rc, "SQLGetInfo");
+			if(length < WRKSTNNAME_LEN) {
+				info_wrkstn_name[length] = '\0';
+			}
+			ZVAL_STRING(return_value, info_wrkstn_name, 1);
+			return TRUE;
 
 	}
 	return FALSE;
@@ -980,13 +1066,24 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
 	* if we got an error very early, we need to throw an exception rather than
 	* use the PDO error reporting.
 	*/
+
 	if (dbh->methods == NULL) {
-		zend_throw_exception_ex(php_pdo_get_exception(), 0 TSRMLS_CC,
+		if(conn_res->error_data.isam_err_msg != '\0') {
+			zend_throw_exception_ex(php_pdo_get_exception(), 0 TSRMLS_CC,
 				"SQLSTATE=%s, %s: %d %s",
 				conn_res->error_data.sql_state,
 				conn_res->error_data.failure_name,
 				conn_res->error_data.sqlcode,
 				conn_res->error_data.err_msg);
+		} else {
+			zend_throw_exception_ex(php_pdo_get_exception(), 0 TSRMLS_CC,
+				"SQLSTATE=%s, %s: %d %s ISAM: %s",
+				conn_res->error_data.sql_state,
+				conn_res->error_data.failure_name,
+				conn_res->error_data.sqlcode,
+				conn_res->error_data.err_msg,
+				conn_res->error_data.isam_err_msg);
+		}
 		ibm_handle_closer(dbh TSRMLS_CC);
 	}
 }
@@ -998,6 +1095,7 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
 void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle,
 	SQLSMALLINT hType, char *tag, char *file, int line TSRMLS_DC)
 {
+	int rc;
 	SQLSMALLINT length;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 
@@ -1011,6 +1109,13 @@ void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle,
 		SQL_MAX_MESSAGE_LENGTH, &length);
 	/* the error message is not returned null terminated. */
 	conn_res->error_data.err_msg[length] = '\0';
+
+	if(hType == SQL_HANDLE_STMT) {
+		/* This is the actual call that returns the ISAM error */
+		rc = SQLGetDiagField(SQL_HANDLE_STMT, handle, 1, SQL_DIAG_ISAM_ERROR,
+				(SQLCHAR *) & (conn_res->error_data.isam_err_msg), MAX_ISAM_ERROR_MSG_LEN, &length);
+		conn_res->error_data.isam_err_msg[length] = '\0';
+	}
 
 	/* now go tell PDO about this problem */
 	process_pdo_error(dbh, stmt TSRMLS_CC);
@@ -1085,10 +1190,11 @@ void clear_stmt_error(pdo_stmt_t *stmt)
 {
 	conn_handle *conn_res = (conn_handle *) stmt->dbh->driver_data;
 
-	conn_res->error_data.sqlcode		= 0;
-	conn_res->error_data.filename		= NULL;
-	conn_res->error_data.lineno		= 0;
-	conn_res->error_data.failure_name	= NULL;
-	conn_res->error_data.sql_state[0]	= '\0';
-	conn_res->error_data.err_msg[0]		= '\0';
+	conn_res->error_data.sqlcode			= 0;
+	conn_res->error_data.filename			= NULL;
+	conn_res->error_data.lineno				= 0;
+	conn_res->error_data.failure_name		= NULL;
+	conn_res->error_data.sql_state[0]		= '\0';
+	conn_res->error_data.err_msg[0]			= '\0';
+	conn_res->error_data.isam_err_msg[0]	= '\0';
 }

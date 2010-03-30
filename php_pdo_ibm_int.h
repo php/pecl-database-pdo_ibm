@@ -60,6 +60,44 @@ enum {
 };
 #endif /* PASE */
 
+/* ISAM Error code Macro */
+#ifndef SQL_DIAG_ISAM_ERROR
+#define SQL_DIAG_ISAM_ERROR 13
+#endif
+
+#define MAX_ISAM_ERROR_MSG_LEN MAX_ERR_MSG_LEN
+
+/* Client information Macros. DB2 for z/OS and OS/390 servers supported max values. */
+#define USERID_LEN 16
+#define ACCTSTR_LEN 200
+#define APPLNAME_LEN 32
+#define WRKSTNNAME_LEN 18
+
+/* SQL variable for Client information */
+#ifndef SQL_ATTR_INFO_USERID
+#define SQL_ATTR_INFO_USERID 1281
+#endif
+
+#ifndef SQL_ATTR_INFO_WRKSTNNAME
+#define SQL_ATTR_INFO_WRKSTNNAME 1282
+#endif
+
+#ifndef SQL_ATTR_INFO_APPLNAME
+#define SQL_ATTR_INFO_APPLNAME 1283
+#endif
+
+#ifndef SQL_ATTR_INFO_ACCTSTR
+#define SQL_ATTR_INFO_ACCTSTR 1284
+#endif
+
+/* Variables for Client Info */
+enum {
+	PDO_SQL_ATTR_INFO_USERID = SQL_ATTR_INFO_USERID,	/* Client UserID */
+	PDO_SQL_ATTR_INFO_ACCTSTR,							/* Client Accounting String */
+	PDO_SQL_ATTR_INFO_APPLNAME,							/* Client Application Name */
+	PDO_SQL_ATTR_INFO_WRKSTNNAME						/* Client Work Station Name */
+};
+
 /* This function is called after executing a stmt for recording lastInsertId */
 int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
 
@@ -128,6 +166,7 @@ typedef struct _conn_error_data {
 	char *failure_name;							/* the failure tag. */
 	SQLCHAR sql_state[8];						/* SQLSTATE code */
 	char err_msg[SQL_MAX_MESSAGE_LENGTH + 1];	/* error message associated with failure */
+	char isam_err_msg[MAX_ISAM_ERROR_MSG_LEN + 1];	/* ISAM error message */
 } conn_error_data;
 
 typedef struct _conn_handle_struct {

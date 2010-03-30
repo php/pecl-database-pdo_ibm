@@ -108,7 +108,7 @@ Notice: Undefined offset:  1 in %s
 Rows not available: 
 As row column number: 0
 
-Notice: Uninitialized string offset:  1 in %s
+Notice: Uninitialized string offset: 1 in %s
 Rows not available: 
 The id is: 0 Breed is: cat
 Result in row : 1

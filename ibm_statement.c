@@ -581,6 +581,8 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 				*/
 				param_res->transfer_length = 0;
 
+				param_res->param_size = Z_STRLEN_P(curr->parameter);
+
 				/*
 				* Now we need to make sure the string buffer
 				* is large enough to receive a new value if
