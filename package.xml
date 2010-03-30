@@ -33,7 +33,8 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-Problem related to dynamic loading is fixed.
+	 Adding support for Client Info (IDS Feature).
+	 Adding support for ISAM Error code (IDS Feature).
  </notes>
  <contents>
   <dir name="/">
