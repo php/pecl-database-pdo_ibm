@@ -559,18 +559,39 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 					param_res->data_type != SQL_CLOB)
 				param_res->ctype = SQL_C_LONG;
 #endif /* PASE */
-				param_res->param_size = 0;
+				if (param_res->data_type != SQL_DECIMAL) {
+					param_res->param_size = 0;
+				}
 				param_res->scale = 0;
 				curr->max_value_len = 0;
 				param_res->transfer_length = SQL_NULL_DATA;
-				rc = SQLBindParameter(stmt_res->hstmt, curr->paramno + 1,
-						inputOutputType, param_res->ctype,
-						param_res->data_type,
-						param_res->param_size,
-						param_res->scale,
-						&((curr->parameter)->value.lval),
-						curr->max_value_len,
-						&param_res->transfer_length);
+				switch(param_res->data_type) {
+					case SQL_TYPE_DATE:
+					case SQL_DATETIME:
+					case SQL_TYPE_TIME:
+					case SQL_TYPE_TIMESTAMP:
+						param_res->transfer_length = SQL_NULL_DATA;
+						param_res->ctype = SQL_C_CHAR;
+						rc = SQLBindParameter(stmt_res->hstmt, curr->paramno + 1,
+								inputOutputType, param_res->ctype,
+								param_res->data_type,
+								param_res->param_size,
+								param_res->scale, NULL,
+								curr->max_value_len <=
+								0 ? 0 : curr->max_value_len,
+								&param_res->transfer_length);
+						break;
+
+					default:
+						rc = SQLBindParameter(stmt_res->hstmt, curr->paramno + 1,
+								inputOutputType, param_res->ctype,
+								param_res->data_type,
+								param_res->param_size,
+								param_res->scale,
+								&((curr->parameter)->value.lval),
+								curr->max_value_len,
+								&param_res->transfer_length);
+				}
 				check_stmt_error(rc, "SQLBindParameter");
 			} else {
 				/* force this to be a real string value */
@@ -582,6 +603,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 				param_res->transfer_length = 0;
 
 				param_res->param_size = Z_STRLEN_P(curr->parameter);
+
 
 				/*
 				* Now we need to make sure the string buffer
@@ -815,7 +837,6 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 
 	switch (col_res->data_type) {
 #ifndef PASE
-		case SQL_LONGVARCHAR:
 		case SQL_LONGVARBINARY:
 		case SQL_VARBINARY:
 		case SQL_BINARY:
@@ -842,6 +863,7 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 #endif /* PASE */
 				} else {
 					col_res->loc_type = SQL_BLOB_LOCATOR;
+					col_res->loc_type = SQL_C_CHAR;
 				}
 				
 				col_res->loc_ind = 0;
@@ -871,6 +893,7 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 #endif /* PASE */
 		case SQL_CHAR:
 		case SQL_VARCHAR:
+		case SQL_LONGVARCHAR:
 		case SQL_TYPE_TIME:
 		case SQL_TYPE_TIMESTAMP:
 		case SQL_BIGINT:

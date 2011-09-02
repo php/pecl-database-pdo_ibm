@@ -629,33 +629,9 @@ static int ibm_handle_quoter(
 	j = 1;
 	for (i = 0; i < unq_len; i++) {
 		switch (unq[i]) {
-			case '\n':
-				sql[j++] = '\\';
-				sql[j++] = 'n';
-				break;
-			case '\r':
-				sql[j++] = '\\';
-				sql[j++] = 'r';
-				break;
-			case '\x1a':
-				sql[j++] = '\\';
-				sql[j++] = 'Z';
-				break;
-			case '\0':
-				sql[j++] = '\\';
-				sql[j++] = '0';
-				break;
 			case '\'':
-				sql[j++] = '\\';
 				sql[j++] = '\'';
-				break;
-			case '\"':
-				sql[j++] = '\\';
-				sql[j++] = '\"';
-				break;
-			case '\\':
-				sql[j++] = '\\';
-				sql[j++] = '\\';
+				sql[j++] = '\'';
 				break;
 			default:
 				sql[j++] = unq[i];
@@ -883,6 +859,25 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	rc = SQLAllocHandle(SQL_HANDLE_DBC, conn_res->henv, &(conn_res->hdbc));
 	check_dbh_error(rc, "SQLAllocHandle");
 
+	/* if we're in auto commit mode, set the connection attribute. */
+#ifndef PASE
+	if (dbh->auto_commit != 0) {
+		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
+				(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
+		check_dbh_error(rc, "SQLSetConnectAttr");
+	} else {
+		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
+				(SQLPOINTER) SQL_AUTOCOMMIT_OFF, SQL_NTS);
+		check_dbh_error(rc, "SQLSetConnectAttr");
+	}
+#else
+	{
+		SQLINTEGER auto_commit;
+		auto_commit = dbh->auto_commit != 0 ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF;
+		rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)(&auto_commit), SQL_NTS);
+	}
+#endif
+
 #ifndef PASE /* i5/OS no support trusted */
 	/*
 	* Checking if trusted context attribute is eabled or not.
@@ -996,25 +991,6 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 #endif /* PASE */
 	}
 
-
-	/* if we're in auto commit mode, set the connection attribute. */
-#ifndef PASE
-	if (dbh->auto_commit != 0) {
-		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
-		check_dbh_error(rc, "SQLSetConnectAttr");
-	} else {
-		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) SQL_AUTOCOMMIT_OFF, SQL_NTS);
-		check_dbh_error(rc, "SQLSetConnectAttr");
-	}
-#else
-	{
-		SQLINTEGER auto_commit;
-		auto_commit = dbh->auto_commit != 0 ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF;
-		rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)(&auto_commit), SQL_NTS);
-	}
-#endif
 
 	/* set the desired case to be upper */
 	dbh->desired_case = PDO_CASE_UPPER;
