@@ -100,14 +100,14 @@ class TestSkip extends FVTTest {
 			if ($dbms_name == "QSQ" || $dbms_name == "AS") {
 				$dbms_ver = $this->db->getAttribute(PDO::ATTR_SERVER_VERSION);
 				if ($dbms_ver > "06000") {
-					$rel = "V6";
+					$rel = "/V6/";
 				}
 				else {
-					$rel = "V5";
+					$rel = "/V5/";
 				}
 				// PASE test_xxx_V5V6.phpt
-				if (eregi("V6|V5", $_SERVER["PHP_SELF"])) {
-					if (!eregi($rel, $_SERVER["PHP_SELF"])) {
+				if (preg_match("/V5|V6/", $_SERVER["PHP_SELF"])) {
+					if (!preg_match($rel, $_SERVER["PHP_SELF"])) {
 						die('skip');
 					}
 				}
@@ -126,10 +126,10 @@ class TestSkip extends FVTTest {
 				}
 			}
 			else {
-				if (eregi("V5|V6", $_SERVER["PHP_SELF"])) die('skip');
+				if (preg_match("/V5|V6/", $_SERVER["PHP_SELF"])) die('skip');
 			}
 		} catch (PDOException $pe) {  
-			if (eregi("V5|V6", $_SERVER["PHP_SELF"])) die('skip');
+			if (preg_match("/V5|V6/", $_SERVER["PHP_SELF"])) die('skip');
 		}
 	}
 }
