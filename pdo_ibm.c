@@ -15,7 +15,7 @@
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
   | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier,  |
-  | Ambrish Bhargava                                                     |
+  | Ambrish Bhargava, Rahul Priyadarshi                                  |
   +----------------------------------------------------------------------+
 */
 
@@ -42,7 +42,7 @@ extern pdo_driver_t pdo_ibm_driver;	/* the registration table */
  *
  * Every user visible function must have an entry in pdo_ibm_functions[].
  */
-function_entry pdo_ibm_functions[] =
+zend_function_entry pdo_ibm_functions[] =
 {
 	PHP_FE(confirm_pdo_ibm_compiled, NULL)	/* For testing, remove later. */
 	{
