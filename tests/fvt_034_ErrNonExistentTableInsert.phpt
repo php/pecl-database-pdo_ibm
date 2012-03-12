@@ -34,4 +34,5 @@ pdo_ibm: Check error condition when inserting into non-existent table
 	$testcase->runTest();
 ?>
 --EXPECTF--
-SQLSTATE[07001]:%s-99999 [%s][%s] CLI0100E  Wrong number of parameters. SQLSTATE=07001 (SQLExecute[-99999] at %s)
+SQLSTATE[42S02]:%s-204 [%s][%s][%s] SQL0204N %s is an undefined name.  SQLSTATE=42704
+%s
