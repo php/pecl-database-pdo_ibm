@@ -15,7 +15,7 @@
   | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
   | Authors: Rick McGuire, Dan Scott, Krishna Raman, Kellen Bombardier,  |
-  | Ambrish Bhargava                                                     |
+  | Ambrish Bhargava, Rahul Priyadarshi                                  |
   +----------------------------------------------------------------------+
 */
 
@@ -604,7 +604,6 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 
 				param_res->param_size = Z_STRLEN_P(curr->parameter);
 
-
 				/*
 				* Now we need to make sure the string buffer
 				* is large enough to receive a new value if
@@ -862,7 +861,6 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 					col_res->loc_type = SQL_DBCLOB_LOCATOR;
 #endif /* PASE */
 				} else {
-					col_res->loc_type = SQL_BLOB_LOCATOR;
 					col_res->loc_type = SQL_C_CHAR;
 				}
 				
@@ -891,9 +889,9 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 		case SQL_VARBINARY_V6:
 		case SQL_BINARY_V6:
 #endif /* PASE */
+		case SQL_LONGVARCHAR:
 		case SQL_CHAR:
 		case SQL_VARCHAR:
-		case SQL_LONGVARCHAR:
 		case SQL_TYPE_TIME:
 		case SQL_TYPE_TIMESTAMP:
 		case SQL_BIGINT:
@@ -1209,9 +1207,11 @@ static int ibm_stmt_param_hook(
 
 			case PDO_PARAM_EVT_EXEC_PRE:
 			/* we're allocating a bound parameter, go do the binding */
-				stmt_bind_parameter(stmt, param TSRMLS_CC);
-				return stmt_parameter_pre_execute(stmt, param TSRMLS_CC);
-
+				if (stmt_bind_parameter(stmt, param TSRMLS_CC) == TRUE) {
+					return stmt_parameter_pre_execute(stmt, param TSRMLS_CC);
+				} else {
+					return FALSE;
+				}
 			case PDO_PARAM_EVT_EXEC_POST:
 				return stmt_parameter_post_execute(stmt, param TSRMLS_CC);
 
@@ -1449,6 +1449,9 @@ static int ibm_stmt_get_column_meta(
 
 	stmt_res = (stmt_handle *) stmt->driver_data;
 	/* access our look aside data */
+	if (stmt_res->columns == NULL) {
+		return FAILURE;
+	}
 	col_res = &stmt_res->columns[colno];
 
 	/* make sure the return value is initialized as an array. */
@@ -1625,6 +1628,7 @@ int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TS
 	}
 	return TRUE;
 }
+
 
 struct pdo_stmt_methods ibm_stmt_methods = {
 	ibm_stmt_dtor,
