@@ -10,6 +10,12 @@ http://pear.php.net/dtd/package-2.0.xsd">
 Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Data Server).
  </description>
  <lead>
+  <name> Rahul Priyadarshi</name>
+  <user>rahulpiyadarshi</user>
+  <email>rahul.priyadarshi@in.ibm.com</email>
+  <active>yes</active>
+ </lead>
+ <lead>
   <name>Ambrish Bhargava</name>
   <user>ambrish</user>
   <email>abhargav@in.ibm.com</email>
@@ -21,11 +27,11 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <email>opendev@us.ibm.com</email>
   <active>yes</active>
  </lead>
- <date>2010-03-30</date>
- <time>15:26:56</time>
+ <date>2012-03-12</date>
+ <time>13:02:01</time>
  <version>
-  <release>1.3.2</release>
-  <api>1.3.2</api>
+  <release>1.3.3</release>
+  <api>1.3.3</api>
  </version>
  <stability>
   <release>stable</release>
@@ -33,8 +39,11 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-	 Adding support for Client Info (IDS Feature).
-	 Adding support for ISAM Error code (IDS Feature).
+  Fixed: Segmentation fault on getColumnMeta
+  Fixed: PDO_IBM driver needs to return SQL error codes
+  Fixed: should throw a PDOException if someone tries to use DDL and placeholders
+  Fixed: Nested queries returns corrupted rows or segmentation fault
+  Fixed: Compilation error with php-5.4.x
  </notes>
  <contents>
   <dir name="/">
