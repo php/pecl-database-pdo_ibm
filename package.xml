@@ -10,8 +10,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
 Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Data Server).
  </description>
  <lead>
-  <name> Rahul Priyadarshi</name>
-  <user>rahulpiyadarshi</user>
+  <name>Rahul Priyadarshi</name>
+  <user>rahulpriyadarshi</user>
   <email>rahul.priyadarshi@in.ibm.com</email>
   <active>yes</active>
  </lead>
