@@ -197,6 +197,10 @@ PHP_FUNCTION(confirm_pdo_ibm_compiled)
 	}
 
 	len = sprintf(string, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "pdo_ibm", arg);
+#if PHP_MAJOR_VERSION >= 7
+        RETURN_STRINGL(string, len);
+#else
 	RETURN_STRINGL(string, len, 1);
+#endif
 }
 /* }}} */

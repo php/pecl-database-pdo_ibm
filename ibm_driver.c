@@ -443,14 +443,24 @@ static int ibm_handle_set_attribute(
 #ifndef PASE /* i5/OS no support trusted */
 		case PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID:
 			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_TRUSTED_CONTEXT_USERID,
-				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value), 
+#else
+				(SQLPOINTER) Z_STRVAL_PP(&return_value),
+#endif
+                                SQL_NTS);  
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
 
 		case PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD:
 			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_TRUSTED_CONTEXT_PASSWORD,
-				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value), 
+#else
+				(SQLPOINTER) Z_STRVAL_PP(&return_value),
+#endif
+                                SQL_NTS);  
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
@@ -459,28 +469,48 @@ static int ibm_handle_set_attribute(
 		/* Set Client Info */
 		case PDO_SQL_ATTR_INFO_USERID:
 			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_USERID,
-				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value), 
+#else
+				(SQLPOINTER) Z_STRVAL_PP(&return_value),
+#endif
+                                SQL_NTS);  
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
 
 		case PDO_SQL_ATTR_INFO_ACCTSTR:
 			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_ACCTSTR,
-				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value), 
+#else
+				(SQLPOINTER) Z_STRVAL_PP(&return_value),
+#endif
+                                SQL_NTS);  
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
 			
 		case PDO_SQL_ATTR_INFO_APPLNAME:
 			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_APPLNAME,
-				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value), 
+#else
+				(SQLPOINTER) Z_STRVAL_PP(&return_value),
+#endif
+                                SQL_NTS);  
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
 
 		case PDO_SQL_ATTR_INFO_WRKSTNNAME:
 			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_WRKSTNNAME,
-				(SQLPOINTER) Z_STRVAL_PP(&return_value), SQL_NTS);
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value), 
+#else
+				(SQLPOINTER) Z_STRVAL_PP(&return_value),
+#endif
+                                SQL_NTS);  
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
@@ -598,7 +628,11 @@ static int ibm_handle_fetch_error(
 	 * in a specific order
 	 */
 	add_next_index_long(info, conn_res->error_data.sqlcode);
+#if PHP_MAJOR_VERSION >=7
+        add_next_index_string(info, suppliment);
+#else
 	add_next_index_string(info, suppliment, 1);
+#endif
 
 	return TRUE;
 }
@@ -616,6 +650,7 @@ static int ibm_handle_quoter(
 	char *sql;
 	int new_length, i, j;
 
+        int len;
 	if(!unq)  {
 		return FALSE;
 	}
@@ -648,7 +683,6 @@ static int ibm_handle_quoter(
 	strcpy(*q, sql);
 	*q_len = strlen(sql);
 	efree(sql);
-
 	return TRUE;
 }
 
@@ -678,7 +712,11 @@ static int ibm_handle_get_attribute(
 
 	switch (attr) {
 		case PDO_ATTR_CLIENT_VERSION:
+#if PHP_MAJOR_VERSION >= 7
+                        ZVAL_STRING(return_value, PDO_IBM_VERSION);
+#else 
 			ZVAL_STRING(return_value, PDO_IBM_VERSION, 1);
+#endif
 			return TRUE;
 
 		case PDO_ATTR_AUTOCOMMIT:
@@ -689,7 +727,11 @@ static int ibm_handle_get_attribute(
 			rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, 
 					(SQLPOINTER)value, MAX_DBMS_IDENTIFIER_NAME, NULL);
 			check_dbh_error(rc, "SQLGetInfo");
+#if PHP_MAJOR_VERSION >= 7
+                        ZVAL_STRING(return_value, value);
+#else
 			ZVAL_STRING(return_value, value, 1);
+#endif
 			return TRUE;
 
 #ifdef PASE /* i5/os release dependent check */
@@ -697,7 +739,11 @@ static int ibm_handle_get_attribute(
 			rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_VER,
 					(SQLPOINTER)server_info, sizeof(server_info), &server_len);
 			check_dbh_error(rc, "SQLGetInfo");
+#if PHP_MAJOR_VERSION >= 7
+			ZVAL_STRING(return_value, server_info);
+#else
 			ZVAL_STRING(return_value, server_info, 1);
+#endif
 			return TRUE;
 #endif /* PASE */
 
@@ -715,7 +761,11 @@ static int ibm_handle_get_attribute(
 			rc = SQLGetConnectAttr(conn_res->hdbc, SQL_ATTR_TRUSTED_CONTEXT_USERID, 
 					(SQLPOINTER)value, MAX_DBMS_IDENTIFIER_NAME, NULL);
 			check_dbh_error(rc, "SQLGetInfo");
+#if PHP_MAJOR_VERSION >= 7
+			ZVAL_STRING(return_value, value);
+#else
 			ZVAL_STRING(return_value, value, 1);
+#endif
 			return TRUE;
 #endif
 
@@ -727,7 +777,11 @@ static int ibm_handle_get_attribute(
 			if(length < USERID_LEN) {
 				info_user_id[length] = '\0';
 			}
+#if PHP_MAJOR_VERSION >= 7
+			ZVAL_STRING(return_value, info_user_id);
+#else
 			ZVAL_STRING(return_value, info_user_id, 1);
+#endif
 			return TRUE;
 			
 		case PDO_SQL_ATTR_INFO_ACCTSTR:
@@ -737,7 +791,11 @@ static int ibm_handle_get_attribute(
 			if(length < ACCTSTR_LEN) {
 				info_acctstr[length] = '\0';
 			}
+#if PHP_MAJOR_VERSION >= 7
+			ZVAL_STRING(return_value, info_acctstr);
+#else
 			ZVAL_STRING(return_value, info_acctstr, 1);
+#endif
 			return TRUE;
 			
 		case PDO_SQL_ATTR_INFO_APPLNAME:
@@ -747,7 +805,11 @@ static int ibm_handle_get_attribute(
 			if(length < APPLNAME_LEN) {
 				info_appl_name[length] = '\0';
 			}
+#if PHP_MAJOR_VERSION >= 7
+			ZVAL_STRING(return_value, info_appl_name);
+#else
 			ZVAL_STRING(return_value, info_appl_name, 1);
+#endif
 			return TRUE;
 			
 		case PDO_SQL_ATTR_INFO_WRKSTNNAME:
@@ -757,7 +819,11 @@ static int ibm_handle_get_attribute(
 			if(length < WRKSTNNAME_LEN) {
 				info_wrkstn_name[length] = '\0';
 			}
+#if PHP_MAJOR_VERSION >= 7
+			ZVAL_STRING(return_value, info_wrkstn_name);
+#else
 			ZVAL_STRING(return_value, info_wrkstn_name, 1);
+#endif
 			return TRUE;
 
 	}
@@ -889,21 +955,39 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		ulong num_idx;
 		char *opt_key;
 		zval **data;
+#if PHP_MAJOR_VERSION >= 7
+		zend_long option_num = 0;
+#else
 		long option_num = 0;
+#endif
 		char *option_str = NULL;
 
 		int numOpts = zend_hash_num_elements(Z_ARRVAL_P(driver_options));
+#if PHP_MAJOR_VERSION >= 7
+                
+                        ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(driver_options), num_idx, opt_key, data) {
+                                if (opt_key) {
+                                        continue;
+                                }
+#else
 		zend_hash_internal_pointer_reset(Z_ARRVAL_P(driver_options));
-
 		for ( i = 0; i < numOpts; i++) {
-			
 			zend_hash_get_current_key(Z_ARRVAL_P(driver_options), &opt_key, &num_idx, 1);
 			zend_hash_get_current_data(Z_ARRVAL_P(driver_options), (void**)&data);
-			
+#endif			
+		
+#if PHP_MAJOR_VERSION >= 7
+                        if (Z_TYPE(data) == IS_STRING) {
+#else	
 			if (Z_TYPE_PP(data) == IS_STRING) {
+#endif
 				option_str = Z_STRVAL_PP(data);
 			} else {
+#if PHP_MAJOR_VERSION >= 7
+				option_num = Z_LVAL(**data);
+#else
 				option_num = Z_LVAL_PP(data);
+#endif
 			}
 
 			if(num_idx == PDO_SQL_ATTR_USE_TRUSTED_CONTEXT) {
@@ -913,9 +997,13 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 					break;
 				}
 			}
+#if PHP_MAJOR_VERSION >=7
+                } ZEND_HASH_FOREACH_END();
+#else
 			zend_hash_move_forward(Z_ARRVAL_P(driver_options));
 			continue;
 		}
+#endif
 	}
 #endif
 		
