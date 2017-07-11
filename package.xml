@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.9.4" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+<package packagerversion="1.10.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
  <name>PDO_IBM</name>
  <channel>pecl.php.net</channel>
  <summary>PDO driver for IBM databases</summary>
@@ -12,9 +12,9 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <active>yes</active>
  </lead>
  <lead>
-  <name>Ambrish Bhargava</name>
-  <user>ambrish</user>
-  <email>abhargav@in.ibm.com</email>
+  <name>Venkatesh KS Babu</name>
+  <user>vnkbabu</user>
+  <email>venkkbab@in.ibm.com</email>
   <active>yes</active>
  </lead>
  <lead>
@@ -23,8 +23,8 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <email>opendev@us.ibm.com</email>
   <active>yes</active>
  </lead>
- <date>2012-03-12</date>
- <time>13:11:56</time>
+ <date>2016-04-18</date>
+ <time>11:29:22</time>
  <version>
   <release>1.3.4</release>
   <api>1.3.4</api>
@@ -33,13 +33,9 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <release>stable</release>
   <api>stable</api>
  </stability>
- <license>Apache License 2.0</license>
+ <license uri="http://www.php.net/license">Apache License 2.0</license>
  <notes>
-Fixed: Segmentation fault on getColumnMeta
-Fixed: PDO_IBM driver needs to return SQL error codes
-Fixed: should throw a PDOException if someone tries to use DDL and placeholders
-Fixed: Nested queries returns corrupted rows or segmentation fault
-Fixed: Compilation error with php-5.4.x
+Fixed: Added PHP 7 support.
  </notes>
  <contents>
   <dir name="/">
@@ -118,11 +114,12 @@ Fixed: Compilation error with php-5.4.x
    <file baseinstalldir="pdo_ibm" md5sum="5c94544bc61020492217fb3c3b7e6350" name="config.m4" role="src" />
    <file baseinstalldir="pdo_ibm" md5sum="91fd7e505ae3cc64dbe15c4c83b86d97" name="config.w32" role="src" />
    <file baseinstalldir="pdo_ibm" md5sum="0be1551cd87fcbfea558ffd74630c07a" name="CREDITS" role="doc" />
-   <file baseinstalldir="pdo_ibm" md5sum="402b6f87b0c4677dea2fe63e953dd72a" name="ibm_driver.c" role="src" />
-   <file baseinstalldir="pdo_ibm" md5sum="f39e8d66981483108fc1456427c8dd87" name="ibm_statement.c" role="src" />
-   <file baseinstalldir="pdo_ibm" md5sum="a8fd098a065701b67a85f79296ead3b9" name="package.xml" role="src" />
-   <file baseinstalldir="pdo_ibm" md5sum="c80e383c2c0ea5b06541bcae2de02356" name="pdo_ibm.c" role="src" />
-   <file baseinstalldir="pdo_ibm" md5sum="f5e67ca0251e6d47804ad9fb7a4227cb" name="php_pdo_ibm.h" role="src" />
+   <file baseinstalldir="pdo_ibm" md5sum="2565745239557cee06d0fc4b2bbf05a5" name="LICENSE" role="doc" />
+   <file baseinstalldir="pdo_ibm" md5sum="40d533b49c68bfffde00cf73948c0007" name="ibm_driver.c" role="src" />
+   <file baseinstalldir="pdo_ibm" md5sum="a7aea142d48f34aea3ab53551a532149" name="ibm_statement.c" role="src" />
+   <file baseinstalldir="pdo_ibm" md5sum="f35cb8a303d1170bb4b7bfffeaecdc6d" name="package.xml" role="src" />
+   <file baseinstalldir="pdo_ibm" md5sum="31059b51ebed64744d67acb09e4475d9" name="pdo_ibm.c" role="src" />
+   <file baseinstalldir="pdo_ibm" md5sum="8498b0b6335811e689e7d97288202afd" name="php_pdo_ibm.h" role="src" />
    <file baseinstalldir="pdo_ibm" md5sum="b37de0fd64a8fb4b8f27bed1c8094434" name="php_pdo_ibm_int.h" role="src" />
   </dir>
  </contents>
