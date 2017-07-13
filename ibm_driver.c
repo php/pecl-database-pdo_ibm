@@ -55,7 +55,7 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt TSRMLS_DC)
 }
 
 /* prepare a statement for execution. */
-static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, long stmt_len, zval *driver_options TSRMLS_DC)
+static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options TSRMLS_DC)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -69,7 +69,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	SQLSMALLINT server_len = 0;
 
 	/* in case we need to convert the statement for positional syntax */
-	int converted_len = 0;
+	size_t converted_len = 0;
 	stmt_res->converted_statement = NULL;
 
 	/* clear the current error information to get ready for new execute */
@@ -253,7 +253,7 @@ static int ibm_handle_closer( pdo_dbh_t * dbh TSRMLS_DC)
 static int ibm_handle_preparer(
 	pdo_dbh_t *dbh,
 	const char *sql,
-	long sql_len,
+	size_t sql_len,
 	pdo_stmt_t *stmt,
 	zval *driver_options
 	TSRMLS_DC)
@@ -274,7 +274,7 @@ static int ibm_handle_preparer(
 static long ibm_handle_doer(
 	pdo_dbh_t *dbh,
 	const char *sql,
-	long sql_len
+	size_t sql_len
 	TSRMLS_DC)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
@@ -520,9 +520,10 @@ static int ibm_handle_set_attribute(
 }
 
 /* fetch the last inserted id */
-static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
+static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len TSRMLS_DC)
 {
 	char *last_id = emalloc( MAX_IDENTITY_DIGITS );
+	strcpy(last_id, "0");
 	int rc = 0;
 	char *sql;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
@@ -552,7 +553,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned
 				"SQLExecDirect", __FILE__, __LINE__ TSRMLS_CC);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
-			return FALSE;
+			return NULL;
 		}
 
 		rc = SQLBindCol(hstmt, 1, SQL_C_CHAR, last_id, MAX_IDENTITY_DIGITS, &out_length);
@@ -565,7 +566,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned
 				"SQLBindCol", __FILE__, __LINE__ TSRMLS_CC);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
-			return FALSE;
+			return NULL;
 		}
 		/* go fetch it. */
 		rc = SQLFetch(hstmt);
@@ -578,7 +579,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned
 				"SQLFetch", __FILE__, __LINE__ TSRMLS_CC);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
-			return FALSE;
+			return NULL;
 		}
 		/* this is a one-shot deal, so make sure we free the statement handle */
 		*len = strlen(last_id);
@@ -641,9 +642,9 @@ static int ibm_handle_fetch_error(
 static int ibm_handle_quoter(
 	pdo_dbh_t *dbh,
 	const char *unq,
-	int unq_len,
+	size_t unq_len,
 	char **q,
-	int *q_len,
+	size_t *q_len,
 	enum pdo_param_type paramtype
 	TSRMLS_DC)
 {
@@ -953,12 +954,14 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	if (driver_options != NULL) {
 		int i = 0;
 		ulong num_idx;
-		char *opt_key;
-		zval **data;
 #if PHP_MAJOR_VERSION >= 7
 		zend_long option_num = 0;
+		zend_string *opt_key = NULL;
+		zval *data;
 #else
 		long option_num = 0;
+		char *opt_key;
+		zval **data;
 #endif
 		char *option_str = NULL;
 
@@ -977,14 +980,15 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 #endif			
 		
 #if PHP_MAJOR_VERSION >= 7
-                        if (Z_TYPE(data) == IS_STRING) {
+			if (Z_TYPE_P(data) == IS_STRING) {
+				option_str = Z_STRVAL_P(data);
 #else	
 			if (Z_TYPE_PP(data) == IS_STRING) {
-#endif
 				option_str = Z_STRVAL_PP(data);
+#endif
 			} else {
 #if PHP_MAJOR_VERSION >= 7
-				option_num = Z_LVAL(**data);
+				option_num = Z_LVAL_P(data);
 #else
 				option_num = Z_LVAL_PP(data);
 #endif

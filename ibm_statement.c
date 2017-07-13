@@ -1253,7 +1253,7 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 static int ibm_stmt_fetcher(
 	pdo_stmt_t *stmt,
 	enum pdo_fetch_orientation ori,
-	long offset
+	zend_long offset
 	TSRMLS_DC)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -1402,6 +1402,7 @@ static int ibm_stmt_describer(
 	column_data *col_res = &stmt_res->columns[colno];
 	struct pdo_column_data *col = NULL;
 	char tmp_name[BUFSIZ];
+	memset(tmp_name, 0, BUFSIZ);
 
 	/* get the column descriptor information */
 	int rc = SQLDescribeCol((SQLHSTMT)stmt_res->hstmt, (SQLSMALLINT)(colno + 1 ),
@@ -1453,7 +1454,7 @@ static int ibm_stmt_describer(
 	} else {
 #if PHP_MAJOR_VERSION >= 7
 	//	col_res->name = estrdup(tmp_name);
-                col_res->name = zend_string_init(tmp_name, strlen(tmp_name), 0); 
+                col_res->name = estrdup(tmp_name);
 #else
 		col_res->name = estrdup(tmp_name);
 #endif
@@ -1465,7 +1466,7 @@ static int ibm_stmt_describer(
 	* Copy the information back into the PDO control block.  Note that
 	* PDO will release the name information, so we don't have to.
 	*/
-	col->name = col_res->name;
+	col->name = zend_string_init(col_res->name, col_res->namelen, 0);
 #if PHP_MAJOR_VERSION < 7
 	col->namelen = col_res->namelen;
 #endif
@@ -1485,7 +1486,7 @@ static int ibm_stmt_get_col(
 	pdo_stmt_t *stmt,
 	int colno,
 	char **ptr,
-	unsigned long *len,
+	size_t *len,
 	int *caller_frees
 	TSRMLS_DC)
 {
@@ -1579,7 +1580,7 @@ static int ibm_stmt_next_rowset(
 */
 static int ibm_stmt_get_column_meta(
 	pdo_stmt_t *stmt,
-	long colno,
+	zend_long colno,
 	zval *return_value
 	TSRMLS_DC)
 {
@@ -1710,7 +1711,7 @@ static int ibm_stmt_get_column_meta(
 /* get driver specific attributes.  We only support CURSOR_NAME. */
 static int ibm_stmt_get_attribute(
 	pdo_stmt_t *stmt,
-	long attr,
+	zend_long attr,
 	zval *return_value
 	TSRMLS_DC)
 {
@@ -1749,7 +1750,7 @@ static int ibm_stmt_get_attribute(
 /* set a driver-specific attribute.  We only support CURSOR_NAME. */
 static int ibm_stmt_set_attribute(
 	pdo_stmt_t *stmt,
-	long attr,
+	zend_long attr,
 	zval *value
 	TSRMLS_DC)
 {
