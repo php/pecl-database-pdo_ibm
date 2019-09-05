@@ -880,6 +880,8 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	int dsn_length = 0;
 	char *new_dsn = NULL;
 	SQLSMALLINT d_length = 0, u_length = 0, p_length = 0;
+	struct sqlca    sqlca;
+	struct sqlca    *pSQLCA = &sqlca;
 #ifdef PASE /* i5/OS incompatible v6 change */
 	char buffer11[11];
 	long attr = SQL_TRUE;
@@ -954,10 +956,11 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		int i = 0;
 		ulong num_idx;
 		char *opt_key;
-		zval **data;
 #if PHP_MAJOR_VERSION >= 7
 		zend_long option_num = 0;
+		zval *data;
 #else
+		zval **data;
 		long option_num = 0;
 #endif
 		char *option_str = NULL;
@@ -977,14 +980,18 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 #endif			
 		
 #if PHP_MAJOR_VERSION >= 7
-                        if (Z_TYPE(data) == IS_STRING) {
+                        if (Z_TYPE_P(data) == IS_STRING) {
 #else	
 			if (Z_TYPE_PP(data) == IS_STRING) {
 #endif
-				option_str = Z_STRVAL_PP(data);
+#if PHP_MAJOR_VERSION >= 7
+               	     option_str = Z_STRVAL_P(data);
+#else
+	             option_str = Z_STRVAL_PP(data);
+#endif
 			} else {
 #if PHP_MAJOR_VERSION >= 7
-				option_num = Z_LVAL(**data);
+				option_num = Z_LVAL_P(data);
 #else
 				option_num = Z_LVAL_PP(data);
 #endif
@@ -1078,6 +1085,10 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		else PDO_IBM_G(is_i5os_classic) = 0;
 #endif /* PASE */
 	}
+	rc = SQLGetSQLCA((SQLHENV) conn_res->henv, (SQLHDBC) conn_res->hdbc, SQL_NULL_HSTMT, pSQLCA);
+         check_dbh_error(rc, "SQLGetSQLCA");
+	conn_res->expansion_factor = pSQLCA->sqlerrd[1];	
+	
 
 
 	/* set the desired case to be upper */

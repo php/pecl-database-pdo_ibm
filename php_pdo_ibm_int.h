@@ -174,6 +174,8 @@ typedef struct _conn_handle_struct {
 	SQLHANDLE hdbc;				/* the connection handle */
 	conn_error_data error_data;	/* error handling information */
 	int last_insert_id;			/* the last serial id inserted */
+	int expansion_factor;		/* maximum expected expansion factor for the length of mixed character data when converted to the application code page from the database code page*/
+
 } conn_handle;
 
 /* values used for binding fetched data */

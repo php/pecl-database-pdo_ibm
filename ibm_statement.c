@@ -1030,7 +1030,18 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 		case SQL_DECIMAL:
 		case SQL_NUMERIC:
 		default:
-			in_length = col_res->data_size + in_length;
+			in_length = (col_res->data_size + in_length);
+			if( col_res->data_type  == SQL_GRAPHIC || col_res->data_type  == SQL_VARGRAPHIC ){
+				/* Graphic string is 2 byte character string. Hence size multiply by 2 is required */
+				in_length = in_length * 2;
+			}
+			if( col_res->data_type == SQL_CHAR || col_res->data_type ){
+				/* Multiply the size by expansion factor to handle cases where client and server code pages are different.*/
+				conn_handle *conn_res = (conn_handle *)stmt->dbh->driver_data;
+				if( conn_res->expansion_factor > 1 ){
+					in_length = in_length * conn_res->expansion_factor;
+				}
+			}
 			col_res->data.str_val = (char *) emalloc(in_length+1);
 			check_stmt_allocation(col_res->data.str_val,
 					"stmt_bind_column",
