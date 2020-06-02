@@ -1,23 +1,46 @@
-fvt_006_ErrConditions_01.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_007_ErrConditions_02.phpt|PASE|V5|V6|i5 diff float to string round vs LUW|
-fvt_008_ErrNonExistentTables.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_009_ErrFaultySQL.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_013_ScrollableCursorNegativeRow.phpt|PASE|V5|V6|i5 .10 vs LUW 0.10 and i5 -225 vs LUW -99999|
-fvt_015_InsertSelectClobBlobColumns.phpt|PASE|V5|V6|i5 XML viper not supported|
-fvt_016_InsertIntegerBindingString.phpt|PASE|V5|V6|i5 query INTEGER "" is 0 vs LUW query INTEGER "" is ""|
-fvt_017_InsertRetrieveLargeClobFile_01.phpt|PASE|V5|V6|i5 bind after execute vs LUW bind before execute|
-fvt_017b_InsertRetrieveLargeClobFile_02.phpt|PASE|V5|V6|i5 bind after execute vs LUW bind before execute|
-fvt_023_CommitAutocommitOFF.phpt|PASE|V5|V6|i5 connect OptimizeAutoCommit=0 not allowed|
-fvt_024_ChangeFetchModes.phpt|PASE|V5|V6|test case improvement|
-fvt_025_ColumnMetaData.phpt|PASE|V5|V6|i5 different meta data no table vs LUW|
-fvt_026_ErrCode.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_028_ExecutBasicSP.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_031_FetchOrientations.phpt|PASE|V5|V6|i5 connect EnableScrollableCursors=1 not allowed|
-fvt_032_FailureErrCodes.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_033_ErrNullConnParams.phpt|PASE|V5|V6|i5 fvt.inc modified for connect|
-fvt_034_ErrNonExistentTableInsert.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_036_SettingDiffOpt.phpt|PASE|V5|V6|i5 different error msg vs LUW|
-fvt_038_LastInsertID.phpt|PASE|V5|V6|test case improvement|
-fvt_040_ServerInfo.phpt|PASE|V5|V6|test case improvement|
-fvt_49872_ClearingErrCodes.phpt|PASE|V5|V6|i5 (null) missing vs LUW|
-fvt_trusted_context.phpt|PASE|V5|V6|i5 no trusted support|
+<?php
+$mypase = [
+"fvt_005_DrvVersion"=>"i5 using modified driver with suffix -sgx",
+"fvt_006_ErrConditions_01"=>"i5 different error msg vs LUW",
+"fvt_007_ErrConditions_02"=>"i5 diff float to string round vs LUW",
+"fvt_008_ErrNonExistentTables"=>"i5 different error msg vs LUW",
+"fvt_009_ErrFaultySQL"=>"i5 different error msg vs LUW",
+"fvt_013_ScrollableCursorNegativeRow"=>"i5 .10 vs LUW 0.10 and i5 -225 vs LUW -99999",
+"fvt_015_InsertSelectClobBlobColumns"=>"i5 XML viper not supported",
+"fvt_016_InsertIntegerBindingString"=>"i5 query INTEGER blank is zero, not blank",
+"fvt_017_InsertRetrieveLargeClobFile_01"=>"i5 bind after execute vs LUW bind before execute",
+"fvt_017b_InsertRetrieveLargeClobFile_02"=>"i5 bind after execute vs LUW bind before execute",
+"fvt_023_CommitAutocommitOFF"=>"i5 connect OptimizeAutoCommit=0 not allowed",
+"fvt_024_ChangeFetchModes"=>"test case improvement",
+"fvt_025_ColumnMetaData"=>"i5 different meta data no table vs LUW",
+"fvt_026_ErrCode"=>"i5 different error msg vs LUW",
+"fvt_028_ExecutBasicSP"=>"i5 different error msg vs LUW",
+"fvt_031_FetchOrientations"=>"i5 connect EnableScrollableCursors=1 not allowed",
+"fvt_032_FailureErrCodes"=>"i5 different error msg vs LUW",
+"fvt_033_ErrNullConnParams"=>"i5 fvt.inc modified for connect",
+"fvt_034_ErrNonExistentTableInsert"=>"i5 different error msg vs LUW",
+"fvt_036_SettingDiffOpt"=>"i5 different error msg vs LUW",
+"fvt_038_LastInsertID"=>"test case improvement",
+"fvt_040_ServerInfo"=>"test case improvement",
+"fvt_trusted_context"=>"i5 no trusted support",
+"fvt_isam_error"=>"i5 different errors"];
+$myos = PHP_OS;
+if (strpos("  ".$myos,'400') > 0 || strpos(" ".$myos,'AIX') > 0) {
+	$mytest = basename($_SERVER["PHP_SELF"]);
+	if ( substr(phpversion(),0,1) <= 5) {
+		$mypase["fvt_49872_V5V6_ClearingErrCodes"] = "i5 (null) missing vs LUW";
+	} else {
+		$mypase["fvt_49872_ClearingErrCodes"] = "i5 (null) missing vs LUW";
+	}
+	foreach ($mypase as $key => $value) {
+		if (preg_match('/'.$key.'/', $mytest)) {
+			die('skip');
+		}
+        }
+}
+else {
+	if (preg_match("/V5|V6/", $mytest)) {
+		die('skip');
+	}
+}
+?>

@@ -39,7 +39,7 @@ pdo_ibm: Testing fetchColumn with different modes and options
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
---EXPECT--
+--EXPECTF--
 The column value is: 1
 The column value is: 2
 The column value is: 3
@@ -52,3 +52,5 @@ The column value is: gold fish
 The column value is: budgerigar
 The column value is: goat
 The column value is: llama
+%s
+

@@ -38,45 +38,33 @@ pdo_ibm: Get Column meta data.
 	$testcase->runTest();
 ?>
 --EXPECT--
-array(8) {
+array(7) {
   ["scale"]=>
   int(0)
-  ["table"]=>
-  string(7) "ANIMALS"
   ["native_type"]=>
   string(7) "INTEGER"
   ["flags"]=>
-  array(3) {
+  array(1) {
     ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(false)
-    ["auto_increment"]=>
     bool(false)
   }
   ["name"]=>
   string(2) "ID"
   ["len"]=>
-  int(11)
+  int(20)
   ["precision"]=>
   int(0)
   ["pdo_type"]=>
   int(2)
 }
-array(8) {
+array(7) {
   ["scale"]=>
   int(0)
-  ["table"]=>
-  string(7) "ANIMALS"
   ["native_type"]=>
   string(7) "VARCHAR"
   ["flags"]=>
-  array(3) {
+  array(1) {
     ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(true)
-    ["auto_increment"]=>
     bool(false)
   }
   ["name"]=>
@@ -88,20 +76,14 @@ array(8) {
   ["pdo_type"]=>
   int(2)
 }
-array(8) {
+array(7) {
   ["scale"]=>
   int(0)
-  ["table"]=>
-  string(7) "ANIMALS"
   ["native_type"]=>
   string(4) "CHAR"
   ["flags"]=>
-  array(3) {
+  array(1) {
     ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(true)
-    ["auto_increment"]=>
     bool(false)
   }
   ["name"]=>
@@ -113,20 +95,14 @@ array(8) {
   ["pdo_type"]=>
   int(2)
 }
-array(8) {
+array(7) {
   ["scale"]=>
   int(2)
-  ["table"]=>
-  string(7) "ANIMALS"
   ["native_type"]=>
   string(7) "DECIMAL"
   ["flags"]=>
-  array(3) {
+  array(1) {
     ["not_null"]=>
-    bool(false)
-    ["unsigned"]=>
-    bool(false)
-    ["auto_increment"]=>
     bool(false)
   }
   ["name"]=>
@@ -140,3 +116,4 @@ array(8) {
 }
 Error: HY097
 Error: 42P10
+

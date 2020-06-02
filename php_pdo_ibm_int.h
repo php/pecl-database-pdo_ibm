@@ -73,6 +73,48 @@ enum {
 #define APPLNAME_LEN 32
 #define WRKSTNNAME_LEN 18
 
+
+#ifdef PASE /* i5/OS introduced after DB2 v5 (1.3.2) */
+/* IBM i long is same ordinal, set to fake/unused ordinal (remove ifdef PASE) */
+#undef SQL_LONGVARCHAR
+#define SQL_LONGVARCHAR -334 
+#undef SQL_LONGVARGRAPHIC
+#define SQL_LONGVARGRAPHIC -335
+#undef SQL_LONGVARBINARY
+#define SQL_LONGVARBINARY -336
+#undef SQL_WLONGVARCHAR
+#define SQL_WLONGVARCHAR -337
+/* IBM i support V6R1+, ignore V5R4- (remove ifdef PASE) */
+#undef SQL_BINARY
+#define  SQL_BINARY          -2
+#undef SQL_VARBINARY
+#define  SQL_VARBINARY       -3
+#undef SQL_C_BINARY
+#define  SQL_C_BINARY	SQL_BINARY
+
+#ifndef SQL_ATTR_INFO_USERID
+#define SQL_ATTR_INFO_USERID		10103
+#endif
+#ifndef SQL_ATTR_INFO_WRKSTNNAME
+#define SQL_ATTR_INFO_WRKSTNNAME	10104
+#endif
+#ifndef SQL_ATTR_INFO_APPLNAME
+#define SQL_ATTR_INFO_APPLNAME		10105
+#endif
+#ifndef SQL_ATTR_INFO_ACCTSTR
+#define SQL_ATTR_INFO_ACCTSTR		10106
+#endif
+#ifndef SQL_ATTR_QUERY_TIMEOUT
+#define SQL_ATTR_QUERY_TIMEOUT		SQL_QUERY_TIMEOUT
+#endif
+#ifndef SQL_IS_UINTEGER
+#define SQL_IS_UINTEGER				0 
+#endif
+/* New 'fake' attributes for IBM i explicit use (IBM i or LUW->IBM i) */
+#define SQL_ATTR_DBC_LIBL 31666
+#define SQL_ATTR_DBC_CURLIB 31667
+#endif /* PASE */
+
 /* SQL variable for Client information */
 #ifndef SQL_ATTR_INFO_USERID
 #define SQL_ATTR_INFO_USERID 1281
@@ -91,12 +133,51 @@ enum {
 #endif
 
 /* Variables for Client Info */
+#ifndef PASE /* (LUW error)??? */
 enum {
 	PDO_SQL_ATTR_INFO_USERID = SQL_ATTR_INFO_USERID,	/* Client UserID */
 	PDO_SQL_ATTR_INFO_ACCTSTR,							/* Client Accounting String */
 	PDO_SQL_ATTR_INFO_APPLNAME,							/* Client Application Name */
 	PDO_SQL_ATTR_INFO_WRKSTNNAME						/* Client Work Station Name */
 };
+#else
+enum {
+	/* see pdo/php_pdo_driver.h:
+	 * this defines the start of the range for driver specific options.
+	 * Drivers should define their own attribute constants beginning with this
+	 * value. (PDO_ATTR_DRIVER_SPECIFIC = 1000)
+	 */
+	/* Variables for Client Info */
+	PDO_SQL_ATTR_INFO_USERID = PDO_ATTR_DRIVER_SPECIFIC,/* Client UserID */
+	PDO_SQL_ATTR_INFO_ACCTSTR,							/* Client Accounting String */
+	PDO_SQL_ATTR_INFO_APPLNAME,							/* Client Application Name */
+	PDO_SQL_ATTR_INFO_WRKSTNNAME,						/* Client Work Station Name */
+	/* i5/OS variables for system naming (1.3.4) */	
+	PDO_I5_ATTR_DBC_SYS_NAMING,							/* i5/OS system naming */
+	/* i5/OS variables for commit isolation (1.3.4) */	
+	PDO_I5_ATTR_COMMIT,									/* i5/OS SQL_ATTR_COMMIT 0 already used */
+	PDO_I5_TXN_NO_COMMIT,								/* i5/OS Commitment control is not used. */
+	PDO_I5_TXN_READ_UNCOMMITTED,						/* i5/OS Dirty reads, nonrepeatable reads, 
+															and phantoms are possible.*/
+	PDO_I5_TXN_READ_COMMITTED,							/* i5/OS Dirty reads are not possible. 
+															Nonrepeatable reads, 
+															and phantoms are possible. */ 
+	PDO_I5_TXN_REPEATABLE_READ,							/* i5/OS Dirty reads and nonrepeatable 
+ 															reads are not possible. 
+ 															Phantoms are possible. */
+	PDO_I5_TXN_SERIALIZABLE,							/* i5/OS Transactions are serializable.
+ 															Dirty reads, 
+ 															non-repeatable reads, 
+                                							and phantoms are not possible */
+	/* i5/OS variables for job sort (special new value via John Broich PTF) (1.3.4) */	
+	PDO_I5_ATTR_JOB_SORT,								/* i5/OS SQL_ATTR_JOB_SORT_SEQUENCE (10046) */
+    /* i5/OS libl and curlib for system naming (1.3.4) */
+    PDO_I5_ATTR_DBC_LIBL,                               /* i5/OS SQL_ATTR_DBC_LIBL (fake) */
+    PDO_I5_ATTR_DBC_CURLIB                              /* i5/OS SQL_ATTR_DBC_CURLIB (fake) */
+};
+#endif /* PASE */
+
+
 
 /* This function is called after executing a stmt for recording lastInsertId */
 int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
@@ -174,8 +255,10 @@ typedef struct _conn_handle_struct {
 	SQLHANDLE hdbc;				/* the connection handle */
 	conn_error_data error_data;	/* error handling information */
 	int last_insert_id;			/* the last serial id inserted */
-	int expansion_factor;		/* maximum expected expansion factor for the length of mixed character data when converted to the application code page from the database code page*/
-
+#ifdef PASE /* ibm i cmd call  helper */
+	char * c_i5_pending_libl;   /* chglibl (logic simplicity change) */
+	char * c_i5_pending_curlib; /* chgcurlib (logic simplicity change) */
+#endif /* PASE */
 } conn_handle;
 
 /* values used for binding fetched data */
@@ -219,12 +302,15 @@ typedef struct _stmt_handle_struct {
 
 /* Defines the driver_data structure for caching param data */
 typedef struct _param_node {
+#ifdef PASE
+	int		param_type;			/* Type of param - INP/OUT/INP-OUT/FILE */
+#endif /* PASE */
 	SQLSMALLINT	data_type;			/* The database data type */
 	SQLUINTEGER	param_size;			/* param size */
-	SQLSMALLINT nullable;			/* is Nullable  */
+	SQLSMALLINT	nullable;			/* is Nullable  */
 	SQLSMALLINT	scale;				/* Decimal scale */
-	SQLSMALLINT ctype;				/* the optimal C type for transfer */
-	SQLINTEGER  transfer_length;	/* the transfer length of the parameter */
+	SQLSMALLINT	ctype;				/* the optimal C type for transfer */
+	SQLINTEGER	transfer_length;	/* the transfer length of the parameter */
 } param_node;
 
 #endif

@@ -25,7 +25,7 @@ pdo_ibm: Test error conditions
 				print("\n");
 				$stmt2 = $this->db->prepare("SELECT id FROM animals WHERE id = 1 " ) ;
 				print("Error Code 4: ".$this->db->errorCode()."\n");
-				print_r($this->db->errorInfo());
+				// print_r($this->db->errorInfo());
 				print("\n");
 			}
 		}
@@ -40,13 +40,8 @@ Array
 (
     [0] => 42703
     [1] => -206
-    [2] => Column COLNOTEXIST not in specified tables. (SQLPrepare[-206] at %s
+    [2] => Column or global variable COLNOTEXIST not found. (SQLPrepare[-206] at %s
 )
 
 Error Code 4: 00000
-Array
-(
-    [0] => 00000
-    [1] => 0
-    [2] =>  ((null)[0] at (null):0)
-)
+

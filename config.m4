@@ -72,7 +72,14 @@ if test "$PHP_PDO_IBM" != "no"; then
 
   PHP_ADD_INCLUDE($PDO_IBM_DIR/include)
   PHP_ADD_LIBPATH($LIB_DIR, PDO_IBM_SHARED_LIBADD)
-  PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+  AC_MSG_CHECKING(["$LIB_DIR/libdb400.a"])
+  if test -r "$LIB_DIR/libdb400.a" ; then
+    PHP_ADD_LIBRARY(db400, 1, PDO_IBM_SHARED_LIBADD)
+    AC_MSG_RESULT(found)
+  else
+    PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+    AC_MSG_RESULT()
+  fi
 
   case "$host_alias" in
     *aix*)

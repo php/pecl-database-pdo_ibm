@@ -36,6 +36,69 @@
 extern struct pdo_stmt_methods ibm_stmt_methods;
 extern int ibm_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC);
 
+#ifdef PASE /* libl, curlib */
+static int db2_ibmi_cmd_helper(SQLHDBC hdbc, char*stmt_string);
+static int db2_ibmi_cmd_libl(SQLHDBC hdbc, char *stmt_string);
+static int db2_ibmi_cmd_curlib(SQLHDBC hdbc, char *stmt_string);
+#endif /*PASE */
+
+#ifdef PASE /* IBM i consolidate ifdefs */
+SQLRETURN _php_db2_override_SQLSetConnectAttr(
+	SQLHDBC		hdbc, 
+	SQLINTEGER	fOption,
+	SQLPOINTER	vParam, 
+	SQLINTEGER	fStrLen)
+{
+	int rc = SQL_ERROR;
+	SQLPOINTER pvParam = vParam;
+	/* IBM i requires pointer to value; 
+	 * LUW supports raw integer (SQL_IS_INTEGER) or pointer (SQL_NTS) 
+	 */
+	if (fStrLen != SQL_NTS) {
+		pvParam = &vParam;
+	}
+	rc = SQLSetConnectAttr(hdbc, fOption, pvParam, fStrLen);
+	return rc;
+}
+SQLRETURN _php_db2_override_SQLSetStmtAttr(
+	SQLHSTMT	hstmt, 
+	SQLINTEGER	fOption,
+	SQLPOINTER	vParam, 
+	SQLINTEGER	fStrLen)
+{
+	int rc = SQL_ERROR;
+	SQLPOINTER pvParam = vParam;
+	/* IBM i requires pointer to value; 
+	 * LUW supports raw integer (SQL_IS_INTEGER) or pointer (SQL_NTS) 
+	 */
+	if (fStrLen != SQL_NTS) {
+		pvParam = &vParam;
+	}
+	rc = SQLSetStmtAttr(hstmt, fOption, pvParam, fStrLen);
+	return rc;
+}
+SQLRETURN _php_db2_override_SQLSetEnvAttr(
+	SQLHENV		henv, 
+	SQLINTEGER	fOption,
+	SQLPOINTER	vParam, 
+	SQLINTEGER	fStrLen)
+{
+	int rc = SQL_ERROR;
+	SQLPOINTER pvParam = vParam;
+	/* IBM i requires pointer to value; 
+	 * LUW supports raw integer (SQL_IS_INTEGER) or pointer (SQL_NTS) 
+	 */
+	if (fStrLen != SQL_NTS) {
+		pvParam = &vParam;
+	}
+	rc = SQLSetEnvAttr(henv, fOption, pvParam, fStrLen);
+	return rc;
+}
+/* define SQLxxx must appear below override _php_db2_override_SQLxxx*/
+#define SQLSetEnvAttr(p1,p2,p3,p4) _php_db2_override_SQLSetEnvAttr(p1,p2,p3,p4)
+#define SQLSetConnectAttr(p1,p2,p3,p4) _php_db2_override_SQLSetConnectAttr(p1,p2,p3,p4)
+#define SQLSetStmtAttr(p1,p2,p3,p4) _php_db2_override_SQLSetStmtAttr(p1,p2,p3,p4)
+#endif /* PASE */
 
 /* allocate and initialize the driver_data portion of a PDOStatement object. */
 static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt TSRMLS_DC)
@@ -51,6 +114,7 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt TSRMLS_DC)
 	/* attach to the statement */
 	stmt->driver_data = stmt_res;
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
+
 	return TRUE;
 }
 
@@ -123,12 +187,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	 */
 	if (stmt_res->cursor_type != PDO_CURSOR_FWDONLY) {
 		/* set the statement attribute */
-#ifdef PASE /* i5 ptr to int (not int) */
-		SQLINTEGER vParam = SQL_CURSOR_DYNAMIC;
-		rc = SQLSetStmtAttr(stmt_res->hstmt, SQL_ATTR_CURSOR_TYPE, (void *) &vParam, 0);
-#else /* not PASE */
 		rc = SQLSetStmtAttr(stmt_res->hstmt, SQL_ATTR_CURSOR_TYPE, (void *) SQL_CURSOR_DYNAMIC, 0);
-#endif /* not PASE */
 		check_stmt_error(rc, "SQLSetStmtAttr");
 	}
 
@@ -155,6 +214,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	/* we're responsible for setting the column_count for the PDO driver. */
 	stmt->column_count = param_count;
 
+	/* Get the server information server_info */
 	memset(server_info, 0, sizeof(server_info));
 	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_VER, (SQLPOINTER)server_info,
 			sizeof(server_info), &server_len);
@@ -164,8 +224,6 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	 * 0r.01.0000
 	 * where r is the major version
 	 */
-	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_VER, &server_info,
-			sizeof(server_info), &server_len);
 	/* making char numbers into integers eg. "10" --> 10 or "09" --> 9 */
 	stmt_res->server_ver = ((server_info[0] - '0')*100) + ((server_info[1] - '0')*10) + (server_info[3] - '0');
 #else
@@ -177,10 +235,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	 * where r is the major version
 	 * where m is the minor version
 	 */
-	stmt_res->server_ver =
-	   ((server_info[1] - '0')*100)
-	   + ((server_info[3] -'0')*10)
-	   + (server_info[4] - '0');
+	stmt_res->server_ver = ((server_info[1] - '0')*100) + ((server_info[3] -'0')*10) + (server_info[4] - '0');
 #endif /* PASE */
 	/*
 	 * Attach the methods...we are now live, so errors will no longer immediately
@@ -232,10 +287,12 @@ static int ibm_handle_closer( pdo_dbh_t * dbh TSRMLS_DC)
 				* There's no point in checking for errors here...
 				* PDO won't process any of the failures even if they happen.
 				*/
+#ifndef PASE /* php 7 acting odd registered 'dtor'(replicate php5.6 for fvt_020_Rollback.phpt) */
 				if (dbh->auto_commit == 0) {
 					SQLEndTran(SQL_HANDLE_DBC, (SQLHDBC) conn_res->hdbc, 
 							SQL_ROLLBACK);
 				}
+#endif /* PASE */
 				SQLDisconnect((SQLHDBC) conn_res->hdbc);
 				SQLFreeHandle(SQL_HANDLE_DBC, conn_res->hdbc);
 			}
@@ -346,14 +403,7 @@ static long ibm_handle_doer(
 static int ibm_handle_begin( pdo_dbh_t *dbh TSRMLS_DC)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
-#ifndef PASE
-	int rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-			(SQLPOINTER) SQL_AUTOCOMMIT_OFF, SQL_NTS);
-#else
-	SQLINTEGER autocommit = SQL_AUTOCOMMIT_OFF;
-	int rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-			(SQLPOINTER) &autocommit, SQL_NTS);
-#endif
+	int rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0);
 	check_dbh_error(rc, "SQLSetConnectAttr");
 	return TRUE;
 }
@@ -367,14 +417,7 @@ static int ibm_handle_commit(
 	int rc = SQLEndTran(SQL_HANDLE_DBC, conn_res->hdbc, SQL_COMMIT);
 	check_dbh_error(rc, "SQLEndTran");
 	if (dbh->auto_commit != 0) {
-#ifndef PASE
-		rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
-#else
-		SQLINTEGER autocommit = SQL_AUTOCOMMIT_ON;
-		rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) &autocommit, SQL_NTS);
-#endif
+		rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_ON, 0);
 		check_dbh_error(rc, "SQLSetConnectAttr");
 	}
 	return TRUE;
@@ -389,14 +432,7 @@ static int ibm_handle_rollback(
 	int rc = SQLEndTran(SQL_HANDLE_DBC, conn_res->hdbc, SQL_ROLLBACK);
 	check_dbh_error(rc, "SQLEndTran");
 	if (dbh->auto_commit != 0) {
-#ifndef PASE
-		rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
-#else
-		SQLINTEGER autocommit = SQL_AUTOCOMMIT_ON;
-		rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) &autocommit, SQL_NTS);
-#endif
+		rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_ON, 0);
 		check_dbh_error(rc, "SQLSetConnectAttr");
 	}
 	return TRUE;
@@ -405,36 +441,36 @@ static int ibm_handle_rollback(
 /* Set the driver attributes. We allow the setting of autocommit */
 static int ibm_handle_set_attribute(
 	pdo_dbh_t *dbh,
+#if PHP_MAJOR_VERSION >= 7
+	zend_long attr,
+#else
 	long attr,
+#endif
 	zval *return_value
 	TSRMLS_DC)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 	int rc = 0;
+	SQLINTEGER i5sqlenum = SQL_FALSE;
+	SQLINTEGER i5sqlvalue = SQL_FALSE;
+	SQLINTEGER sqlBoolean = SQL_FALSE;
+#if PHP_MAJOR_VERSION >= 7
+	if (Z_TYPE_P(return_value) == IS_TRUE) {
+		sqlBoolean = SQL_TRUE;
+	}
+#else
+	sqlBoolean = Z_LVAL_P(return_value) ? SQL_TRUE : SQL_FALSE;
+#endif
 
 	switch (attr) {
 		case PDO_ATTR_AUTOCOMMIT:
-			if (dbh->auto_commit != Z_LVAL_P(return_value)) {
-				dbh->auto_commit = Z_LVAL_P(return_value);
-				if (dbh->auto_commit == TRUE) {
-#ifndef PASE
-					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-						(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
-#else
-					SQLINTEGER autocommit = SQL_AUTOCOMMIT_ON;
-					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-						(SQLPOINTER) &autocommit, SQL_NTS);
-#endif
+			if (dbh->auto_commit != sqlBoolean) {
+				dbh->auto_commit = sqlBoolean;
+				if (dbh->auto_commit) {
+					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_ON, 0);
 					check_dbh_error(rc, "SQLSetConnectAttr");
 				} else {
-#ifndef PASE
-					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-						(SQLPOINTER) SQL_AUTOCOMMIT_OFF, SQL_NTS);
-#else
-					SQLINTEGER autocommit = SQL_AUTOCOMMIT_OFF;
-					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-						(SQLPOINTER) &autocommit, SQL_NTS);
-#endif
+					rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0);
 					check_dbh_error(rc, "SQLSetConnectAttr");
 				}
 			}
@@ -464,7 +500,7 @@ static int ibm_handle_set_attribute(
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
-#endif
+#endif /* PASE */
 
 		/* Set Client Info */
 		case PDO_SQL_ATTR_INFO_USERID:
@@ -514,6 +550,113 @@ static int ibm_handle_set_attribute(
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
+#ifdef PASE /* i5/OS specific settings (1.3.4) */
+		/* 
+		i5_naming - PDO::I5_ATTR_DBC_SYS_NAMING
+		true  value turns on DB2 UDB CLI iSeries system naming mode. 
+		      Files are qualified using the slash (/) delimiter. 
+		      Unqualified files are resolved using the library list for the job.
+		false value turns off DB2 UDB CLI default naming mode, which is SQL naming. 
+		      Files are qualified using the period (.) delimiter. 
+			  Unqualified files are resolved using either the default library or the current user ID.
+		*/
+		case PDO_I5_ATTR_DBC_SYS_NAMING:
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_DBC_SYS_NAMING, (SQLPOINTER) sqlBoolean, 0);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+		/* 
+		i5_commit - PDO::I5_ATTR_COMMIT
+		The SQL_ATTR_COMMIT attribute should be set before the SQLConnect(). 
+		If the value is changed after the connection has been established, 
+		and the connection is to a remote data source, the change does not take effect 
+		until the next successful SQLConnect() for the connection handle
+		PDO::I5_TXN_NO_COMMIT - Commitment control is not used.
+		PDO::I5_TXN_READ_UNCOMMITTED - Dirty reads, nonrepeatable reads, and phantoms are possible. 
+		PDO::I5_TXN_READ_COMMITTED - Dirty reads are not possible. Nonrepeatable reads, and phantoms are possible. 
+		PDO::I5_TXN_REPEATABLE_READ - Dirty reads and nonrepeatable reads are not possible. Phantoms are possible. 
+		PDO::I5_TXN_SERIALIZABLE - Transactions are serializable. Dirty reads, non-repeatable reads, and phantoms are not possible
+		*/
+		case PDO_I5_ATTR_COMMIT:
+			i5sqlenum = Z_LVAL_P(return_value);
+			switch (i5sqlenum) {
+				case PDO_I5_TXN_NO_COMMIT:
+					i5sqlvalue = SQL_TXN_NO_COMMIT;
+					break;
+				case PDO_I5_TXN_READ_UNCOMMITTED:
+					i5sqlvalue = SQL_TXN_READ_UNCOMMITTED;
+					break;
+				case PDO_I5_TXN_READ_COMMITTED:
+					i5sqlvalue = SQL_TXN_READ_COMMITTED;
+					break;
+				case PDO_I5_TXN_REPEATABLE_READ:
+					i5sqlvalue = SQL_TXN_REPEATABLE_READ;
+					break;
+				case PDO_I5_TXN_SERIALIZABLE:
+					i5sqlvalue = SQL_TXN_SERIALIZABLE;
+					break;
+				default:
+					i5sqlvalue = SQL_TXN_READ_COMMITTED;
+					break;
+			}			
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_COMMIT, (SQLPOINTER) i5sqlvalue, 0);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+		/* 
+		i5_job_sort - PDO::I5_ATTR_JOB_SORT
+		SQL_ATTR_JOB_SORT_SEQUENCE (conn is hidden 10046)
+		true  value turns on DB2 UDB CLI job sort mode. 
+		false value turns off DB2 UDB CLI job sortmode. 
+		*/
+		case PDO_I5_ATTR_JOB_SORT:
+			if (sqlBoolean) i5sqlvalue = 2;
+			else i5sqlvalue = 0;
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, 10046, (SQLPOINTER) i5sqlvalue, 0);
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
+			break;
+		/* 
+		i5_libl - PDO::I5_ATTR_DBC_LIBL
+		"MYLIB YOURLIB" - CHGLIBL LIBL(MYLIB YOURLIB) 
+		*/
+		case PDO_I5_ATTR_DBC_LIBL:
+			/* if fail, assume delayed set of libl, curlib (after connect) */
+			rc = db2_ibmi_cmd_libl((SQLHDBC) conn_res->hdbc, 
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value));
+			if (rc = SQL_ERROR) {
+				conn_res->c_i5_pending_libl = (char *)estrdup(Z_STRVAL_P(return_value));
+			}
+#else
+			(SQLPOINTER) Z_STRVAL_PP(&return_value));
+			if (rc = SQL_ERROR) {
+				conn_res->c_i5_pending_libl = (char *)estrdup(Z_STRVAL_PP(&return_value));
+			}
+#endif
+			break;
+		/* 
+		i5_curlibl - PDO::I5_ATTR_DBC_CURLIB
+		"MYLIB" - CHGCURLIB CURLIB(MYLIB)
+		*/
+		case PDO_I5_ATTR_DBC_CURLIB:
+			/* if fail, assume delayed set of libl, curlib (after connect) */
+			rc = db2_ibmi_cmd_curlib((SQLHDBC) conn_res->hdbc, 
+#if PHP_MAJOR_VERSION >=7
+				(SQLPOINTER) Z_STRVAL_P(return_value));
+			if (rc = SQL_ERROR) {
+				conn_res->c_i5_pending_curlib = (char *)estrdup(Z_STRVAL_P(return_value));
+			}
+#else
+			(SQLPOINTER) Z_STRVAL_PP(&return_value));
+			if (rc = SQL_ERROR) {
+				conn_res->c_i5_pending_curlib = (char *)estrdup(Z_STRVAL_PP(&return_value));
+			}
+#endif
+			break;
+
+
+#endif /* PASE */
 		default:
 			return FALSE;
 	}
@@ -690,7 +833,11 @@ static int ibm_handle_quoter(
 /* Get the driver attributes. We return the autocommit and version information. */
 static int ibm_handle_get_attribute(
 	pdo_dbh_t *dbh,
+#if PHP_MAJOR_VERSION >= 7
+	zend_long attr,
+#else
 	long attr,
+#endif
 	zval *return_value
 	TSRMLS_DC)
 {
@@ -772,7 +919,7 @@ static int ibm_handle_get_attribute(
 		/* Get Client Info */
 		case PDO_SQL_ATTR_INFO_USERID:
 			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_USERID, 
-					(SQLPOINTER) info_user_id, USERID_LEN, &length);
+					(SQLPOINTER) &info_user_id, USERID_LEN, &length);
 			check_dbh_error(rc, "SQLGetInfo");
 			if(length < USERID_LEN) {
 				info_user_id[length] = '\0';
@@ -786,7 +933,7 @@ static int ibm_handle_get_attribute(
 			
 		case PDO_SQL_ATTR_INFO_ACCTSTR:
 			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_ACCTSTR, 
-					(SQLPOINTER) info_acctstr, ACCTSTR_LEN, &length);
+					(SQLPOINTER) &info_acctstr, ACCTSTR_LEN, &length);
 			check_dbh_error(rc, "SQLGetInfo");
 			if(length < ACCTSTR_LEN) {
 				info_acctstr[length] = '\0';
@@ -800,7 +947,7 @@ static int ibm_handle_get_attribute(
 			
 		case PDO_SQL_ATTR_INFO_APPLNAME:
 			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_APPLNAME, 
-					(SQLPOINTER) info_appl_name, APPLNAME_LEN, &length);
+					(SQLPOINTER) &info_appl_name, APPLNAME_LEN, &length);
 			check_dbh_error(rc, "SQLGetInfo");
 			if(length < APPLNAME_LEN) {
 				info_appl_name[length] = '\0';
@@ -814,7 +961,7 @@ static int ibm_handle_get_attribute(
 			
 		case PDO_SQL_ATTR_INFO_WRKSTNNAME:
 			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_INFO_WRKSTNNAME, 
-					(SQLPOINTER) info_wrkstn_name, WRKSTNNAME_LEN, &length);
+					(SQLPOINTER) &info_wrkstn_name, WRKSTNNAME_LEN, &length);
 			check_dbh_error(rc, "SQLGetInfo");
 			if(length < WRKSTNNAME_LEN) {
 				info_wrkstn_name[length] = '\0';
@@ -880,12 +1027,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	int dsn_length = 0;
 	char *new_dsn = NULL;
 	SQLSMALLINT d_length = 0, u_length = 0, p_length = 0;
-	struct sqlca    sqlca;
-	struct sqlca    *pSQLCA = &sqlca;
-#ifdef PASE /* i5/OS incompatible v6 change */
-	char buffer11[11];
-	long attr = SQL_TRUE;
-#endif /* PASE */
+
 	/*
 	* Allocate our driver data control block.  If this is a persistent
 	* connection, we need to allocate this from persistent storage.
@@ -897,54 +1039,37 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	memset((void *) conn_res, '\0', sizeof(conn_handle));
 	dbh->driver_data = conn_res;
 
-#ifndef PASE /* i5/OS difference */
 	/* we need an environment to use for a base */
 	rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &conn_res->henv);
-	check_dbh_error(rc, "SQLAllocHandle");
-#else /* PASE */
-	{
-		rc = SQLAllocEnv(&(conn_res->henv));
-		if ( rc == SQL_ERROR ) {
-			check_dbh_error(rc, "SQLAllocHandle");
-		}
-	}
-#endif /* PASE */
-
 #ifndef PASE
+	check_dbh_error(rc, "SQLAllocHandle");
 	/* and we're using the OBDC version 3 style interface */
-	rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_ODBC_VERSION,
-			(void *) SQL_OV_ODBC3, 0);
+	rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
 	check_dbh_error(rc, "SQLSetEnvAttr");
-#else
-	/* if (dbh->username != NULL) -- always server mode to avoid ini file setting */
-	{
-		attr = SQL_TRUE;
-		SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_SERVER_MODE, &attr, 0);
+#else /* i5/OS only one env handle, SQL_SUCCESS_WITH_INFO is good */
+	if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) {
+		rc = SQL_SUCCESS;
 	}
-#endif
+	check_dbh_error(rc, "SQLAllocHandle");
+	/* consistent with ibm_db2 (1.3.4) */
+	if (!(PDO_IBM_G(i5_ignore_userid))) {
+		rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_SERVER_MODE, (void *) SQL_TRUE, 0);
+	}
+	/* null in column names */
+	rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_INCLUDE_NULL_IN_LEN, (void *) SQL_FALSE, 0);
+#endif /* PASE */
 
 	/* now an actual connection handle */
 	rc = SQLAllocHandle(SQL_HANDLE_DBC, conn_res->henv, &(conn_res->hdbc));
 	check_dbh_error(rc, "SQLAllocHandle");
 
 	/* if we're in auto commit mode, set the connection attribute. */
-#ifndef PASE
 	if (dbh->auto_commit != 0) {
-		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) SQL_AUTOCOMMIT_ON, SQL_NTS);
-		check_dbh_error(rc, "SQLSetConnectAttr");
+		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_ON, 0);
 	} else {
-		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT,
-				(SQLPOINTER) SQL_AUTOCOMMIT_OFF, SQL_NTS);
-		check_dbh_error(rc, "SQLSetConnectAttr");
+		rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0);
 	}
-#else
-	{
-		SQLINTEGER auto_commit;
-		auto_commit = dbh->auto_commit != 0 ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF;
-		rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)(&auto_commit), SQL_NTS);
-	}
-#endif
+	check_dbh_error(rc, "SQLSetConnectAttr");
 
 #ifndef PASE /* i5/OS no support trusted */
 	/*
@@ -956,11 +1081,10 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		int i = 0;
 		ulong num_idx;
 		char *opt_key;
+		zval **data;
 #if PHP_MAJOR_VERSION >= 7
 		zend_long option_num = 0;
-		zval *data;
 #else
-		zval **data;
 		long option_num = 0;
 #endif
 		char *option_str = NULL;
@@ -980,18 +1104,15 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 #endif			
 		
 #if PHP_MAJOR_VERSION >= 7
-                        if (Z_TYPE_P(data) == IS_STRING) {
+            if (Z_TYPE(data) == IS_STRING) {
+				option_str = Z_STRVAL_P(data);
 #else	
 			if (Z_TYPE_PP(data) == IS_STRING) {
-#endif
-#if PHP_MAJOR_VERSION >= 7
-               	     option_str = Z_STRVAL_P(data);
-#else
-	             option_str = Z_STRVAL_PP(data);
+				option_str = Z_STRVAL_PP(data);
 #endif
 			} else {
 #if PHP_MAJOR_VERSION >= 7
-				option_num = Z_LVAL_P(data);
+				option_num = Z_LVAL(**data);
 #else
 				option_num = Z_LVAL_PP(data);
 #endif
@@ -1012,7 +1133,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		}
 #endif
 	}
-#endif
+#endif /* PASE */
 		
 	/*
 	* NB:  We don't have any specific driver options we support at this time, so
@@ -1055,7 +1176,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 				0, NULL, SQL_DRIVER_NOPROMPT);
 		check_dbh_error(rc, "SQLDriverConnect");
 	} else 
-#endif
+#endif /* PASE */
 	{
 		/* Make sure each of the connection parameters is not NULL */
 		if (dbh->data_source) {
@@ -1071,24 +1192,41 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 		* No connection options specified, we can just connect with the name,
 		*  userid, and password as given.
 		*/
-		rc = SQLConnect((SQLHDBC) conn_res->hdbc, (SQLCHAR *) dbh->data_source,
+#ifdef PASE /* consistent with ibm_db2 (1.3.4) */
+		if ((PDO_IBM_G(i5_ignore_userid))) {
+			rc = SQLConnect((SQLHDBC) conn_res->hdbc, 
+			(SQLCHAR *) dbh->data_source,
+			(SQLSMALLINT) d_length,
+			(SQLCHAR *)NULL, 
+			(SQLSMALLINT)0,
+			(SQLCHAR *)NULL, 
+			(SQLSMALLINT)0);
+		} else {
+#endif /* PASE */
+			rc = SQLConnect((SQLHDBC) conn_res->hdbc, 
+			(SQLCHAR *) dbh->data_source,
 			(SQLSMALLINT) d_length,
 			(SQLCHAR *) dbh->username,
 			(SQLSMALLINT) u_length,
 			(SQLCHAR *)dbh->password,
 			(SQLSMALLINT) p_length);
+#ifdef PASE /* consistent with ibm_db2 (1.3.4) */
+		}
+#endif /* PASE */
 		check_dbh_error(rc, "SQLConnect");
-#ifdef PASE /* i5/OS incompatible v6+ change */
-		memset(buffer11, 0, sizeof(buffer11));
-		rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_VER, (SQLPOINTER)buffer11, sizeof(buffer11), NULL);
-		if (buffer11[0]=='0' && buffer11[1]=='5') PDO_IBM_G(is_i5os_classic) = 1;
-		else PDO_IBM_G(is_i5os_classic) = 0;
+#ifdef PASE /* delayed set of libl, curlib (after connect) */
+		if (conn_res->c_i5_pending_libl) {
+			rc = db2_ibmi_cmd_libl((SQLHDBC) conn_res->hdbc, conn_res->c_i5_pending_libl);
+			efree(conn_res->c_i5_pending_libl);
+			conn_res->c_i5_pending_libl = NULL;
+		}
+		if (conn_res->c_i5_pending_curlib) {
+			rc = db2_ibmi_cmd_curlib((SQLHDBC) conn_res->hdbc, conn_res->c_i5_pending_curlib);
+			efree(conn_res->c_i5_pending_curlib);
+			conn_res->c_i5_pending_curlib = NULL;
+		}
 #endif /* PASE */
 	}
-	rc = SQLGetSQLCA((SQLHENV) conn_res->henv, (SQLHDBC) conn_res->hdbc, SQL_NULL_HSTMT, pSQLCA);
-         check_dbh_error(rc, "SQLGetSQLCA");
-	conn_res->expansion_factor = pSQLCA->sqlerrd[1];	
-	
 
 
 	/* set the desired case to be upper */
@@ -1273,3 +1411,70 @@ void clear_stmt_error(pdo_stmt_t *stmt)
 	conn_res->error_data.err_msg[0]			= '\0';
 	conn_res->error_data.isam_err_msg[0]	= '\0';
 }
+
+
+#ifdef PASE /* libl, curlib */
+static int db2_ibmi_cmd_helper(
+	SQLHDBC		hdbc,
+	char		*stmt_string)
+{
+	int i;
+	SQLHSTMT hstmt;
+	int rc = SQL_ERROR;
+	char len[40];
+	char *len_string = (char *)&len;
+	int len_string_len = 0;
+	char query[32702];
+	char *query_string = (char *)&query;
+	int query_string_len = 0;
+	int stmt_string_len = 0;
+
+	stmt_string_len = strlen(stmt_string);
+	memset(len_string, 0, sizeof(len));
+	len_string_len = sprintf(len_string, "%d", stmt_string_len);
+	query_string_len = 20 + stmt_string_len + 2 + len_string_len + 1;
+
+	memset(query_string,0,sizeof(query));
+	strcpy(query_string, "CALL QSYS2.QCMDEXC('"); /* IBM i works V6R1+ (w/PTF) */
+	strcat(query_string, stmt_string);
+	strcat(query_string, "',");
+	strcat(query_string, len_string);
+	strcat(query_string, ")");
+
+	rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
+	rc = SQLExecDirect((SQLHSTMT) hstmt, query_string, query_string_len);
+	SQLFreeHandle( SQL_HANDLE_STMT, hstmt );
+
+	return rc;
+}
+static int db2_ibmi_cmd_libl(
+	SQLHDBC		hdbc,
+	char		*stmt_string)
+{
+	char buff[32600];
+	char *i5cmd = (char *)&buff;
+
+	memset(i5cmd, 0, 32600);
+	strcpy(i5cmd, "CHGLIBL LIBL(");
+	strcat(i5cmd, stmt_string);
+	strcat(i5cmd, ")");
+
+	return db2_ibmi_cmd_helper(hdbc, i5cmd);
+}
+static int db2_ibmi_cmd_curlib(
+	SQLHDBC		hdbc,
+	char		*stmt_string)
+{
+	char buff[32600];
+	char *i5cmd = (char *)&buff;
+
+	memset(i5cmd, 0, 32600);
+	strcpy(i5cmd, "CHGCURLIB CURLIB(");
+	strcat(i5cmd, stmt_string);
+	strcat(i5cmd, ")");
+
+	return db2_ibmi_cmd_helper(hdbc, i5cmd);
+}
+
+#endif /*PASE */
+

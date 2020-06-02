@@ -38,6 +38,17 @@ ZEND_DECLARE_MODULE_GLOBALS(pdo_ibm)
 static int le_pdo_ibm;
 extern pdo_driver_t pdo_ibm_driver;	/* the registration table */
 
+
+#ifdef PASE /* PASE i5/OS start-up */
+/* This routine should be called by the application prior
+ * to any other CLI routine to override the ascii ccsid
+ * being retrieved from the Qp2RunPase() routine.  If this
+ * routine is called after any CLI routine is called in
+ * the process it will have no effect.
+ */
+int SQLOverrideCCSID400(int newCCSID);
+#endif /* PASE */
+
 /* {{{ pdo_ibm_functions[]
  *
  * Every user visible function must have an entry in pdo_ibm_functions[].
@@ -96,12 +107,23 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 */
 /* }}} */
+#ifdef PASE /* i5/OS specific functions */
+PHP_INI_BEGIN()
+	STD_PHP_INI_BOOLEAN("pdo_ibm.i5_override_ccsid", "0", PHP_INI_SYSTEM, OnUpdateLong,
+		i5_override_ccsid, zend_pdo_ibm_globals, pdo_ibm_globals)
+PHP_INI_END()
+#endif /* PASE */
+
 
 /* {{{ php_pdo_ibm_init_globals
  */
 static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 {
-        pdo_ibm_globals->is_i5os_classic = 1;
+#ifdef PASE /* prior any CLI routine override ascii ccsid */
+	if (pdo_ibm_globals->i5_override_ccsid) {
+		SQLOverrideCCSID400(pdo_ibm_globals->i5_override_ccsid);
+	}
+#endif /* PASE */
 }
 /* }}} */
 
@@ -118,7 +140,20 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_USE_TRUSTED_CONTEXT", (long) PDO_SQL_ATTR_USE_TRUSTED_CONTEXT);
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_USERID", (long) PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID);	
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_TRUSTED_CONTEXT_PASSWORD", (long) PDO_SQL_ATTR_TRUSTED_CONTEXT_PASSWORD);
-#endif
+#else /* PASE i5/OS introduced (1.3.4) */
+	REGISTER_PDO_CLASS_CONST_LONG("I5_ATTR_DBC_SYS_NAMING", (long)PDO_I5_ATTR_DBC_SYS_NAMING);
+	
+	REGISTER_PDO_CLASS_CONST_LONG("I5_ATTR_COMMIT", (long)PDO_I5_ATTR_COMMIT);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_TXN_NO_COMMIT", (long)PDO_I5_TXN_NO_COMMIT);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_TXN_READ_UNCOMMITTED", (long)PDO_I5_TXN_READ_UNCOMMITTED);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_TXN_READ_COMMITTED", (long)PDO_I5_TXN_READ_COMMITTED);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_TXN_REPEATABLE_READ", (long)PDO_I5_TXN_REPEATABLE_READ);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_TXN_SERIALIZABLE", (long)PDO_I5_TXN_SERIALIZABLE);
+
+	REGISTER_PDO_CLASS_CONST_LONG("I5_ATTR_JOB_SORT", (long)PDO_I5_ATTR_JOB_SORT);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_ATTR_DBC_LIBL", (long)PDO_I5_ATTR_DBC_LIBL);
+	REGISTER_PDO_CLASS_CONST_LONG("I5_ATTR_DBC_CURLIB", (long)PDO_I5_ATTR_DBC_CURLIB);
+#endif /* PASE */
 
 	/* Client information variables */
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_INFO_USERID", (long) PDO_SQL_ATTR_INFO_USERID);
