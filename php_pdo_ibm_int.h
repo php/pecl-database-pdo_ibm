@@ -75,6 +75,8 @@ enum {
 
 
 #ifdef PASE /* i5/OS introduced after DB2 v5 (1.3.2) */
+/* IBM i generically changed  (remove ifdef PASE) */
+#define SQL_IS_INTEGER 0
 /* IBM i long is same ordinal, set to fake/unused ordinal (remove ifdef PASE) */
 #undef SQL_LONGVARCHAR
 #define SQL_LONGVARCHAR -334 
