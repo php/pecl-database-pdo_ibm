@@ -51,10 +51,13 @@ SQLRETURN _php_db2_override_SQLSetConnectAttr(
 {
 	int rc = SQL_ERROR;
 	SQLPOINTER pvParam = vParam;
+	int iParam = (SQLINTEGER)(intptr_t)vParam;
 	/* IBM i requires pointer to value; 
 	 * LUW supports raw integer (SQL_IS_INTEGER) or pointer (SQL_NTS) 
 	 */
-	if (fStrLen != SQL_NTS) {
+	if (fStrLen == SQL_IS_INTEGER) {
+		pvParam = &iParam;
+	} else if (fStrLen != SQL_NTS) {
 		pvParam = &vParam;
 	}
 	rc = SQLSetConnectAttr(hdbc, fOption, pvParam, fStrLen);
@@ -68,10 +71,13 @@ SQLRETURN _php_db2_override_SQLSetStmtAttr(
 {
 	int rc = SQL_ERROR;
 	SQLPOINTER pvParam = vParam;
+	int iParam = (SQLINTEGER)(intptr_t)vParam;
 	/* IBM i requires pointer to value; 
 	 * LUW supports raw integer (SQL_IS_INTEGER) or pointer (SQL_NTS) 
 	 */
-	if (fStrLen != SQL_NTS) {
+	if (fStrLen == SQL_IS_INTEGER) {
+		pvParam = &iParam;
+	} else if (fStrLen != SQL_NTS) {
 		pvParam = &vParam;
 	}
 	rc = SQLSetStmtAttr(hstmt, fOption, pvParam, fStrLen);
@@ -85,10 +91,13 @@ SQLRETURN _php_db2_override_SQLSetEnvAttr(
 {
 	int rc = SQL_ERROR;
 	SQLPOINTER pvParam = vParam;
+	int iParam = (SQLINTEGER)(intptr_t)vParam;
 	/* IBM i requires pointer to value; 
 	 * LUW supports raw integer (SQL_IS_INTEGER) or pointer (SQL_NTS) 
 	 */
-	if (fStrLen != SQL_NTS) {
+	if (fStrLen == SQL_IS_INTEGER) {
+		pvParam = &iParam;
+	} else if (fStrLen != SQL_NTS) {
 		pvParam = &vParam;
 	}
 	rc = SQLSetEnvAttr(henv, fOption, pvParam, fStrLen);
