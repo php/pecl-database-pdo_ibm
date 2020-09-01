@@ -184,6 +184,8 @@ enum {
 /* This function is called after executing a stmt for recording lastInsertId */
 int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
 
+/* Cleanup function used across multiple compilation units */
+void stmt_cleanup(pdo_stmt_t *stmt TSRMLS_DC);
 
 /* error handling functions and macros. */
 void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle, SQLSMALLINT hType, char *tag, char *file, int line TSRMLS_DC);
