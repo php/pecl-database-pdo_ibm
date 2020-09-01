@@ -93,7 +93,11 @@ if test "$PHP_PDO_IBM" != "no"; then
       CPPFLAGS="$CPPFLAGS -D__H_LOCALEDEF";;
   esac
 
-  PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_inc_path)
+  if test -r $LIB_DIR/libdb400.a ; then
+    PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_inc_path -DPASE)
+  else
+    PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_inc_path)
+  fi
 
   ifdef([PHP_ADD_EXTENSION_DEP],
   [
