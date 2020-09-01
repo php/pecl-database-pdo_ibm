@@ -793,20 +793,19 @@ static int ibm_handle_fetch_error(
 static int ibm_handle_quoter(
 	pdo_dbh_t *dbh,
 	const char *unq,
-	int unq_len,
+	size_t unq_len,
 	char **q,
-	int *q_len,
+	size_t *q_len,
 	enum pdo_param_type paramtype
 	TSRMLS_DC)
 {
 	char *sql;
-	int new_length, i, j;
+	size_t new_length, i, j;
 
-        int len;
+        size_t len;
 	if(!unq)  {
 		return FALSE;
 	}
-
 	/* allocate twice the source length first (worst case) */
 	sql = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
 
