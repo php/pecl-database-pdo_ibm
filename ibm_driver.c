@@ -128,7 +128,7 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt TSRMLS_DC)
 }
 
 /* prepare a statement for execution. */
-static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, long stmt_len, zval *driver_options TSRMLS_DC)
+static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options TSRMLS_DC)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -142,7 +142,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	SQLSMALLINT server_len = 0;
 
 	/* in case we need to convert the statement for positional syntax */
-	int converted_len = 0;
+	size_t converted_len = 0;
 	stmt_res->converted_statement = NULL;
 
 	/* clear the current error information to get ready for new execute */
@@ -319,7 +319,7 @@ static int ibm_handle_closer( pdo_dbh_t * dbh TSRMLS_DC)
 static int ibm_handle_preparer(
 	pdo_dbh_t *dbh,
 	const char *sql,
-	long sql_len,
+	size_t sql_len,
 	pdo_stmt_t *stmt,
 	zval *driver_options
 	TSRMLS_DC)
@@ -340,7 +340,7 @@ static int ibm_handle_preparer(
 static long ibm_handle_doer(
 	pdo_dbh_t *dbh,
 	const char *sql,
-	long sql_len
+	size_t sql_len
 	TSRMLS_DC)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
@@ -672,7 +672,7 @@ static int ibm_handle_set_attribute(
 }
 
 /* fetch the last inserted id */
-static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, unsigned int *len TSRMLS_DC)
+static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len TSRMLS_DC)
 {
 	char *last_id = emalloc( MAX_IDENTITY_DIGITS );
 	int rc = 0;
