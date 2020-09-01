@@ -37,7 +37,7 @@ public function runTest() {
 
   try {
     $create  = "DROP TABLE libint\n";
-    print("$create\n");
+    //print("$create\n");
     $result = $this->db->query( $create );
   } catch( Exception $e ) { }
   try {
@@ -51,7 +51,7 @@ public function runTest() {
     $create .= " E1 SMALLINT,\n";
     $create .= " E2 INTEGER,\n";
     $create .= " E3 BIGINT)\n";
-    print("$create\n");
+    //print("$create\n");
     $result = $this->db->query( $create );
   } catch( Exception $e ) { 
     $err = $this->db->errorInfo();
@@ -69,7 +69,7 @@ public function runTest() {
     $e2   = "";
     $e3   = "";
 	$callme = "insert into libint (v1,v2,v3,n1,n2,n3,e1,e2,e3) values (?,?,?,?,?,?,?,?,?)";
-    print("$callme\n");
+    //print("$callme\n");
     $stmt = $this->db->prepare($callme);
     $r1 = $stmt->bindParam(1,$v1);
     $r2 = $stmt->bindParam(2,$v2);

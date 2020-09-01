@@ -37,7 +37,7 @@ public function runTest() {
 
   try {
     $create  = "DROP TABLE liblchar\n";
-    print("$create\n");
+    //print("$create\n");
     $result = $this->db->query( $create );
   } catch( Exception $e ) { }
   try {
@@ -48,7 +48,7 @@ public function runTest() {
     $create .= " N2 CHAR(128),\n";
     $create .= " E1 VARCHAR(128),\n";
     $create .= " E2 CHAR(128))\n";
-    print("$create\n");
+    //print("$create\n");
     $result = $this->db->query( $create );
   } catch( Exception $e ) { 
     $err = $this->db->errorInfo();
@@ -63,7 +63,7 @@ public function runTest() {
     $e1   = "";
     $e2   = "";
 	$callme = "insert into liblchar (v1,v2,n1,n2,e1,e2) values (?,?,?,?,?,?)";
-    print("$callme\n");
+    //print("$callme\n");
     $stmt = $this->db->prepare($callme);
     $r1 = $stmt->bindParam(1,$v1);
     $r2 = $stmt->bindParam(2,$v2);

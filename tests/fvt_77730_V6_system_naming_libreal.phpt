@@ -37,7 +37,7 @@ public function runTest() {
 
   try {
     $create  = "DROP TABLE libreal\n";
-    print("$create\n");
+    //print("$create\n");
     $result = $this->db->query( $create );
   } catch( Exception $e ) { }
   try {
@@ -54,7 +54,7 @@ public function runTest() {
     $create .= " E2 FLOAT(8),\n";
     $create .= " E3 REAL,\n";
     $create .= " E4 DOUBLE)\n";
-    print("$create\n");
+    //print("$create\n");
     $result = $this->db->query( $create );
   } catch( Exception $e ) { 
     $err = $this->db->errorInfo();
@@ -75,7 +75,7 @@ public function runTest() {
     $e3   = "";
     $e4   = "";
 	$callme = "insert into libreal (v1,v2,v3,v4,n1,n2,n3,n4,e1,e2,e3,e4) values (?,?,?,?,?,?,?,?,?,?,?,?)";
-    print("$callme\n");
+    //print("$callme\n");
     $stmt = $this->db->prepare($callme);
     $r1  = $stmt->bindParam(1,$v1);
     $r2  = $stmt->bindParam(2,$v2);
