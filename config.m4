@@ -46,14 +46,21 @@ if test "$PHP_PDO_IBM" != "no"; then
   done
 
   AC_MSG_CHECKING([for DB2 CLI include files in default path])
-  for i in $SEARCH_PATH ; do
-    AC_MSG_CHECKING([in $i])
-    if test -r "$i/include/sqlcli1.h" ; then
-      PDO_IBM_DIR=$i
-      AC_MSG_RESULT(found in $i)
-      break
-    fi
-  done
+  if test -r $LIB_DIR/libdb400.a ; then
+    dnl PASE doesn't need that, we'll use the sqlcli-devel package.
+    PHP_ADD_INCLUDE(/QOpenSys/pkgs/include/cli)
+    AC_MSG_RESULT([found PASE headers])
+  else
+    dnl but LUW/Connect will
+    for i in $SEARCH_PATH ; do
+      AC_MSG_CHECKING([in $i])
+      if test -r "$i/include/sqlcli1.h" ; then
+        PDO_IBM_DIR=$i
+        AC_MSG_RESULT(found in $i)
+        break
+      fi
+    done
+  fi
 
   AC_MSG_CHECKING([for PDO includes])
   if test -f $abs_srcdir/include/php/ext/pdo/php_pdo_driver.h; then
