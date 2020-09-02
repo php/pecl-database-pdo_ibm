@@ -608,10 +608,20 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 					convert_to_long(curr->parameter);
 					data_buf = &Z_LVAL_P(curr->parameter);
 #endif
+					/*
+					 * SQL_BIGINT works as the C-side type
+					 * and will bind as a 64-bit integer,
+					 * because XPF long is 32-bit and PASE
+					 * long is 64-bit (under 64-bit PASE).
+					 */
 					rc = SQLBindParameter(stmt_res->hstmt,
 						curr->paramno + 1,
 						inputOutputType,
-						SQL_C_LONG,
+#if defined(PASE) && defined(__LP64__)
+						SQL_BIGINT,
+#else
+						SQL_C_LONG
+#endif
 						param_res->data_type,
 						param_res->param_size,
 						param_res->scale,
