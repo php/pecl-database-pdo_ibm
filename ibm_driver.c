@@ -570,7 +570,7 @@ static int ibm_handle_set_attribute(
 			  Unqualified files are resolved using either the default library or the current user ID.
 		*/
 		case PDO_I5_ATTR_DBC_SYS_NAMING:
-			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_DBC_SYS_NAMING, (SQLPOINTER) sqlBoolean, 0);
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_DBC_SYS_NAMING, (SQLPOINTER)(intptr_t) sqlBoolean, 0);
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
@@ -608,7 +608,7 @@ static int ibm_handle_set_attribute(
 					i5sqlvalue = SQL_TXN_READ_COMMITTED;
 					break;
 			}			
-			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_COMMIT, (SQLPOINTER) i5sqlvalue, 0);
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_COMMIT, (SQLPOINTER)(intptr_t) i5sqlvalue, 0);
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
@@ -621,7 +621,7 @@ static int ibm_handle_set_attribute(
 		case PDO_I5_ATTR_JOB_SORT:
 			if (sqlBoolean) i5sqlvalue = 2;
 			else i5sqlvalue = 0;
-			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, 10046, (SQLPOINTER) i5sqlvalue, 0);
+			rc = SQLSetConnectAttr((SQLHDBC) conn_res->hdbc, 10046, (SQLPOINTER)(intptr_t) i5sqlvalue, 0);
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
 			break;
