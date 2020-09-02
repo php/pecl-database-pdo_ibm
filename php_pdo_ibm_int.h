@@ -134,6 +134,11 @@ enum {
 #define SQL_ATTR_INFO_ACCTSTR 1284
 #endif
 
+/* CB 20200826 - This is documented, but not defined by headers in 7.2/7.4 */
+#ifndef SQL_ATTR_NON_HEXCCSID
+#define SQL_ATTR_NON_HEXCCSID 10203
+#endif
+
 /* Variables for Client Info */
 #ifndef PASE /* (LUW error)??? */
 enum {

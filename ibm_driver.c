@@ -1065,6 +1065,12 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 	}
 	/* null in column names */
 	rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_INCLUDE_NULL_IN_LEN, (void *) SQL_FALSE, 0);
+	/* hex ccsid is bad news (like ibm_db) */
+	rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_NON_HEXCCSID, (SQLPOINTER)(intptr_t)SQL_TRUE, SQL_IS_INTEGER);
+	/* 1208 data (like ibm_db2) */
+	if (PDO_IBM_G(i5_override_ccsid) == 1208) {
+		rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_UTF8, (SQLPOINTER)(intptr_t)SQL_TRUE, 0);
+	}
 #endif /* PASE */
 
 	/* now an actual connection handle */
