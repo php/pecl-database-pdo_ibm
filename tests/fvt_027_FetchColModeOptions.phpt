@@ -25,14 +25,22 @@ pdo_ibm: Testing fetchColumn with different modes and options
 
 			$stmt = $this->db->prepare($sql);
 			$stmt->execute();
-			while( $value = $stmt->fetchColumn( -1 ) ) {
-				print "The column value is: " . $value . "\n";
+			try {
+				while( $value = $stmt->fetchColumn( -1 ) ) {
+					print "The column value is: " . $value . "\n";
+				}
+			} catch (Exception $e) {
+				print "Negative index expected to fail\n";
 			}
 
 			$stmt = $this->db->prepare($sql);
 			$stmt->execute();
-			while( $value = $stmt->fetchColumn( 7 ) ) {
-				print "The column value is: " . $value . "\n";
+			try {
+				while( $value = $stmt->fetchColumn( 7 ) ) {
+					print "The column value is: " . $value . "\n";
+				}
+			} catch (Exception $e) {
+				print "Out of bounds index expected to fail\n";
 			}
 		}
 	}
@@ -52,5 +60,5 @@ The column value is: gold fish
 The column value is: budgerigar
 The column value is: goat
 The column value is: llama
-%s
-
+Negative index expected to fail
+Out of bounds index expected to fail
