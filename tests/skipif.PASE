@@ -4,6 +4,7 @@ $mypase = [
 "fvt_006_ErrConditions_01"=>"i5 different error msg vs LUW",
 "fvt_007_ErrConditions_02"=>"i5 diff float to string round vs LUW",
 "fvt_008_ErrNonExistentTables"=>"i5 different error msg vs LUW",
+"fvt_008_V5_ErrNonExistentTables"=>"V5R4 no longer supported",
 "fvt_009_ErrFaultySQL"=>"i5 different error msg vs LUW",
 "fvt_013_ScrollableCursorNegativeRow"=>"i5 .10 vs LUW 0.10 and i5 -225 vs LUW -99999",
 "fvt_015_InsertSelectClobBlobColumns"=>"i5 XML viper not supported",
