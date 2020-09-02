@@ -39,11 +39,11 @@ pdo_ibm: Insert and retrieve a very large clob file.
 
 			while ($stmt->fetch(PDO::FETCH_BOUND)) {
 				var_dump( $id );
-				var_dump( $clob );
+				//var_dump( $clob );
 				$fp = fopen( dirname(__FILE__) . "/large_clob_out.dat" , "w" );
 				//$fp = fopen("large_clob_out.dat" , "w" ); // Test Tool
 				fwrite($fp , $clob);
-				system( "diff large_clob.dat large_clob_out.dat" );
+				system( "diff " . dirname(__FILE__) . "/large_clob.dat " . dirname(__FILE__) . "/large_clob_out.dat" );
 			}
 			print "done\n";
 		}
@@ -57,5 +57,4 @@ inserting from file stream
 succesful
 runnign query
 string(1) "0"
-string(%d) %s
 done
