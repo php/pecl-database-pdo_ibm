@@ -39,12 +39,12 @@ pdo_ibm: Insert and retrieve a very large file.
 			$stmt->bindColumn( 'MY_BLOB' , $blob , PDO::PARAM_LOB );
 			while ($stmt->fetch(PDO::FETCH_BOUND)){
 				var_dump( $id );
-				var_dump( $blob );
+				//var_dump( $blob );
 				$fp = fopen( dirname(__FILE__) . "/large_blob_out.dat" , "wb" );
 				//$fp = fopen("large_blob_out.dat" , "wb" ); // Test Tool
 				//echo "datalength: " . stream_copy_to_stream( $blob , $fp ) . "\n";
 				echo "datalength: " . fwrite($fp, $blob) . "\n";
-				system( "diff large_blob.dat large_blob_out.dat" );
+				system( "diff " . dirname(__FILE__) . "/large_blob.dat " . dirname(__FILE__) . "/large_blob_out.dat" );
 			}
 			print "done\n";
 		}
@@ -58,5 +58,5 @@ inserting from file stream
 succesful
 runnign query
 string(1) "0"
-string(4966) %s
+datalength: 4966
 done
