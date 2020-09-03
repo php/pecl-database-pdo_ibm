@@ -421,6 +421,17 @@ static void db2_inout_parm_pad_data(param_node *param_res, struct pdo_bound_para
 	here=back= Z_STRVAL_P(curr->parameter) + len - 1;
 #endif
 	/*
+	 * HACK: Purge the buffer of any leftovers, but keep a copy of what we
+	 * need from it we can blit back in. Otherwise, we tend to get some
+	 * garbage from previous uses that can get used. (CB 20200903)
+	 */
+	char *tmp_buf = estrdup(front);
+	if (tmp_buf) {
+		memset(front, 0, len);
+		strncpy(front, tmp_buf, strlen(tmp_buf));
+		efree(tmp_buf);
+	}
+	/*
 	* character cast to number pad
 	* Example: 
 	* BIGINT<implicit>CHAR works consistently if 0x30 pad left, 
