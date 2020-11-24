@@ -37,13 +37,19 @@ extern zend_module_entry pdo_ibm_module_entry;
 #include "TSRM.h"
 #endif
 
+#ifndef TSRMLS_D
+#define TSRMLS_D void
+#define TSRMLS_DC
+#define TSRMLS_C
+#define TSRMLS_CC
+#define TSRMLS_FETCH()
+#endif
+
 PHP_MINIT_FUNCTION(pdo_ibm);
 PHP_MSHUTDOWN_FUNCTION(pdo_ibm);
 PHP_RINIT_FUNCTION(pdo_ibm);
 PHP_RSHUTDOWN_FUNCTION(pdo_ibm);
 PHP_MINFO_FUNCTION(pdo_ibm);
-
-PHP_FUNCTION(confirm_pdo_ibm_compiled);	/* For testing, remove later. */
 
 /* 
 	Declare any global variables you may need between the BEGIN

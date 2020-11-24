@@ -49,19 +49,6 @@ extern pdo_driver_t pdo_ibm_driver;	/* the registration table */
 int SQLOverrideCCSID400(int newCCSID);
 #endif /* PASE */
 
-/* {{{ pdo_ibm_functions[]
- *
- * Every user visible function must have an entry in pdo_ibm_functions[].
- */
-zend_function_entry pdo_ibm_functions[] =
-{
-	PHP_FE(confirm_pdo_ibm_compiled, NULL)	/* For testing, remove later. */
-	{
-		NULL, NULL, NULL
-	}	/* Must be the last line in pdo_ibm_functions[] */
-};
-/* }}} */
-
 /* {{{ pdo_ibm_deps
  */
 #if ZEND_MODULE_API_NO >= 20041225
@@ -83,7 +70,7 @@ zend_module_entry pdo_ibm_module_entry =
 	STANDARD_MODULE_HEADER,
 #endif
 	"pdo_ibm",
-	pdo_ibm_functions,
+	NULL,
 	PHP_MINIT(pdo_ibm),
 	PHP_MSHUTDOWN(pdo_ibm),
 	PHP_RINIT(pdo_ibm),        /* Replace with NULL if there's nothing to do at request start */
@@ -212,30 +199,4 @@ PHP_MINFO_FUNCTION(pdo_ibm)
 }
 /* }}} */
 
-
-/* Remove the following function when you have succesfully modified config.m4
-   so that your module can be compiled into PHP, it exists only for testing
-   purposes. */
-
-/* Every user-visible function in PHP should document itself in the source */
-/* {{{ proto string confirm_pdo_ibm_compiled(string arg)
-   Return a string to confirm that the module is compiled in */
-PHP_FUNCTION(confirm_pdo_ibm_compiled)
-{
-	char *arg = NULL;
-	int arg_len, len;
-	char string[256];
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FALSE)
-	{
-		return;
-	}
-
-	len = sprintf(string, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "pdo_ibm", arg);
-#if PHP_MAJOR_VERSION >= 7
-        RETURN_STRINGL(string, len);
-#else
-	RETURN_STRINGL(string, len, 1);
-#endif
-}
 /* }}} */
