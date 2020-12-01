@@ -2,7 +2,27 @@
 
 Interface for PHP to DB2 for z/OS, DB2 for LUW, DB2 for i.
 
-## Prerequisite
+## IBM i users
+
+When running on IBM i, `PDO_IBM` doesn't link with the Db2 LUW client library,
+but instead with libdb400, which provides a PASE wrapper for SQL/CLI. The
+differences between SQL/CLI in IBM i and the LUW driver are wrapped for you.
+You don't need Db2 Connect on IBM i as a result.
+
+To install, make sure you have the new Yum-based OSS environment. Install PHP,
+plus any dependencies like so:
+
+```shell
+yum install sqlcli-devel gcc make-gnu
+```
+
+Tony Cairns' [replacement libdb400](https://bitbucket.org/litmis/db2sock/src/master/db2/)
+is not yet tested, but may be desirable due to its greater debugging features.
+
+IBM i users should read `tests/README400.txt` in order to set up prequisites
+for unit tests.
+
+## LUW/z/Db2 Connect users
 
 CLIDRIVER should be installed in your system.
 If not installed Download from the below link.
