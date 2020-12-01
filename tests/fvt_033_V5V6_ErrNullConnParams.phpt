@@ -40,7 +40,7 @@ pdo_ibm: Check error condition when given null connection parameters
 ?>
 --EXPECTF--
 Connection Failed
-invalid data source name
+%s
 
 Connection Failed
 SQLSTATE=08001, SQLConnect: -30082 %s
