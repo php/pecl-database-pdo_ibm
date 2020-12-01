@@ -187,23 +187,23 @@ enum {
 
 
 /* This function is called after executing a stmt for recording lastInsertId */
-int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC);
+int record_last_insert_id( pdo_stmt_t *stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt);
 
 /* Cleanup function used across multiple compilation units */
-void stmt_cleanup(pdo_stmt_t *stmt TSRMLS_DC);
+void stmt_cleanup(pdo_stmt_t *stmt);
 
 /* error handling functions and macros. */
-void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle, SQLSMALLINT hType, char *tag, char *file, int line TSRMLS_DC);
-void raise_ibm_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, char *state, char *tag, char *message, char *file, int line TSRMLS_DC);
-void raise_dbh_error(pdo_dbh_t *dbh, char *tag, char *file, int line TSRMLS_DC);
-void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line TSRMLS_DC);
+void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle, SQLSMALLINT hType, char *tag, char *file, int line);
+void raise_ibm_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, char *state, char *tag, char *message, char *file, int line);
+void raise_dbh_error(pdo_dbh_t *dbh, char *tag, char *file, int line);
+void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line);
 void clear_stmt_error(pdo_stmt_t *stmt);
-int ibm_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC);
+int ibm_stmt_dtor(pdo_stmt_t *stmt);
 
-#define RAISE_DBH_ERROR(tag) raise_dbh_error(dbh, tag, __FILE__, __LINE__ TSRMLS_CC)
-#define RAISE_STMT_ERROR(tag) raise_stmt_error(stmt, tag, __FILE__, __LINE__ TSRMLS_CC)
-#define RAISE_IBM_STMT_ERROR(state, tag, msg) raise_ibm_error(stmt->dbh, stmt, state, tag, msg, __FILE__, __LINE__ TSRMLS_CC)
-#define RAISE_IBM_DBH_ERROR(state, tag, msg) raise_ibm_error(dbh, NULL, state, tag, msg, __FILE__, __LINE__ TSRMLS_CC)
+#define RAISE_DBH_ERROR(tag) raise_dbh_error(dbh, tag, __FILE__, __LINE__)
+#define RAISE_STMT_ERROR(tag) raise_stmt_error(stmt, tag, __FILE__, __LINE__)
+#define RAISE_IBM_STMT_ERROR(state, tag, msg) raise_ibm_error(stmt->dbh, stmt, state, tag, msg, __FILE__, __LINE__)
+#define RAISE_IBM_DBH_ERROR(state, tag, msg) raise_ibm_error(dbh, NULL, state, tag, msg, __FILE__, __LINE__)
 
 /* check for an SQL error in the context of an 
    PDO method execution. */

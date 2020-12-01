@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 extern struct pdo_stmt_methods ibm_stmt_methods;
-extern int ibm_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC);
+extern int ibm_stmt_dtor(pdo_stmt_t *stmt);
 
 #ifdef PASE /* libl, curlib */
 static int db2_ibmi_cmd_helper(SQLHDBC hdbc, char*stmt_string);
@@ -110,7 +110,7 @@ SQLRETURN _php_db2_override_SQLSetEnvAttr(
 #endif /* PASE */
 
 /* allocate and initialize the driver_data portion of a PDOStatement object. */
-static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt TSRMLS_DC)
+static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 
@@ -128,7 +128,7 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt TSRMLS_DC)
 }
 
 /* prepare a statement for execution. */
-static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options TSRMLS_DC)
+static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -160,7 +160,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
 	rc = pdo_parse_params(stmt, (char *) stmt_string, stmt_len,
 			&stmt_res->converted_statement,
-			&converted_len TSRMLS_CC);
+			&converted_len);
 
 	/*
 	 * If the query needed reformatting, a new statement string has been
@@ -188,7 +188,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 	/* now see if the cursor type has been explicitly specified. */
 	stmt_res->cursor_type = pdo_attr_lval(driver_options, PDO_ATTR_CURSOR, 
-			PDO_CURSOR_FWDONLY TSRMLS_CC);
+			PDO_CURSOR_FWDONLY);
 
 	/*
 	 * The default is just sequential access.  If something else has been
@@ -207,7 +207,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	/* Check for errors from that prepare */
 	check_stmt_error(rc, "SQLPrepare");
 	if (rc == SQL_ERROR) {
-		stmt_cleanup(stmt TSRMLS_CC);
+		stmt_cleanup(stmt);
 		return FALSE;
 	}
 
@@ -273,7 +273,7 @@ static void current_error_state(pdo_dbh_t *dbh)
 *  connection.  In that case, the closer is not automatically called by PDO,
 *  so we need to force cleanup.
 */
-static int ibm_handle_closer( pdo_dbh_t * dbh TSRMLS_DC)
+static int ibm_handle_closer( pdo_dbh_t * dbh)
 {
 	conn_handle *conn_res;
 
@@ -321,17 +321,16 @@ static int ibm_handle_preparer(
 	const char *sql,
 	size_t sql_len,
 	pdo_stmt_t *stmt,
-	zval *driver_options
-	TSRMLS_DC)
+	zval *driver_options)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
 	/* allocate new driver_data structure */
-	if (dbh_new_stmt_data(dbh, stmt TSRMLS_CC) == TRUE) {
+	if (dbh_new_stmt_data(dbh, stmt) == TRUE) {
 		/* Allocates the stmt handle */
 		/* Prepares the statement */
 		/* returns the stat_handle back to the calling function */
-		return dbh_prepare_stmt(dbh, stmt, sql, sql_len, driver_options TSRMLS_CC);
+		return dbh_prepare_stmt(dbh, stmt, sql, sql_len, driver_options);
 	}
 	return FALSE;
 }
@@ -340,8 +339,7 @@ static int ibm_handle_preparer(
 static long ibm_handle_doer(
 	pdo_dbh_t *dbh,
 	const char *sql,
-	size_t sql_len
-	TSRMLS_DC)
+	size_t sql_len)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	SQLHANDLE hstmt;
@@ -357,7 +355,7 @@ static long ibm_handle_doer(
 		* we catch the proper error record.
 		*/
 		raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-			"SQLExecDirect", __FILE__, __LINE__ TSRMLS_CC);
+			"SQLExecDirect", __FILE__, __LINE__);
 		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
 		/*
@@ -383,7 +381,7 @@ static long ibm_handle_doer(
 			* we catch the proper error record.
 			*/
 			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-				"SQLRowCount", __FILE__, __LINE__ TSRMLS_CC);
+				"SQLRowCount", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 			return -1;
 		}
@@ -399,7 +397,7 @@ static long ibm_handle_doer(
 	}
 
 	/* Set the last inserted id */
-	rc = record_last_insert_id( NULL, dbh, hstmt TSRMLS_CC);
+	rc = record_last_insert_id( NULL, dbh, hstmt);
 	if( rc == FALSE ) {
 		return -1;
 	}
@@ -409,7 +407,7 @@ static long ibm_handle_doer(
 }
 
 /* start a new transaction */
-static int ibm_handle_begin( pdo_dbh_t *dbh TSRMLS_DC)
+static int ibm_handle_begin(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	int rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0);
@@ -417,9 +415,7 @@ static int ibm_handle_begin( pdo_dbh_t *dbh TSRMLS_DC)
 	return TRUE;
 }
 
-static int ibm_handle_commit(
-	pdo_dbh_t *dbh
-	TSRMLS_DC)
+static int ibm_handle_commit(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
@@ -432,9 +428,7 @@ static int ibm_handle_commit(
 	return TRUE;
 }
 
-static int ibm_handle_rollback(
-	pdo_dbh_t *dbh
-	TSRMLS_DC)
+static int ibm_handle_rollback(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
@@ -455,8 +449,7 @@ static int ibm_handle_set_attribute(
 #else
 	long attr,
 #endif
-	zval *return_value
-	TSRMLS_DC)
+	zval *return_value)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 	int rc = 0;
@@ -672,7 +665,7 @@ static int ibm_handle_set_attribute(
 }
 
 /* fetch the last inserted id */
-static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len TSRMLS_DC)
+static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len)
 {
 	char *last_id = emalloc( MAX_IDENTITY_DIGITS );
 	int rc = 0;
@@ -701,7 +694,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 			* we catch the proper error record.
 			*/
 			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-				"SQLExecDirect", __FILE__, __LINE__ TSRMLS_CC);
+				"SQLExecDirect", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
 			return FALSE;
@@ -714,7 +707,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 			* we catch the proper error record.
 			*/
 			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-				"SQLBindCol", __FILE__, __LINE__ TSRMLS_CC);
+				"SQLBindCol", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
 			return FALSE;
@@ -727,7 +720,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 			* we catch the proper error record.
 			*/
 			raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-				"SQLFetch", __FILE__, __LINE__ TSRMLS_CC);
+				"SQLFetch", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
 			return FALSE;
@@ -749,8 +742,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 static int ibm_handle_fetch_error(
 	pdo_dbh_t *dbh,
 	pdo_stmt_t *stmt,
-	zval *info
-	TSRMLS_DC)
+	zval *info)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 	char suppliment[512];
@@ -796,8 +788,7 @@ static int ibm_handle_quoter(
 	size_t unq_len,
 	char **q,
 	size_t *q_len,
-	enum pdo_param_type paramtype
-	TSRMLS_DC)
+	enum pdo_param_type paramtype)
 {
 	char *sql;
 	size_t new_length, i, j;
@@ -846,8 +837,7 @@ static int ibm_handle_get_attribute(
 #else
 	long attr,
 #endif
-	zval *return_value
-	TSRMLS_DC)
+	zval *return_value)
 {
 	char value[MAX_DBMS_IDENTIFIER_NAME];
 	int rc;
@@ -986,9 +976,7 @@ static int ibm_handle_get_attribute(
 }
 
 #ifndef PASE
-static int ibm_handle_check_liveness(
-	pdo_dbh_t *dbh
-	TSRMLS_DC)
+static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 
@@ -1029,7 +1017,7 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 };
 
 /* handle the business of creating a connection. */
-static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
+static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 {
 	int rc = 0;
 	int dsn_length = 0;
@@ -1260,11 +1248,10 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
 */
 static int ibm_handle_factory(
 	pdo_dbh_t *dbh,
-	zval *driver_options
-	TSRMLS_DC)
+	zval *driver_options)
 {
 	/* go do the connection */
-	return dbh_connect(dbh, driver_options TSRMLS_CC);
+	return dbh_connect(dbh, driver_options);
 }
 
 pdo_driver_t pdo_ibm_driver =
@@ -1274,7 +1261,7 @@ pdo_driver_t pdo_ibm_driver =
 };
 
 /* common error handling path for final disposition of an error.*/
-static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
+static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt)
 {
 /*  current_error_state(dbh);*/
 
@@ -1284,7 +1271,7 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
 		/* what this a error in the stmt constructor? */
 		if (stmt->methods == NULL) {
 			/* make sure we do any required cleanup. */
-			ibm_stmt_dtor(stmt TSRMLS_CC);
+			ibm_stmt_dtor(stmt);
 		}
 		strcpy(stmt->error_code, conn_res->error_data.sql_state);
 	}
@@ -1296,14 +1283,14 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
 
 	if (dbh->methods == NULL) {
 		if(conn_res->error_data.isam_err_msg != '\0') {
-			zend_throw_exception_ex(php_pdo_get_exception(), 0 TSRMLS_CC,
+			zend_throw_exception_ex(php_pdo_get_exception(), 0,
 				"SQLSTATE=%s, %s: %d %s",
 				conn_res->error_data.sql_state,
 				conn_res->error_data.failure_name,
 				conn_res->error_data.sqlcode,
 				conn_res->error_data.err_msg);
 		} else {
-			zend_throw_exception_ex(php_pdo_get_exception(), 0 TSRMLS_CC,
+			zend_throw_exception_ex(php_pdo_get_exception(), 0,
 				"SQLSTATE=%s, %s: %d %s ISAM: %s",
 				conn_res->error_data.sql_state,
 				conn_res->error_data.failure_name,
@@ -1311,7 +1298,7 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
 				conn_res->error_data.err_msg,
 				conn_res->error_data.isam_err_msg);
 		}
-		ibm_handle_closer(dbh TSRMLS_CC);
+		ibm_handle_closer(dbh);
 	}
 }
 
@@ -1320,7 +1307,7 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt TSRMLS_DC)
 * call is saved in our error record.
 */
 void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle,
-	SQLSMALLINT hType, char *tag, char *file, int line TSRMLS_DC)
+	SQLSMALLINT hType, char *tag, char *file, int line)
 {
 	int rc;
 	SQLSMALLINT length;
@@ -1345,7 +1332,7 @@ void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle,
 	}
 
 	/* now go tell PDO about this problem */
-	process_pdo_error(dbh, stmt TSRMLS_CC);
+	process_pdo_error(dbh, stmt);
 }
 
 /*
@@ -1353,7 +1340,7 @@ void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle,
 * provided sqlstate and message info.
 */
 void raise_ibm_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, char *state, char *tag,
-	char *message, char *file, int line TSRMLS_DC)
+	char *message, char *file, int line)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 
@@ -1365,18 +1352,18 @@ void raise_ibm_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, char *state, char *tag,
 	strcpy(conn_res->error_data.sql_state, state);
 	conn_res->error_data.sqlcode = 1;	/* just give a non-zero code state. */
 	/* now go tell PDO about this problem */
-	process_pdo_error(dbh, stmt TSRMLS_CC);
+	process_pdo_error(dbh, stmt);
 }
 
 /*
 * Raise an error in a connection context.  This ensures we use the
 * connection handle for retrieving error information.
 */
-void raise_dbh_error(pdo_dbh_t *dbh, char *tag, char *file, int line TSRMLS_DC)
+void raise_dbh_error(pdo_dbh_t *dbh, char *tag, char *file, int line)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	raise_sql_error(dbh, NULL, conn_res->hdbc, SQL_HANDLE_DBC, tag, file,
-			line TSRMLS_CC);
+			line);
 }
 
 /*
@@ -1384,14 +1371,14 @@ void raise_dbh_error(pdo_dbh_t *dbh, char *tag, char *file, int line TSRMLS_DC)
 * handle for retrieving the diag record, as well as forcing stmt-related
 * cleanup.
 */
-void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line TSRMLS_DC)
+void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 
 	/* if we're in the middle of execution when an error was detected, make sure we cancel */
 	if (stmt_res->executing) {
 		/*  raise the error */
-		raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line TSRMLS_CC);
+		raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line);
 		/*  cancel the statement */
 		SQLCancel(stmt_res->hstmt);
 		/*  make sure we release execution-related storage. */
@@ -1406,7 +1393,7 @@ void raise_stmt_error(pdo_stmt_t *stmt, char *tag, char *file, int line TSRMLS_D
 		stmt_res->executing = 0;
 	} else {
 		/*  raise the error */
-		raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line TSRMLS_CC);
+		raise_sql_error(stmt->dbh, stmt, stmt_res->hstmt, SQL_HANDLE_STMT, tag, file, line);
 	}
 }
 

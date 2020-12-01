@@ -113,7 +113,7 @@ static int get_lob_substring(pdo_stmt_t *stmt, column_data *col_res,
 }
 #endif
 
-STREAM_RETURN_TYPE lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
+STREAM_RETURN_TYPE lob_stream_read(php_stream *stream, char *buf, size_t count)
 {
 	SQLINTEGER readBytes = 0;
 	struct lob_stream_data *data = stream->abstract;
@@ -184,17 +184,17 @@ STREAM_RETURN_TYPE lob_stream_read(php_stream *stream, char *buf, size_t count T
 	return (STREAM_RETURN_TYPE) readBytes;
 }
 
-STREAM_RETURN_TYPE lob_stream_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC)
+STREAM_RETURN_TYPE lob_stream_write(php_stream *stream, const char *buf, size_t count)
 {
 	return 0;
 }
 
-int lob_stream_flush(php_stream *stream TSRMLS_DC)
+int lob_stream_flush(php_stream *stream)
 {
 	return 0;
 }
 
-int lob_stream_close(php_stream *stream, int close_handle TSRMLS_DC)
+int lob_stream_close(php_stream *stream, int close_handle)
 {
 	struct lob_stream_data *data = stream->abstract;
 	efree(data);
@@ -213,7 +213,7 @@ php_stream_ops lob_stream_ops = {
 	NULL			/* Stat */
 };
 
-php_stream* create_lob_stream( pdo_stmt_t *stmt , stmt_handle *stmt_res , int colno TSRMLS_DC )
+php_stream* create_lob_stream( pdo_stmt_t *stmt , stmt_handle *stmt_res , int colno )
 {
 	struct lob_stream_data *data;
 	column_data *col_res;
@@ -226,7 +226,7 @@ php_stream* create_lob_stream( pdo_stmt_t *stmt , stmt_handle *stmt_res , int co
 	col_res = &data->stmt_res->columns[data->colno];
 	retval = (php_stream *) php_stream_alloc(&lob_stream_ops, data, NULL, "r");
 	/* Find out if the column contains NULL data */
-	if (lob_stream_read(retval, NULL, 0 TSRMLS_CC) == SQL_NULL_DATA) {
+	if (lob_stream_read(retval, NULL, 0) == SQL_NULL_DATA) {
 		php_stream_close(retval);
 		return NULL;
 	} else
@@ -238,7 +238,7 @@ php_stream* create_lob_stream( pdo_stmt_t *stmt , stmt_handle *stmt_res , int co
 * the statement constructors or whenever we traverse from one
 * result set to the next.
 */
-static void stmt_free_column_descriptors(pdo_stmt_t *stmt TSRMLS_DC)
+static void stmt_free_column_descriptors(pdo_stmt_t *stmt)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	if (stmt_res->columns != NULL) {
@@ -269,7 +269,7 @@ static void stmt_free_column_descriptors(pdo_stmt_t *stmt TSRMLS_DC)
 * instance.  This cleans up the driver_data control block, as
 * well as any temporary allocations used during execution.
 */
-void stmt_cleanup(pdo_stmt_t *stmt TSRMLS_DC)
+void stmt_cleanup(pdo_stmt_t *stmt)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	if (stmt_res != NULL) {
@@ -280,15 +280,14 @@ void stmt_cleanup(pdo_stmt_t *stmt TSRMLS_DC)
 			stmt_res->lob_buffer = NULL;
 		}
 		/* free any descriptors we're keeping active */
-		stmt_free_column_descriptors(stmt TSRMLS_CC);
+		stmt_free_column_descriptors(stmt);
 		efree(stmt_res);
 	}
 	stmt->driver_data = NULL;
 }
 
 /* get the parameter description information for a positional bound parameter. */
-static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_data *param 
-		TSRMLS_DC)
+static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_data *param)
 {
 	param_node *param_res = (param_node *) param->driver_data;
 	stmt_handle *stmt_res = NULL;
@@ -528,7 +527,7 @@ static void db2_inout_parm_pad_return(param_node *param_res, struct pdo_bound_pa
 * Bind a statement parameter to the PHP value supplying or receiving the
 * parameter data.
 */
-int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRMLS_DC)
+int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 {
 	int rc, is_num = 0, is_null = 0, is_empty = 0;
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -549,7 +548,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 #endif
 
 	/* make sure we have current description information. */
-	if (stmt_get_parameter_info(stmt, curr TSRMLS_CC) == FALSE) {
+	if (stmt_get_parameter_info(stmt, curr) == FALSE) {
 		return FALSE;
 	}
 	param_res = (param_node *) curr->driver_data;
@@ -944,7 +943,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRM
 }
 
 /* handle the pre-execution phase for bound parameters. */
-static int stmt_parameter_pre_execute(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRMLS_DC)
+static int stmt_parameter_pre_execute(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	param_node *param_res = (param_node *) curr->driver_data;
@@ -1061,7 +1060,7 @@ static int stmt_parameter_pre_execute(pdo_stmt_t *stmt, struct pdo_bound_param_d
 
 
 /* post-execution bound parameter handling. */
-static int stmt_parameter_post_execute(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr TSRMLS_DC)
+static int stmt_parameter_post_execute(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 {
 	param_node *param_res = (param_node *) curr->driver_data;
 
@@ -1115,7 +1114,7 @@ static int stmt_parameter_post_execute(pdo_stmt_t *stmt, struct pdo_bound_param_
 }
 
 /* bind a column to an internally allocated buffer location. */
-static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
+static int stmt_bind_column(pdo_stmt_t *stmt, int colno)
 {
 	stmt_handle *stmt_res;
 	column_data *col_res;
@@ -1206,7 +1205,7 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 }
 
 /* allocate a set of internal column descriptors for a statement. */
-static int stmt_allocate_column_descriptors(pdo_stmt_t *stmt TSRMLS_DC)
+static int stmt_allocate_column_descriptors(pdo_stmt_t *stmt)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	SQLSMALLINT nResultCols = 0;
@@ -1237,7 +1236,7 @@ static int stmt_allocate_column_descriptors(pdo_stmt_t *stmt TSRMLS_DC)
 * This is also used for error cleanup for errors that occur while
 * the stmt is still half constructed.
 */
-int ibm_stmt_dtor( pdo_stmt_t *stmt TSRMLS_DC)
+int ibm_stmt_dtor( pdo_stmt_t *stmt)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 
@@ -1252,7 +1251,7 @@ int ibm_stmt_dtor( pdo_stmt_t *stmt TSRMLS_DC)
 			stmt_res->hstmt = SQL_NULL_HANDLE;
 		}
 		/* release any control blocks we have attached to this statement */
-		stmt_cleanup(stmt TSRMLS_CC);
+		stmt_cleanup(stmt);
 	}
 	return TRUE;
 }
@@ -1261,7 +1260,7 @@ int ibm_stmt_dtor( pdo_stmt_t *stmt TSRMLS_DC)
 * Execute a PDOStatement.  Used for both the PDOStatement::execute() method
 * as well as the PDO:query() method.
 */
-static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
+static int ibm_stmt_executer( pdo_stmt_t * stmt)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	int rc = 0;
@@ -1390,14 +1389,14 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 	
 		/* Is this the first time we've executed this statement? */
 		if (!stmt->executed) {
-			if (stmt_allocate_column_descriptors(stmt TSRMLS_CC) == FALSE) {
+			if (stmt_allocate_column_descriptors(stmt) == FALSE) {
 				return FALSE;
 			}
 		}
 	}
 
 	/* Set the last serial id inserted */
-	rc = record_last_insert_id(stmt, stmt->dbh, stmt_res->hstmt TSRMLS_CC);
+	rc = record_last_insert_id(stmt, stmt->dbh, stmt_res->hstmt);
 	if( rc == FALSE ) {
 		return FALSE;
 	}
@@ -1412,8 +1411,7 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt TSRMLS_DC)
 static int ibm_stmt_fetcher(
 	pdo_stmt_t *stmt,
 	enum pdo_fetch_orientation ori,
-	long offset
-	TSRMLS_DC)
+	long offset)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	/* by default, we're just fetching the next one */
@@ -1489,8 +1487,7 @@ static int ibm_stmt_fetcher(
 static int ibm_stmt_param_hook(
 	pdo_stmt_t *stmt,
 	struct pdo_bound_param_data *param,
-	enum pdo_param_event event_type
-	TSRMLS_DC)
+	enum pdo_param_event event_type)
 {
 	/*
 	* We get called for both parameters and bound columns.
@@ -1514,13 +1511,13 @@ static int ibm_stmt_param_hook(
 
 			case PDO_PARAM_EVT_EXEC_PRE:
 			/* we're allocating a bound parameter, go do the binding */
-				if (stmt_bind_parameter(stmt, param TSRMLS_CC) == TRUE) {
-					return stmt_parameter_pre_execute(stmt, param TSRMLS_CC);
+				if (stmt_bind_parameter(stmt, param) == TRUE) {
+					return stmt_parameter_pre_execute(stmt, param);
 				} else {
 					return FALSE;
 				}
 			case PDO_PARAM_EVT_EXEC_POST:
-				return stmt_parameter_post_execute(stmt, param TSRMLS_CC);
+				return stmt_parameter_post_execute(stmt, param);
 
 			/* parameters aren't processed at the fetch phase. */
 			case PDO_PARAM_EVT_FETCH_PRE:
@@ -1553,8 +1550,7 @@ static int ibm_stmt_param_hook(
 /* describe a column for the PDO driver. */
 static int ibm_stmt_describer(
 	pdo_stmt_t *stmt,
-	int colno
-	TSRMLS_DC)
+	int colno)
 {
 	stmt_handle *stmt_res = (stmt_handle *)stmt->driver_data;
 	/* access the information for this column */
@@ -1632,7 +1628,7 @@ static int ibm_stmt_describer(
 	col->precision = col_res->scale;
 
 	/* bind the columns */
-	stmt_bind_column(stmt, colno TSRMLS_CC);
+	stmt_bind_column(stmt, colno);
 	return TRUE;
 }
 
@@ -1645,15 +1641,14 @@ static int ibm_stmt_get_col(
 	int colno,
 	char **ptr,
 	unsigned long *len,
-	int *caller_frees
-	TSRMLS_DC)
+	int *caller_frees)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	/* access our look aside data */
 	column_data *col_res = &stmt_res->columns[colno];
 
 	if (col_res->returned_type == PDO_PARAM_LOB) {
-		php_stream *stream = create_lob_stream(stmt, stmt_res, colno TSRMLS_CC);	/* already opened */
+		php_stream *stream = create_lob_stream(stmt, stmt_res, colno);	/* already opened */
 		if (stream != NULL) {
 			*ptr = (char *) stream;
 		} else {
@@ -1698,9 +1693,7 @@ static int ibm_stmt_get_col(
 }
 
 /* step to the next result set of the query. */
-static int ibm_stmt_next_rowset(
-	pdo_stmt_t *stmt
-	TSRMLS_DC)
+static int ibm_stmt_next_rowset(pdo_stmt_t *stmt)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 
@@ -1723,9 +1716,9 @@ static int ibm_stmt_next_rowset(
 	* The next result set may have different column information, so
 	* we need to clear out our existing set.
 	*/
-	stmt_free_column_descriptors(stmt TSRMLS_CC);
+	stmt_free_column_descriptors(stmt);
 	/* Now allocate a new set of column descriptors */
-	if (stmt_allocate_column_descriptors(stmt TSRMLS_CC) == FALSE) {
+	if (stmt_allocate_column_descriptors(stmt) == FALSE) {
 		return FALSE;
 	}
 	/* more results to process */
@@ -1739,8 +1732,7 @@ static int ibm_stmt_next_rowset(
 static int ibm_stmt_get_column_meta(
 	pdo_stmt_t *stmt,
 	long colno,
-	zval *return_value
-	TSRMLS_DC)
+	zval *return_value)
 {
 	stmt_handle *stmt_res = NULL;
 	column_data *col_res = NULL;
@@ -1878,8 +1870,7 @@ static int ibm_stmt_get_column_meta(
 static int ibm_stmt_get_attribute(
 	pdo_stmt_t *stmt,
 	long attr,
-	zval *return_value
-	TSRMLS_DC)
+	zval *return_value)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 
@@ -1917,8 +1908,7 @@ static int ibm_stmt_get_attribute(
 static int ibm_stmt_set_attribute(
 	pdo_stmt_t *stmt,
 	long attr,
-	zval *value
-	TSRMLS_DC)
+	zval *value)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	int rc = 0;
@@ -1946,7 +1936,7 @@ static int ibm_stmt_set_attribute(
 /* This function updates the last_insert_id value of the connection handle,
 * when a row with serial type column inserted in IDS.
 */
-int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TSRMLS_DC)
+int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt)
 {
 	int rc;
 	long int returnValue;
@@ -1973,7 +1963,7 @@ int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt TS
 				* we catch the proper error record.
 				*/
 				raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
-					"SQLGetStmtAttr", __FILE__, __LINE__ TSRMLS_CC);
+					"SQLGetStmtAttr", __FILE__, __LINE__);
 				SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 				return FALSE;
 			}
