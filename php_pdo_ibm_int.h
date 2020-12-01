@@ -299,6 +299,16 @@ typedef struct {
 /* size of the buffer used to read LOB streams */
 #define LOB_BUFFER_SIZE 8192
 
+/*
+ * PHP 7.4 changes the stream r/w functions to be ssize_t
+ * (so you can return errors without (size_t)-1)
+ */
+#if PHP_MAJOR_VERSION > 7 || (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION == 4)
+#define STREAM_RETURN_TYPE ssize_t
+#else
+#define STREAM_RETURN_TYPE size_t
+#endif
+
 typedef struct _stmt_handle_struct {
 	SQLHANDLE hstmt;					/* the statement handle associated with the stmt */
 	int executing;						/* an executing state flag for error cleanup */

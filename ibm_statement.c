@@ -113,7 +113,7 @@ static int get_lob_substring(pdo_stmt_t *stmt, column_data *col_res,
 }
 #endif
 
-size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
+STREAM_RETURN_TYPE lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 {
 	SQLINTEGER readBytes = 0;
 	struct lob_stream_data *data = stream->abstract;
@@ -164,10 +164,14 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 	}
 #else
 	rc = SQLGetData(stmt_res->hstmt, data->colno + 1, ctype, buf, count, &readBytes);
-	check_stmt_error(rc, "SQLGetData");
+	/* custom error handling for possible ssize_t */
+	if (rc == SQL_ERROR) {
+		RAISE_STMT_ERROR("SQLGetData");
+		return (STREAM_RETURN_TYPE)-1;
+	}
 
 	if (readBytes == -1) {	/*For NULL CLOB/BLOB values */
-		return (size_t) readBytes;
+		return (STREAM_RETURN_TYPE) readBytes;
 	}
 	if (readBytes > count) {
 		if (col_res->data_type == SQL_LONGVARCHAR) {  /*Dont return the NULL at end of CLOB buffer */
@@ -177,10 +181,10 @@ size_t lob_stream_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
 		}
 	}
 #endif
-	return (size_t) readBytes;
+	return (STREAM_RETURN_TYPE) readBytes;
 }
 
-size_t lob_stream_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC)
+STREAM_RETURN_TYPE lob_stream_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC)
 {
 	return 0;
 }
