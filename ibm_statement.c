@@ -1594,6 +1594,7 @@ static int ibm_stmt_describer(
 	* and ask for the information again.
 	*/
 	if (col_res->namelen <= 0) {
+		/* XXX: Internable? */
 		col_res->name = estrdup("");
 		check_stmt_allocation(col_res->name, "ibm_stmt_describer",
 				"Unable to allocate column name");
@@ -1602,16 +1603,11 @@ static int ibm_stmt_describer(
 		col_res->name = emalloc(col_res->namelen + 1);
 		check_stmt_allocation(col_res->name, "ibm_stmt_describer", "Unable to allocate column name");
 		rc = SQLDescribeCol((SQLHSTMT)stmt_res->hstmt, (SQLSMALLINT)(colno + 1 ), col_res->name,
-				BUFSIZ, &col_res->namelen, &col_res->data_type, &col_res->data_size, &col_res->scale,
+				col_res->namelen, &col_res->namelen, &col_res->data_type, &col_res->data_size, &col_res->scale,
 				&col_res->nullable);
 		check_stmt_error(rc, "SQLDescribeCol");
 	} else {
-#if PHP_MAJOR_VERSION >= 7
-	//	col_res->name = estrdup(tmp_name);
-                col_res->name = zend_string_init(tmp_name, strlen(tmp_name), 0); 
-#else
 		col_res->name = estrdup(tmp_name);
-#endif
 		check_stmt_allocation(col_res->name, "ibm_stmt_describer", "Unable to allocate column name");
 	}
 	col = &stmt->columns[colno];
@@ -1620,12 +1616,27 @@ static int ibm_stmt_describer(
 	* Copy the information back into the PDO control block.  Note that
 	* PDO will release the name information, so we don't have to.
 	*/
+#if PHP_MAJOR_VERSION >= 7
+        col->name = zend_string_init(col_res->name, strlen(col_res->name), 0);
+#else
 	col->name = col_res->name;
-#if PHP_MAJOR_VERSION < 7
 	col->namelen = col_res->namelen;
 #endif
 	col->maxlen = col_res->data_size;
 	col->precision = col_res->scale;
+
+#if PHP_MAJOR_VERSION >= 7
+	/*
+	 * We don't need col_res->name anymore since we always fetch it.
+	 * It isn't referenced anywhere but inside of this function.
+	 * Perhaps we could keep it, cache it, and free it when we free
+	 * other resources in col_res. For now, free it to avoid leaks.
+	 * If we were to keep it, free it in stmt_free_column_descriptors.
+	 * zend_string_init will copy the old buffer, so it's safe.
+	 * (In PHP 5, PDO manages the lifetime of the char*, so don't free.)
+	 */
+	efree(col_res->name);
+#endif
 
 	/* bind the columns */
 	stmt_bind_column(stmt, colno);
