@@ -29,6 +29,16 @@ pdo_ibm: Testing fetchColumn with different modes and options
 				while( $value = $stmt->fetchColumn( -1 ) ) {
 					print "The column value is: " . $value . "\n";
 				}
+			} catch( ValueError $e ) {
+				/*
+				 * PHP 8 makes PDO catch negative column
+				 * references, so it'll never reach the driver.
+				 * It won't mutate the SQL error, so it'll just
+				 * return the same value it had last time. As
+				 * such, just consider getting a ValueError
+				 * good enough for this part of the test.
+				 */
+				print "Negative index expected to fail\n";
 			} catch (Exception $e) {
 				print "Negative index expected to fail\n";
 			}
@@ -39,6 +49,9 @@ pdo_ibm: Testing fetchColumn with different modes and options
 				while( $value = $stmt->fetchColumn( 7 ) ) {
 					print "The column value is: " . $value . "\n";
 				}
+			} catch( ValueError $e ) {
+				/* As above, so below (but for OOB) */
+				print "Out of bounds index expected to fail\n";
 			} catch (Exception $e) {
 				print "Out of bounds index expected to fail\n";
 			}
