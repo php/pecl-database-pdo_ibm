@@ -28,6 +28,16 @@ pdo_ibm: Get Column meta data.
 			try{
 				$meta = $stmt->getColumnMeta(-1);
 				var_dump( $meta );
+			} catch( ValueError $e ) {
+				/*
+				 * PHP 8 makes PDO catch negative column
+				 * references, so it'll never reach the driver.
+				 * It won't mutate the SQL error, so it'll just
+				 * return the same value it had last time. As
+				 * such, just consider getting a ValueError
+				 * good enough for this part of the test.
+				 */
+				print "ValueError\n";
 			} catch( Exception $e ) {
 				print "Error: " . $stmt->errorCode() . "\n";
 			}
@@ -37,83 +47,107 @@ pdo_ibm: Get Column meta data.
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
---EXPECT--
-array(7) {
-  ["scale"]=>
-  int(0)
-  ["native_type"]=>
-  string(7) "INTEGER"
-  ["flags"]=>
-  array(1) {
-    ["not_null"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(2) "ID"
-  ["len"]=>
-  int(20)
-  ["precision"]=>
-  int(0)
-  ["pdo_type"]=>
-  int(2)
-}
-array(7) {
-  ["scale"]=>
-  int(0)
-  ["native_type"]=>
-  string(7) "VARCHAR"
-  ["flags"]=>
-  array(1) {
-    ["not_null"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(5) "BREED"
-  ["len"]=>
-  int(32)
-  ["precision"]=>
-  int(0)
-  ["pdo_type"]=>
-  int(2)
-}
-array(7) {
-  ["scale"]=>
-  int(0)
-  ["native_type"]=>
-  string(4) "CHAR"
-  ["flags"]=>
-  array(1) {
-    ["not_null"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(4) "NAME"
-  ["len"]=>
-  int(16)
-  ["precision"]=>
-  int(0)
-  ["pdo_type"]=>
-  int(2)
-}
-array(7) {
-  ["scale"]=>
-  int(2)
-  ["native_type"]=>
-  string(7) "DECIMAL"
-  ["flags"]=>
-  array(1) {
-    ["not_null"]=>
-    bool(false)
-  }
-  ["name"]=>
-  string(6) "WEIGHT"
-  ["len"]=>
-  int(9)
-  ["precision"]=>
-  int(2)
-  ["pdo_type"]=>
-  int(2)
-}
+--EXPECTREGEX--
+array\(8\) \{
+  \["scale"\]=>
+  int\(0\)
+  \["table"\]=>
+  string\(7\) ("ANIMALS")|("animals")
+  \["native_type"\]=>
+  string\(7\) "INTEGER"
+  \["flags"\]=>
+  array\(3\) {
+    \["not_null"\]=>
+    bool\(false\)
+    \["unsigned"\]=>
+    bool\(false\)
+    \["auto_increment"\]=>
+    bool\(false\)
+  \}
+  \["name"\]=>
+  string\(2\) "ID"
+  \["len"\]=>
+  int\(11\)
+  \["precision"\]=>
+  int\(0\)
+  \["pdo_type"\]=>
+  int\(2\)
+\}
+array\(8\) \{
+  \["scale"\]=>
+  int\(0\)
+  \["table"\]=>
+  string\(7\) ("ANIMALS")|("animals")
+  \["native_type"\]=>
+  string\(7\) "VARCHAR"
+  \["flags"\]=>
+  array\(3\) \{
+    \["not_null"\]=>
+    bool\(false\)
+    \["unsigned"\]=>
+    bool\(true\)
+    \["auto_increment"\]=>
+    bool\(false\)
+  \}
+  \["name"\]=>
+  string\(5\) "BREED"
+  \["len"\]=>
+  int\(32\)
+  \["precision"\]=>
+  int\(0\)
+  \["pdo_type"\]=>
+  int\(2\)
+\}
+array\(8\) \{
+  \["scale"\]=>
+  int\(0\)
+  \["table"\]=>
+  string\(7\) ("ANIMALS")|("animals")
+  \["native_type"\]=>
+  string\(4\) "CHAR"
+  \["flags"\]=>
+  array\(3\) {
+    \["not_null"\]=>
+    bool\(false\)
+    \["unsigned"\]=>
+    bool\(true\)
+    \["auto_increment"\]=>
+    bool\(false\)
+  \}
+  \["name"\]=>
+  string\(4\) "NAME"
+  \["len"\]=>
+  int\(16\)
+  \["precision"\]=>
+  int\(0\)
+  \["pdo_type"\]=>
+  int\(2\)
+\}
+array\(8\) \{
+  \["scale"\]=>
+  int\(2\)
+  \["table"\]=>
+  string\(7\) ("ANIMALS")|("animals")
+  \["native_type"\]=>
+  string\(7\) "DECIMAL"
+  \["flags"\]=>
+  array\(3\) {
+    \["not_null"\]=>
+    bool\(false\)
+    \["unsigned"\]=>
+    bool\(false\)
+    \["auto_increment"\]=>
+    bool\(false\)
+  \}
+  \["name"\]=>
+  string\(6\) "WEIGHT"
+  \["len"\]=>
+  int\(9\)
+  \["precision"\]=>
+  int\(2\)
+  \["pdo_type"\]=>
+  int\(2\)
+\}
 Error: HY097
-Error: 42P10
+(Error: 42P10)|(ValueError)
 

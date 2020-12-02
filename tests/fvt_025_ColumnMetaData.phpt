@@ -28,6 +28,16 @@ pdo_ibm: Get Column meta data.
 			try{
 				$meta = $stmt->getColumnMeta(-1);
 				var_dump( $meta );
+			} catch( ValueError $e ) {
+				/*
+				 * PHP 8 makes PDO catch negative column
+				 * references, so it'll never reach the driver.
+				 * It won't mutate the SQL error, so it'll just
+				 * return the same value it had last time. As
+				 * such, just consider getting a ValueError
+				 * good enough for this part of the test.
+				 */
+				print "ValueError\n";
 			} catch( Exception $e ) {
 				print "Error: " . $stmt->errorCode() . "\n";
 			}
@@ -139,5 +149,5 @@ array\(8\) \{
   int\(2\)
 \}
 Error: HY097
-Error: 42P10
+(Error: 42P10)|(ValueError)
 
