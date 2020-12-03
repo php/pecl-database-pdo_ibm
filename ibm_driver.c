@@ -1282,7 +1282,7 @@ static void process_pdo_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt)
 	*/
 
 	if (dbh->methods == NULL) {
-		if(conn_res->error_data.isam_err_msg != '\0') {
+		if(conn_res->error_data.isam_err_msg[0] != '\0') {
 			zend_throw_exception_ex(php_pdo_get_exception(), 0,
 				"SQLSTATE=%s, %s: %d %s",
 				conn_res->error_data.sql_state,
