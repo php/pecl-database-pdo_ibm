@@ -1122,7 +1122,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 
 			if(num_idx == PDO_SQL_ATTR_USE_TRUSTED_CONTEXT) {
 				if (option_num == SQL_TRUE) {
-					rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_USE_TRUSTED_CONTEXT, SQL_TRUE, SQL_IS_INTEGER);
+					rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_USE_TRUSTED_CONTEXT, (SQLPOINTER)(intptr_t)SQL_TRUE, SQL_IS_INTEGER);
 					check_dbh_error(rc, "SQLSetConnectAttr");
 					break;
 				}
