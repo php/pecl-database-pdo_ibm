@@ -1082,22 +1082,23 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 	if (driver_options != NULL) {
 		int i = 0;
 		ulong num_idx;
-		char *opt_key;
-		zval **data;
 #if PHP_MAJOR_VERSION >= 7
+		zend_string *opt_key;
+		zval *data;
 		zend_long option_num = 0;
 #else
+		char *opt_key;
+		zval **data;
 		long option_num = 0;
 #endif
 		char *option_str = NULL;
 
 		int numOpts = zend_hash_num_elements(Z_ARRVAL_P(driver_options));
 #if PHP_MAJOR_VERSION >= 7
-                
-                        ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(driver_options), num_idx, opt_key, data) {
-                                if (opt_key) {
-                                        continue;
-                                }
+		ZEND_HASH_FOREACH_KEY_VAL(Z_ARRVAL_P(driver_options), num_idx, opt_key, data) {
+			if (opt_key) {
+			        continue;
+			}
 #else
 		zend_hash_internal_pointer_reset(Z_ARRVAL_P(driver_options));
 		for ( i = 0; i < numOpts; i++) {
@@ -1106,7 +1107,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 #endif			
 		
 #if PHP_MAJOR_VERSION >= 7
-            if (Z_TYPE(data) == IS_STRING) {
+			if (Z_TYPE_P(data) == IS_STRING) {
 				option_str = Z_STRVAL_P(data);
 #else	
 			if (Z_TYPE_PP(data) == IS_STRING) {
@@ -1114,7 +1115,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 #endif
 			} else {
 #if PHP_MAJOR_VERSION >= 7
-				option_num = Z_LVAL(**data);
+				option_num = Z_LVAL_P(data);
 #else
 				option_num = Z_LVAL_PP(data);
 #endif
