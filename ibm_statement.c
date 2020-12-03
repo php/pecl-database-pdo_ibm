@@ -634,7 +634,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 #if defined(PASE) && defined(__LP64__)
 						SQL_BIGINT,
 #else
-						SQL_C_LONG
+						SQL_C_LONG,
 #endif
 						param_res->data_type,
 						param_res->param_size,
