@@ -672,7 +672,11 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 	char *sql;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	SQLHANDLE hstmt;
-	SQLUINTEGER out_length;
+#ifdef PASE
+	SQLINTEGER out_length;
+#else
+	SQLLEN out_length;
+#endif
 	char server[MAX_DBMS_IDENTIFIER_NAME];
 
 #ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
