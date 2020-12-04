@@ -535,7 +535,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 	SQLSMALLINT inputOutputType = 0;
 	SQLSMALLINT switchInputOutputType = 0;
 	int origlen = 0;
-	char *data_buf = NULL;
+	void *data_buf = NULL;
 	int how_to_handle_empty_string = 0;
 
 #if PHP_MAJOR_VERSION >= 7
