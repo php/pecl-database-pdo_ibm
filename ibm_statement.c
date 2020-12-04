@@ -1522,6 +1522,8 @@ static int ibm_stmt_param_hook(
 			/* parameters aren't processed at the fetch phase. */
 			case PDO_PARAM_EVT_FETCH_PRE:
 			case PDO_PARAM_EVT_FETCH_POST:
+			/* XXX: anything we can actually normalize? */
+			case PDO_PARAM_EVT_NORMALIZE:
 				break;
 		}
 	} else {
@@ -1541,6 +1543,8 @@ static int ibm_stmt_param_hook(
 				}
 				break;
 			case PDO_PARAM_EVT_FETCH_POST:
+				break;
+			case PDO_PARAM_EVT_NORMALIZE:
 				break;
 		}
 	}
