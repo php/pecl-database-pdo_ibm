@@ -594,9 +594,8 @@ static int ibm_handle_set_attribute(
 			/* if fail, assume delayed set of libl, curlib (after connect) */
 			rc = db2_ibmi_cmd_libl((SQLHDBC) conn_res->hdbc, 
 				(SQLPOINTER) Z_STRVAL_P(return_value));
-			if (rc = SQL_ERROR) {
-				conn_res->c_i5_pending_libl = (char *)estrdup(Z_STRVAL_P(return_value));
-			}
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
 			break;
 		/* 
 		i5_curlibl - PDO::I5_ATTR_DBC_CURLIB
@@ -606,9 +605,8 @@ static int ibm_handle_set_attribute(
 			/* if fail, assume delayed set of libl, curlib (after connect) */
 			rc = db2_ibmi_cmd_curlib((SQLHDBC) conn_res->hdbc, 
 				(SQLPOINTER) Z_STRVAL_P(return_value));
-			if (rc = SQL_ERROR) {
-				conn_res->c_i5_pending_curlib = (char *)estrdup(Z_STRVAL_P(return_value));
-			}
+			check_dbh_error(rc, "SQLSetConnectAttr");
+			return TRUE;
 			break;
 
 
