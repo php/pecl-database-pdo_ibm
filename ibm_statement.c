@@ -144,7 +144,11 @@ STREAM_RETURN_TYPE lob_stream_read(php_stream *stream, char *buf, size_t count)
 	if (buf == NULL) {
 		rc = get_lob_length(stmt, col_res);
 		if (rc != SQL_ERROR && col_res->lob_data_length > 0) {
-			col_res->lob_data = emalloc(col_res->lob_data_length+1);
+			if (col_res->lob_data) {
+				col_res->lob_data = erealloc(col_res->lob_data, col_res->lob_data_length+1);
+			} else {
+				col_res->lob_data = emalloc(col_res->lob_data_length+1);
+			}
 			rc = get_lob_substring(stmt, col_res, ctype, &readBytes);
 		}
 	} else {
