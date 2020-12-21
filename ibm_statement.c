@@ -307,6 +307,9 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 		/* get the statement specifics */
 		stmt_res = (stmt_handle *) stmt->driver_data;
 
+		/* this is only used if a string is interned for an OUT */
+		param_res->tmp_binding_buffer = NULL;
+
 		/*
 		* NB:  The PDO parameter numbers are origin zero, but the
 		* SQLDescribeParam() ones start with 1.
@@ -746,6 +749,8 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 				*/
 				if (IS_INTERNED(Z_STR_P(parameter))) {
 					Z_STR_P(parameter) = zend_string_init(Z_STRVAL_P(parameter), Z_STRLEN_P(parameter), 0);
+					/* free at event hook */
+					param_res->tmp_binding_buffer = (parameter);
 				}
 				/*
 				* Now we need to make sure the string buffer
@@ -1375,6 +1380,10 @@ static int ibm_stmt_param_hook(
 			* specific data.  We need to free this now.
 			*/
 				if (param->driver_data != NULL) {
+					param_node *param_res = (param_node*)param->driver_data;
+					if (param_res->tmp_binding_buffer != NULL) {
+						zend_string_release(Z_STR_P(param_res->tmp_binding_buffer));
+					}
 					efree(param->driver_data);
 					param->driver_data = NULL;
 				}

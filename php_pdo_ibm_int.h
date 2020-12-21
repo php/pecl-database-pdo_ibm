@@ -330,6 +330,11 @@ typedef struct _param_node {
 	SQLSMALLINT	scale;				/* Decimal scale */
 	SQLSMALLINT	ctype;				/* the optimal C type for transfer */
 	SQLINTEGER	transfer_length;	/* the transfer length of the parameter */
+	/*
+	 * XXX: This should be converted into a general purpose binding buffer
+	 * that blits into a new zval like every other extension
+	 */
+	zval *tmp_binding_buffer;		/* the temporary value used for binding out params if the string is interned */
 } param_node;
 
 #endif
