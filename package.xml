@@ -29,10 +29,10 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <email>calvin@cmpct.info</email>
   <active>yes</active>
  </developer>
- <date>2020-12-01</date>
+ <date>2020-12-22</date>
  <time>11:11:11</time>
  <version>
-  <release>1.4.0</release>
+  <release>1.4.1</release>
   <api>1.3.4</api>
  </version>
  <stability>
@@ -41,13 +41,11 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-* 2020-12-01: 1.4.0
-- Compatibility with PHP 8
-- Merge Tony Cairns' fork with IBM i compatibility fixes
-- Fix compatibility with 64-bit PASE/modern IBM i (sqlcli-dev package, pointer/integer width mismatch, XMLSERVICE location, etc)
-- Major improvements to test suite (fix broken tests, less hardcoding)
-- Handle CCSID 65535 on IBM i
-- Fix warnings
+* 2020-12-22: 1.4.1
+- Fix memory leaks
+- Remove PHP compatibility stubs and ifdefs
+- Fix compile warnings
+- Fix tests with PHP 8 exceptions
  </notes>
  <contents>
   <dir name="/">
