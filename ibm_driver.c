@@ -305,8 +305,14 @@ static int ibm_handle_closer( pdo_dbh_t * dbh)
 				SQLDisconnect((SQLHDBC) conn_res->hdbc);
 				SQLFreeHandle(SQL_HANDLE_DBC, conn_res->hdbc);
 			}
-			/* and finally the handle */
+#ifndef PASE
+			/*
+			 * On IBM i, the environment handle seems to be a
+			 * singleton and causes spurious messages if freed.
+			 * ibm_db2 avoids freeing it on i for that reason
+			 */
 			SQLFreeHandle(SQL_HANDLE_ENV, conn_res->henv);
+#endif
 		}
 		/* now free the driver data */
 		pefree(conn_res, dbh->is_persistent);
