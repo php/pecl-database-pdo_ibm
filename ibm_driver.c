@@ -897,7 +897,6 @@ static int ibm_handle_get_attribute(
 	return FALSE;
 }
 
-#ifndef PASE
 static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
@@ -916,7 +915,6 @@ static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
 	return dead_flag == SQL_CD_FALSE ? SUCCESS : FAILURE;
 
 }
-#endif
 
 static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_closer,
@@ -930,11 +928,7 @@ static struct pdo_dbh_methods ibm_dbh_methods = {
 	ibm_handle_lastInsertID,
 	ibm_handle_fetch_error,
 	ibm_handle_get_attribute,
-#ifndef PASE
-	ibm_handle_check_liveness,/* check_liveness  */
-#else
-	NULL,				/* check_liveness  */
-#endif
+	ibm_handle_check_liveness,
 	NULL				/* get_driver_methods */
 };
 
