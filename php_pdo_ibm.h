@@ -22,7 +22,7 @@
 #ifndef PHP_PDO_IBM_H
 #define PHP_PDO_IBM_H
 
-#define PDO_IBM_VERSION "1.4.0"
+#define PDO_IBM_VERSION "1.4.1"
 
 extern zend_module_entry pdo_ibm_module_entry;
 #define phpext_pdo_ibm_ptr &pdo_ibm_module_entry
