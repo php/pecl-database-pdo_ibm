@@ -1021,23 +1021,22 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 					check_dbh_error(rc, "SQLSetConnectAttr");
 					break;
 				}
-			}
+			} else
 #endif /* PASE */
-#ifdef PASE
-			/*
-			 * CB 20210507: Setting system naming before the
-			 * connection can be desirable because it'll match
-			 * the ibm_db2 behaviour where the SQL path is set
-			 * properly.
-			 */
-			if(num_idx == PDO_I5_ATTR_DBC_SYS_NAMING) {
-				if (option_num == SQL_TRUE) {
-					rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_DBC_SYS_NAMING, (SQLPOINTER)(intptr_t)SQL_TRUE, SQL_IS_INTEGER);
-					check_dbh_error(rc, "SQLSetConnectAttr");
-					break;
-				}
+			{
+				/*
+				 * CB 20210507:
+				 * There's some stuff that should be set before
+				 * connect (like IBM i system naming mode) that
+				 * differs if set after (i.e naming mode not
+				 * affecting the SQL path). To keep it DRY, it
+				 * should be fine to reuse existing attribute
+				 * setting code. The exception seems to be that
+				 * LUW has the above trusted context that must
+				 * be set before, but not after.
+				 */
+				ibm_handle_set_attribute(dbh, num_idx, data);
 			}
-#endif
                 } ZEND_HASH_FOREACH_END();
 	}
 		
