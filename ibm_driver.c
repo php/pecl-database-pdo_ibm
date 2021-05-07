@@ -989,7 +989,6 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 	}
 	check_dbh_error(rc, "SQLSetConnectAttr");
 
-#ifndef PASE /* i5/OS no support trusted */
 	/*
 	* Checking if trusted context attribute is eabled or not.
 	* Setting Trusted Context attribute before making connection, if enabled.
@@ -1015,6 +1014,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 				option_num = Z_LVAL_P(data);
 			}
 
+#ifndef PASE /* i5/OS no support trusted */
 			if(num_idx == PDO_SQL_ATTR_USE_TRUSTED_CONTEXT) {
 				if (option_num == SQL_TRUE) {
 					rc = SQLSetConnectAttr((SQLHDBC)conn_res->hdbc, SQL_ATTR_USE_TRUSTED_CONTEXT, (SQLPOINTER)(intptr_t)SQL_TRUE, SQL_IS_INTEGER);
@@ -1022,9 +1022,9 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 					break;
 				}
 			}
+#endif /* PASE */
                 } ZEND_HASH_FOREACH_END();
 	}
-#endif /* PASE */
 		
 	/*
 	* NB:  We don't have any specific driver options we support at this time, so
