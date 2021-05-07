@@ -900,7 +900,17 @@ static int ibm_handle_get_attribute(
 static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+#ifdef PASE
+	/* Liveness is useful, but we need this since PASE doesn't do CD */
+	RETCODE ret;
+	SQLINTEGER try_auto = 0;
 
+	ret = SQLGetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)&try_auto, 1, NULL);
+	if (ret != SQL_SUCCESS) {
+		return FAILURE;
+	}
+	return SUCCESS;
+#else
 	SQLINTEGER dead_flag;
 	SQLINTEGER length;
 
@@ -913,7 +923,7 @@ static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
 	}
 	/* return the state from the query */
 	return dead_flag == SQL_CD_FALSE ? SUCCESS : FAILURE;
-
+#endif
 }
 
 static struct pdo_dbh_methods ibm_dbh_methods = {
