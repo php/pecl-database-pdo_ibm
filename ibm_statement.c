@@ -1034,7 +1034,9 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno)
 			col_res->out_length = 0;
 			/* and this is returned as a stream */
 			col_res->returned_type = PDO_PARAM_LOB;
+#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
 			col->param_type = PDO_PARAM_LOB;
+#endif
 			col_res->lob_loc = 0;
 			if(col_res->data_type == SQL_CLOB) {
 				col_res->loc_type = SQL_CLOB_LOCATOR;
@@ -1092,7 +1094,9 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno)
 					col_res->data.str_val, in_length,
 					(SQLINTEGER *) (&col_res->out_length));
 			col_res->returned_type = PDO_PARAM_STR;
+#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
 			col->param_type = PDO_PARAM_STR;
+#endif
 	}
 	return TRUE;
 }
@@ -1530,9 +1534,14 @@ static int ibm_stmt_describer(
 static int ibm_stmt_get_col(
 	pdo_stmt_t *stmt,
 	int colno,
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	zval *result,
+	enum pdo_param_type *type)
+#else
 	char **ptr,
 	unsigned long *len,
 	int *caller_frees)
+#endif
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	/* access our look aside data */
@@ -1540,44 +1549,72 @@ static int ibm_stmt_get_col(
 
 	if (col_res->returned_type == PDO_PARAM_LOB) {
 		php_stream *stream = create_lob_stream(stmt, stmt_res, colno);	/* already opened */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+		php_stream_to_zval(stream, result);
+#else
 		if (stream != NULL) {
 			*ptr = (char *) stream;
 		} else {
 			*ptr = NULL;
 		}
 		*len = 0;
+#endif
 	}
 	/* see if this is a null value */
 	else if (col_res->out_length == SQL_NULL_DATA) {
 		/* return this as a real null */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+		ZVAL_NULL(result);
+#else
 		*ptr = NULL;
 		*len = 0;
+#endif
 	}
 	/* see if length is SQL_NTS ("count the length yourself"-value) */
 	else if (col_res->out_length == SQL_NTS) {
 		if (col_res->data.str_val && col_res->data.str_val[0] != '\0') {
 			/* it's not an empty string */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+			ZVAL_STRING(result, col_res->data.str_val);
+#else
 			*ptr = col_res->data.str_val;
 			*len = strlen(col_res->data.str_val);
+#endif
 		} else if (col_res->data.str_val && col_res->data.str_val[0] == '\0') {
 			/* it's an empty string */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+			ZVAL_STRINGL(result, col_res->data.str_val, 0);
+#else
 			*ptr = col_res->data.str_val;
 			*len = 0;
+#endif
 		} else {
 			/* it's NULL */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+			ZVAL_NULL(result);
+#else
 			*ptr = NULL;
 			*len = 0;
+#endif
 		}
 	}
 	/* string type...very common */
 	else if (col_res->returned_type == PDO_PARAM_STR) {
 		/* set the info */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+		ZVAL_STRINGL(result, col_res->data.str_val, col_res->out_length);
+#else
 		*ptr = col_res->data.str_val;
 		*len = col_res->out_length;
+#endif
 	} else {
 	/* binary numeric form */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+		ZVAL_LONG(result, col_res->data.l_val);
+#else
 		*ptr = (char *) &col_res->data.l_val;
 		*len = col_res->out_length;
+#endif
 	}
 
 	return TRUE;
@@ -1717,6 +1754,52 @@ static int ibm_stmt_get_column_meta(
 	/* add the flags to the result bundle. */
 	add_assoc_zval(return_value, "flags", &flags);
 
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	/*
+	 * Just like in stmt_bind_column, but in 8.1, we need to turn it as a
+	 * PDO metadata property this time. We can't set it in pdo_column_data.
+	 *
+	 * XXX: Also safe for pre-8.1?
+	 */
+	switch (col_res->data_type) {
+		/* LOBs */
+#ifndef PASE /* i5/OS - not LOBs */
+		case SQL_LONGVARBINARY:
+		case SQL_VARBINARY:
+		case SQL_BINARY:
+		case SQL_XML:
+#endif /* PASE */
+		case SQL_BLOB:
+		case SQL_CLOB:
+#ifdef PASE /* i5 DBCLOB locator */
+		case SQL_DBCLOB:
+#endif /* PASE */
+			add_assoc_long(return_value, "pdo_type", PDO_PARAM_LOB);
+			break;
+		/* Strings */
+#ifdef PASE /* i5/os - not LOBs */
+		case SQL_LONGVARBINARY:
+		case SQL_VARBINARY:
+		case SQL_BINARY:
+		case SQL_XML:
+#endif /* PASE */
+		case SQL_LONGVARCHAR:
+		case SQL_CHAR:
+		case SQL_VARCHAR:
+		case SQL_TYPE_TIME:
+		case SQL_TYPE_TIMESTAMP:
+		case SQL_BIGINT:
+		case SQL_REAL:
+		case SQL_FLOAT:
+		case SQL_DOUBLE:
+		case SQL_DECIMAL:
+		case SQL_NUMERIC:
+		default:
+			add_assoc_long(return_value, "pdo_type", PDO_PARAM_STR);
+			break;
+		/* XXX: PARAM_(INT|BOOL)? */
+	}
+#endif
 	return SUCCESS;
 }
 
