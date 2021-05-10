@@ -165,7 +165,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	/* this is necessary...it tells the parser what we require */
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
 #if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
-	rc = pdo_parse_params(stmt, (char *) stmt_string,
+	rc = pdo_parse_params(stmt, stmt_string,
 			&stmt_res->converted_statement);
 #else
 	rc = pdo_parse_params(stmt, (char *) stmt_string, stmt_len,
