@@ -312,7 +312,19 @@ typedef struct {
 typedef struct _stmt_handle_struct {
 	SQLHANDLE hstmt;					/* the statement handle associated with the stmt */
 	int executing;						/* an executing state flag for error cleanup */
+	/*
+	 * PHP 8.1 converts many internal PDO functions to take zend_strings
+	 * instead of {char*, size_t}.
+	 *
+	 * XXX: Why is this variable statement handle scope instead of just
+	 * being a local in the statement preparer? It seems it's so that it
+	 * can be freed at stmt free, but PDO_ODBC does so in the function...
+	 */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	zend_string *converted_statement;			/* temporary version of the statement with parameter replacement */
+#else
 	char *converted_statement;			/* temporary version of the statement with parameter replacement */
+#endif
 	char *lob_buffer;					/* buffer used for reading in LOB parameters */
 	column_data *columns;				/* the column descriptors */
 	enum pdo_cursor_type cursor_type;	/* the type of cursor we support. */

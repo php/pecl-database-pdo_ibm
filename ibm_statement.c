@@ -278,7 +278,11 @@ void stmt_cleanup(pdo_stmt_t *stmt)
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	if (stmt_res != NULL) {
 		if (stmt_res->converted_statement != NULL) {
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+			zend_string_release(stmt_res->converted_statement);
+#else
 			efree(stmt_res->converted_statement);
+#endif
 		}
 		if (stmt_res->lob_buffer != NULL) {
 			stmt_res->lob_buffer = NULL;

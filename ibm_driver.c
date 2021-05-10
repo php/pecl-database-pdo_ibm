@@ -128,7 +128,11 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt)
 }
 
 /* prepare a statement for execution. */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zend_string *stmt_string, zval *driver_options)
+#else
 static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options)
+#endif
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -142,7 +146,9 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	SQLSMALLINT server_len = 0;
 
 	/* in case we need to convert the statement for positional syntax */
+#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
 	size_t converted_len = 0;
+#endif
 	stmt_res->converted_statement = NULL;
 
 	/* clear the current error information to get ready for new execute */
@@ -158,9 +164,14 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 	/* this is necessary...it tells the parser what we require */
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	rc = pdo_parse_params(stmt, (char *) stmt_string,
+			&stmt_res->converted_statement);
+#else
 	rc = pdo_parse_params(stmt, (char *) stmt_string, stmt_len,
 			&stmt_res->converted_statement,
 			&converted_len);
+#endif
 
 	/*
 	 * If the query needed reformatting, a new statement string has been
@@ -168,7 +179,9 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	 */
 	if (rc == 1) {
 		stmt_string = stmt_res->converted_statement;
+#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
 		stmt_len = converted_len;
+#endif
 	}
 	/*
 	 * A negative return indicates there was an error.  The error_code
@@ -202,7 +215,11 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 
 	/* Prepare the stmt. */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	rc = SQLPrepare((SQLHSTMT) stmt_res->hstmt, (SQLCHAR *) ZSTR_VAL(stmt_string), ZSTR_LEN(stmt_string));
+#else
 	rc = SQLPrepare((SQLHSTMT) stmt_res->hstmt, (SQLCHAR *) stmt_string, stmt_len);
+#endif
 
 	/* Check for errors from that prepare */
 	check_stmt_error(rc, "SQLPrepare");
@@ -324,8 +341,12 @@ static int ibm_handle_closer( pdo_dbh_t * dbh)
 /* prepare a statement for execution. */
 static int ibm_handle_preparer(
 	pdo_dbh_t *dbh,
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	zend_string *sql,
+#else
 	const char *sql,
 	size_t sql_len,
+#endif
 	pdo_stmt_t *stmt,
 	zval *driver_options)
 {
@@ -336,7 +357,11 @@ static int ibm_handle_preparer(
 		/* Allocates the stmt handle */
 		/* Prepares the statement */
 		/* returns the stat_handle back to the calling function */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+		return dbh_prepare_stmt(dbh, stmt, sql, driver_options);
+#else
 		return dbh_prepare_stmt(dbh, stmt, sql, sql_len, driver_options);
+#endif
 	}
 	return FALSE;
 }
