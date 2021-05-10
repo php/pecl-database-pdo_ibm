@@ -290,7 +290,11 @@ static void current_error_state(pdo_dbh_t *dbh)
 *  connection.  In that case, the closer is not automatically called by PDO,
 *  so we need to force cleanup.
 */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+static void ibm_handle_closer( pdo_dbh_t * dbh)
+#else
 static int ibm_handle_closer( pdo_dbh_t * dbh)
+#endif
 {
 	conn_handle *conn_res;
 
