@@ -373,10 +373,16 @@ static STATUS_RETURN_TYPE ibm_handle_preparer(
 }
 
 /* directly execute an SQL statement. */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
 static long ibm_handle_doer(
+	pdo_dbh_t *dbh,
+	const zend_string *sql)
+#else
+static zend_long ibm_handle_doer(
 	pdo_dbh_t *dbh,
 	const char *sql,
 	size_t sql_len)
+#endif
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	SQLHANDLE hstmt;
@@ -385,7 +391,11 @@ static long ibm_handle_doer(
 	int rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &hstmt);
 	check_dbh_error(rc, "SQLAllocHandle");
 
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	rc = SQLExecDirect(hstmt, (SQLCHAR *) ZSTR_VAL(sql), ZSTR_LEN(sql));
+#else
 	rc = SQLExecDirect(hstmt, (SQLCHAR *) sql, sql_len);
+#endif
 	if (rc == SQL_ERROR) {
 		/*
 		* NB...we raise the error before freeing the handle so that
