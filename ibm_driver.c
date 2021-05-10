@@ -660,7 +660,11 @@ static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 }
 
 /* fetch the last inserted id */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+static zend_string *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const zend_string *name)
+#else
 static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len)
+#endif
 {
 	char *last_id = emalloc( MAX_IDENTITY_DIGITS );
 	int rc = 0;
@@ -673,6 +677,9 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 	SQLLEN out_length;
 #endif
 	char server[MAX_DBMS_IDENTIFIER_NAME];
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	zend_string *last_id_zstr;
+#endif
 
 #ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
 	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
@@ -725,16 +732,28 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 			return FALSE;
 		}
 		/* this is a one-shot deal, so make sure we free the statement handle */
-		*len = strlen(last_id);
 		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+		last_id_zstr = zend_string_init(last_id, strlen(last_id), 0);
+		efree(last_id);
+		return last_id_zstr;
+#else
+		*len = strlen(last_id);
 		return last_id;
+#endif
 #ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
 	}
 #endif
 
 	sprintf(last_id, "%d", conn_res->last_insert_id);
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	last_id_zstr = zend_string_init(last_id, strlen(last_id), 0);
+	efree(last_id);
+	return last_id_zstr;
+#else
 	*len = strlen(last_id);
 	return last_id;
+#endif
 }
 
 /* fetch the supplemental error material */
