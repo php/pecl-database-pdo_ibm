@@ -769,6 +769,12 @@ static int ibm_handle_fetch_error(
 }
 
 /* quotes an SQL statement */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+static zend_string* ibm_handle_quoter(
+	pdo_dbh_t *dbh,
+	zend_string *unquoted,
+	enum pdo_param_type paramtype)
+#else
 static int ibm_handle_quoter(
 	pdo_dbh_t *dbh,
 	const char *unq,
@@ -776,14 +782,28 @@ static int ibm_handle_quoter(
 	char **q,
 	size_t *q_len,
 	enum pdo_param_type paramtype)
+#endif
 {
 	char *sql;
 	size_t new_length, i, j;
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	/* keep the logic close to the pre-8.1 version w/ compat vars */
+	const char *unq = ZSTR_VAL(unquoted);
+	size_t unq_len = ZSTR_LEN(unquoted);
+	zend_string *quoted;
+#endif
 
         size_t len;
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	/* AFAIK we can't get a non-null unquoted */
+	if (unq_len == 0) {
+		return zend_string_init("''", 2, 0);
+	}
+#else
 	if(!unq)  {
 		return FALSE;
 	}
+#endif
 	/* allocate twice the source length first (worst case) */
 	sql = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
 
@@ -808,11 +828,17 @@ static int ibm_handle_quoter(
 	sql[j++] = '\0';
 
 	/* copy over final string and free the memory used */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+	quoted = zend_string_init(sql, strlen(sql), 0);
+	efree(sql);
+	return quoted;
+#else
 	*q = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
 	strcpy(*q, sql);
 	*q_len = strlen(sql);
 	efree(sql);
 	return TRUE;
+#endif
 }
 
 
