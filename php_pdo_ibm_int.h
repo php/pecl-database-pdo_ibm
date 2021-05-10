@@ -309,6 +309,15 @@ typedef struct {
 #define STREAM_RETURN_TYPE size_t
 #endif
 
+/*
+ * PHP 8.1 changes many functions to be bool instead of int
+ */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#define STATUS_RETURN_TYPE bool
+#else
+#define STATUS_RETURN_TYPE int
+#endif
+
 typedef struct _stmt_handle_struct {
 	SQLHANDLE hstmt;					/* the statement handle associated with the stmt */
 	int executing;						/* an executing state flag for error cleanup */

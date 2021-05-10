@@ -343,11 +343,7 @@ static int ibm_handle_closer( pdo_dbh_t * dbh)
 }
 
 /* prepare a statement for execution. */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
-static bool ibm_handle_preparer(
-#else
-static int ibm_handle_preparer(
-#endif
+static STATUS_RETURN_TYPE ibm_handle_preparer(
 	pdo_dbh_t *dbh,
 #if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
 	zend_string *sql,
@@ -446,7 +442,7 @@ static long ibm_handle_doer(
 }
 
 /* start a new transaction */
-static int ibm_handle_begin(pdo_dbh_t *dbh)
+static STATUS_RETURN_TYPE ibm_handle_begin(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	int rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0);
@@ -454,7 +450,7 @@ static int ibm_handle_begin(pdo_dbh_t *dbh)
 	return TRUE;
 }
 
-static int ibm_handle_commit(pdo_dbh_t *dbh)
+static STATUS_RETURN_TYPE ibm_handle_commit(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
@@ -467,7 +463,7 @@ static int ibm_handle_commit(pdo_dbh_t *dbh)
 	return TRUE;
 }
 
-static int ibm_handle_rollback(pdo_dbh_t *dbh)
+static STATUS_RETURN_TYPE ibm_handle_rollback(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
@@ -481,7 +477,7 @@ static int ibm_handle_rollback(pdo_dbh_t *dbh)
 }
 
 /* Set the driver attributes. We allow the setting of autocommit */
-static int ibm_handle_set_attribute(
+static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 	pdo_dbh_t *dbh,
 	zend_long attr,
 	zval *return_value)
