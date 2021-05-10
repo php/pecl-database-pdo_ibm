@@ -807,6 +807,8 @@ static int ibm_handle_get_attribute(
 #ifdef PASE /* i5/os release dependent check */
 	unsigned char server_info[30];
 	SQLSMALLINT server_len = 0;
+	/* for the IBM i attribs */
+	SQLINTEGER sqlBoolean = SQL_FALSE;
 #endif /* PASE */
 
 	switch (attr) {
@@ -892,7 +894,16 @@ static int ibm_handle_get_attribute(
 			}
 			ZVAL_STRING(return_value, info_wrkstn_name);
 			return TRUE;
-
+#ifdef PASE /* IBM i specific settings, explained in setAttribute */
+		case PDO_I5_ATTR_DBC_SYS_NAMING:
+			rc = SQLGetConnectAttr((SQLHDBC) conn_res->hdbc, SQL_ATTR_DBC_SYS_NAMING, (SQLPOINTER) &sqlBoolean, 0, NULL);
+			check_dbh_error(rc, "SQLGetConnectAttr");
+			ZVAL_BOOL(return_value, sqlBoolean);
+			return TRUE;
+		/* TODO: case PDO_I5_ATTR_COMMIT: */
+		/* TODO: case PDO_I5_ATTR_JOB_SORT: */
+		/* prob no libl/curlib, since they're accessible by SQL */
+#endif
 	}
 	return FALSE;
 }
