@@ -774,7 +774,7 @@ static int ibm_handle_fetch_error(
 #if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
 static zend_string* ibm_handle_quoter(
 	pdo_dbh_t *dbh,
-	zend_string *unquoted,
+	const zend_string *unquoted,
 	enum pdo_param_type paramtype)
 #else
 static int ibm_handle_quoter(
