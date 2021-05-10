@@ -339,7 +339,9 @@ static int ibm_handle_closer( pdo_dbh_t * dbh)
 		pefree(conn_res, dbh->is_persistent);
 		dbh->driver_data = NULL;
 	}
+#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
 	return TRUE;
+#endif
 }
 
 /* prepare a statement for execution. */
