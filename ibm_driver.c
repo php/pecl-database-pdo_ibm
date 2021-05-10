@@ -290,11 +290,7 @@ static void current_error_state(pdo_dbh_t *dbh)
 *  connection.  In that case, the closer is not automatically called by PDO,
 *  so we need to force cleanup.
 */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
-static void ibm_handle_closer( pdo_dbh_t * dbh)
-#else
-static int ibm_handle_closer( pdo_dbh_t * dbh)
-#endif
+static NO_STATUS_RETURN_TYPE ibm_handle_closer( pdo_dbh_t * dbh)
 {
 	conn_handle *conn_res;
 
@@ -742,7 +738,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 }
 
 /* fetch the supplemental error material */
-static int ibm_handle_fetch_error(
+static NO_STATUS_RETURN_TYPE ibm_handle_fetch_error(
 	pdo_dbh_t *dbh,
 	pdo_stmt_t *stmt,
 	zval *info)
@@ -777,7 +773,9 @@ static int ibm_handle_fetch_error(
 	add_next_index_long(info, conn_res->error_data.sqlcode);
         add_next_index_string(info, suppliment);
 
+#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
 	return TRUE;
+#endif
 }
 
 /* quotes an SQL statement */

@@ -314,8 +314,10 @@ typedef struct {
  */
 #if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
 #define STATUS_RETURN_TYPE bool
+#define NO_STATUS_RETURN_TYPE void
 #else
 #define STATUS_RETURN_TYPE int
+#define NO_STATUS_RETURN_TYPE int
 #endif
 
 typedef struct _stmt_handle_struct {
