@@ -343,7 +343,11 @@ static int ibm_handle_closer( pdo_dbh_t * dbh)
 }
 
 /* prepare a statement for execution. */
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+static bool ibm_handle_preparer(
+#else
 static int ibm_handle_preparer(
+#endif
 	pdo_dbh_t *dbh,
 #if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
 	zend_string *sql,
