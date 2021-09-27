@@ -33,6 +33,8 @@
 #define SQL_XML -370
 #endif
 
+typedef unsigned long ulong;
+
 /* Maximum length of the name of the DBMS being accessed */
 #define MAX_DBMS_IDENTIFIER_NAME 256
 

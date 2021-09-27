@@ -32,7 +32,9 @@
 
 /* If you declare any globals in php_pdo_ibm.h uncomment this:
 */
+#ifdef ZTS
 ZEND_DECLARE_MODULE_GLOBALS(pdo_ibm)
+#endif
 
 /* True global resources - no need for thread safety here */
 static int le_pdo_ibm;
@@ -104,22 +106,24 @@ PHP_INI_END()
 
 /* {{{ php_pdo_ibm_init_globals
  */
+/* Uncomment this function if you have INI entries
 static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 {
-#ifdef PASE /* prior any CLI routine override ascii ccsid */
+#ifdef PASE // prior any CLI routine override ascii ccsid 
 	if (pdo_ibm_globals->i5_override_ccsid) {
 		SQLOverrideCCSID400(pdo_ibm_globals->i5_override_ccsid);
 	}
-#endif /* PASE */
+#endif // PASE 
 }
+*/
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(pdo_ibm)
 {
-	ZEND_INIT_MODULE_GLOBALS(pdo_ibm, php_pdo_ibm_init_globals, NULL);
 	/* If you have INI entries, uncomment these lines
+	ZEND_INIT_MODULE_GLOBALS(pdo_ibm, php_pdo_ibm_init_globals, NULL);	
 	REGISTER_INI_ENTRIES();
 	*/
 

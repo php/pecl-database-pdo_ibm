@@ -47,13 +47,12 @@ PHP_MINFO_FUNCTION(pdo_ibm);
 	Declare any global variables you may need between the BEGIN
 	and END macros here: 
 */
-ZEND_BEGIN_MODULE_GLOBALS(pdo_ibm)
 #ifdef PASE /* i5/OS ease of use turn off/on */
+ZEND_BEGIN_MODULE_GLOBALS(pdo_ibm)
 	long		i5_ignore_userid; 		/* blank userid, possible no qsqsrvr  */
 	long		i5_override_ccsid; 		/* prior any CLI routine override ascii ccsid */
-#endif /* PASE */
 ZEND_END_MODULE_GLOBALS(pdo_ibm)
-
+#endif /* PASE */
 
 /*
 	In every utility function you add that needs to use variables 
@@ -72,6 +71,8 @@ ZEND_END_MODULE_GLOBALS(pdo_ibm)
 #define PDO_IBM_G(v) (pdo_ibm_globals.v)
 #endif
 
+#ifdef ZTS
 ZEND_EXTERN_MODULE_GLOBALS(pdo_ibm)
+#endif
 
 #endif	/* PHP_PDO_IBM_H */
