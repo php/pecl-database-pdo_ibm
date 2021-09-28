@@ -32,7 +32,7 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  <date>2020-12-22</date>
  <time>11:11:11</time>
  <version>
-  <release>1.4.1</release>
+  <release>1.4.2</release>
   <api>1.3.4</api>
  </version>
  <stability>
@@ -41,11 +41,8 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-* 2020-12-22: 1.4.1
-- Fix memory leaks
-- Remove PHP compatibility stubs and ifdefs
-- Fix compile warnings
-- Fix tests with PHP 8 exceptions
+* 2021-09-28: 1.4.2
+- PHP 8.0.11 support
  </notes>
  <contents>
   <dir name="/">
