@@ -32,7 +32,7 @@
 
 /* If you declare any globals in php_pdo_ibm.h uncomment this:
 */
-#ifdef ZTS
+#ifdef PASE
 ZEND_DECLARE_MODULE_GLOBALS(pdo_ibm)
 #endif
 

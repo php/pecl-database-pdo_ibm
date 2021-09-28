@@ -71,7 +71,7 @@ ZEND_END_MODULE_GLOBALS(pdo_ibm)
 #define PDO_IBM_G(v) (pdo_ibm_globals.v)
 #endif
 
-#ifdef ZTS
+#ifdef PASE
 ZEND_EXTERN_MODULE_GLOBALS(pdo_ibm)
 #endif
 
