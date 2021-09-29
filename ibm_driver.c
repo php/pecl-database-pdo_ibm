@@ -1017,7 +1017,7 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 
 	if (driver_options != NULL) {
 		int i = 0;
-		ulong num_idx;
+		zend_ulong num_idx;
 		zend_string *opt_key;
 		zval *data;
 		zend_long option_num = 0;
