@@ -29,10 +29,10 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <email>calvin@cmpct.info</email>
   <active>yes</active>
  </developer>
- <date>2020-12-22</date>
+ <date>2021-09-30</date>
  <time>11:11:11</time>
  <version>
-  <release>1.4.1</release>
+  <release>1.4.2</release>
   <api>1.3.4</api>
  </version>
  <stability>
@@ -41,11 +41,12 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-* 2020-12-22: 1.4.1
-- Fix memory leaks
-- Remove PHP compatibility stubs and ifdefs
-- Fix compile warnings
-- Fix tests with PHP 8 exceptions
+* 2021-09-30: 1.4.2
+- Enable liveness checks on all platforms
+- Fix build issue with ulong on some platforms (did not affect Linux/IBM i)
+- Remove spurious warnings from closing the environment handle on IBM i
+- Enable processing driver options before connection (fixes naming mode issues on IBM i)
+- Getter for current naming mode on IBM i
  </notes>
  <contents>
   <dir name="/">
