@@ -53,20 +53,20 @@ export LD_LIBRARY_PATH=/home/user/clidriver/lib
    the HTTP server environment, add the LD_LIBRARY_PATH variable in the httpd.conf file.
 
 ```
-## How to install php pdo_ibm extension in Windows
-```
-Set CLIDRIVER\bin path to PATH environment variable.
+## Prebuilt binaries for Windows
 
-set PATH=<CLIDRIVER installed path>\bin;%PATH%
+1. Add the `CLIDRIVER\bin` path to the `PATH` environment variable like so (for a batch file):
+    ```
+    set PATH=<CLIDRIVER installed path>\bin;%PATH%
+    ```
+2. Download the DLLs for PHP 7.x and 8.x from [the ibmdb repository](https://github.com/ibmdb/php_ibm_db2).
+   Select the build for the PHP that matches the version, architecture, and thread model.
 
-1. Download the php_pdo_ibm DLLs for PHP 7.x(7.0, 7.1, 7.2) from below link.
-      https://github.com/ibmdb/php_ibm_db2
-	  
-
-2. Open the php.ini file in an editor of your choice. Edit the extension entry in the
-   php.ini file in the <local_php_directory>\php\lib directory to reference the PHP driver:
-	  extension=php_pdo_ibm
-```
+3. Open the `php.ini` file in an editor of your choice. Edit the extension entry in the
+   `php.ini` file in the `<local_php_directory>\php\lib` directory to reference the driver:
+    ````
+    extension=php_pdo_ibm
+    ````
 
 ## How to run sample program
 
