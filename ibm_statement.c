@@ -1441,6 +1441,7 @@ static int ibm_stmt_describer(
 	column_data *col_res = &stmt_res->columns[colno];
 	struct pdo_column_data *col = NULL;
 	char tmp_name[BUFSIZ];
+	memset(tmp_name, 0, BUFSIZ);
 
 	/* get the column descriptor information */
 	int rc = SQLDescribeCol((SQLHSTMT)stmt_res->hstmt, (SQLSMALLINT)(colno + 1 ),
