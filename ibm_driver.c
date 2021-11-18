@@ -625,7 +625,7 @@ static int ibm_handle_set_attribute(
 /* fetch the last inserted id */
 static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len)
 {
-	char *last_id = emalloc( MAX_IDENTITY_DIGITS );
+	char *last_id;
 	int rc = 0;
 	char *sql;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
@@ -640,12 +640,17 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 #ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
 	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
 	check_dbh_error(rc, "SQLGetInfo");
-	
+
+	last_id = emalloc(MAX_IDENTITY_DIGITS);
+	if (last_id == NULL) {
+		return NULL;
+	}
+	strcpy(last_id, "0");
+
 	if( strncmp( server, "DB2", 3 ) == 0 )
 	{
 #endif /* PASE */
 		/* get a new statement handle */
-		strcpy( last_id, "0" );
 		rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &hstmt);
 		check_dbh_error(rc, "SQLAllocHandle");
 		sql = "SELECT IDENTITY_VAL_LOCAL() FROM SYSIBM.SYSDUMMY1";
@@ -659,7 +664,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 				"SQLExecDirect", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
-			return FALSE;
+			return NULL;
 		}
 
 		rc = SQLBindCol(hstmt, 1, SQL_C_CHAR, last_id, MAX_IDENTITY_DIGITS, &out_length);
@@ -672,7 +677,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 				"SQLBindCol", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
-			return FALSE;
+			return NULL;
 		}
 		/* go fetch it. */
 		rc = SQLFetch(hstmt);
@@ -685,7 +690,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 				"SQLFetch", __FILE__, __LINE__);
 			SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 
-			return FALSE;
+			return NULL;
 		}
 		/* this is a one-shot deal, so make sure we free the statement handle */
 		*len = strlen(last_id);
