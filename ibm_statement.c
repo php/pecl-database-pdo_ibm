@@ -1287,7 +1287,7 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt)
 static int ibm_stmt_fetcher(
 	pdo_stmt_t *stmt,
 	enum pdo_fetch_orientation ori,
-	long offset)
+	zend_long offset)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	/* by default, we're just fetching the next one */
@@ -1527,7 +1527,7 @@ static int ibm_stmt_get_col(
 	pdo_stmt_t *stmt,
 	int colno,
 	char **ptr,
-	unsigned long *len,
+	size_t *len,
 	int *caller_frees)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -1618,7 +1618,7 @@ static int ibm_stmt_next_rowset(pdo_stmt_t *stmt)
 */
 static int ibm_stmt_get_column_meta(
 	pdo_stmt_t *stmt,
-	long colno,
+	zend_long colno,
 	zval *return_value)
 {
 	stmt_handle *stmt_res = NULL;
@@ -1721,7 +1721,7 @@ static int ibm_stmt_get_column_meta(
 /* get driver specific attributes.  We only support CURSOR_NAME. */
 static int ibm_stmt_get_attribute(
 	pdo_stmt_t *stmt,
-	long attr,
+	zend_long attr,
 	zval *return_value)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -1755,7 +1755,7 @@ static int ibm_stmt_get_attribute(
 /* set a driver-specific attribute.  We only support CURSOR_NAME. */
 static int ibm_stmt_set_attribute(
 	pdo_stmt_t *stmt,
-	long attr,
+	zend_long attr,
 	zval *value)
 {
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
