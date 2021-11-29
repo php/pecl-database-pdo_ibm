@@ -128,7 +128,7 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt)
 }
 
 /* prepare a statement for execution. */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zend_string *stmt_string, zval *driver_options)
 #else
 static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options)
@@ -146,7 +146,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	SQLSMALLINT server_len = 0;
 
 	/* in case we need to convert the statement for positional syntax */
-#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
+#if !PHP_8_1_OR_HIGHER
 	size_t converted_len = 0;
 #endif
 	stmt_res->converted_statement = NULL;
@@ -164,7 +164,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 	/* this is necessary...it tells the parser what we require */
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	rc = pdo_parse_params(stmt, stmt_string,
 			&stmt_res->converted_statement);
 #else
@@ -179,7 +179,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	 */
 	if (rc == 1) {
 		stmt_string = stmt_res->converted_statement;
-#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
+#if !PHP_8_1_OR_HIGHER
 		stmt_len = converted_len;
 #endif
 	}
@@ -215,7 +215,7 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 
 	/* Prepare the stmt. */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	rc = SQLPrepare((SQLHSTMT) stmt_res->hstmt, (SQLCHAR *) ZSTR_VAL(stmt_string), ZSTR_LEN(stmt_string));
 #else
 	rc = SQLPrepare((SQLHSTMT) stmt_res->hstmt, (SQLCHAR *) stmt_string, stmt_len);
@@ -335,7 +335,7 @@ static NO_STATUS_RETURN_TYPE ibm_handle_closer( pdo_dbh_t * dbh)
 		pefree(conn_res, dbh->is_persistent);
 		dbh->driver_data = NULL;
 	}
-#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
+#if !PHP_8_1_OR_HIGHER
 	return TRUE;
 #endif
 }
@@ -343,7 +343,7 @@ static NO_STATUS_RETURN_TYPE ibm_handle_closer( pdo_dbh_t * dbh)
 /* prepare a statement for execution. */
 static STATUS_RETURN_TYPE ibm_handle_preparer(
 	pdo_dbh_t *dbh,
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	zend_string *sql,
 #else
 	const char *sql,
@@ -359,7 +359,7 @@ static STATUS_RETURN_TYPE ibm_handle_preparer(
 		/* Allocates the stmt handle */
 		/* Prepares the statement */
 		/* returns the stat_handle back to the calling function */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 		return dbh_prepare_stmt(dbh, stmt, sql, driver_options);
 #else
 		return dbh_prepare_stmt(dbh, stmt, sql, sql_len, driver_options);
@@ -369,7 +369,7 @@ static STATUS_RETURN_TYPE ibm_handle_preparer(
 }
 
 /* directly execute an SQL statement. */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 static long ibm_handle_doer(
 	pdo_dbh_t *dbh,
 	const zend_string *sql)
@@ -387,7 +387,7 @@ static zend_long ibm_handle_doer(
 	int rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &hstmt);
 	check_dbh_error(rc, "SQLAllocHandle");
 
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	rc = SQLExecDirect(hstmt, (SQLCHAR *) ZSTR_VAL(sql), ZSTR_LEN(sql));
 #else
 	rc = SQLExecDirect(hstmt, (SQLCHAR *) sql, sql_len);
@@ -660,7 +660,7 @@ static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 }
 
 /* fetch the last inserted id */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 static zend_string *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const zend_string *name)
 #else
 static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len)
@@ -677,7 +677,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 	SQLLEN out_length;
 #endif
 	char server[MAX_DBMS_IDENTIFIER_NAME];
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	zend_string *last_id_zstr;
 #endif
 
@@ -733,7 +733,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 		}
 		/* this is a one-shot deal, so make sure we free the statement handle */
 		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 		last_id_zstr = zend_string_init(last_id, strlen(last_id), 0);
 		efree(last_id);
 		return last_id_zstr;
@@ -746,7 +746,7 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 #endif
 
 	sprintf(last_id, "%d", conn_res->last_insert_id);
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	last_id_zstr = zend_string_init(last_id, strlen(last_id), 0);
 	efree(last_id);
 	return last_id_zstr;
@@ -792,13 +792,13 @@ static NO_STATUS_RETURN_TYPE ibm_handle_fetch_error(
 	add_next_index_long(info, conn_res->error_data.sqlcode);
         add_next_index_string(info, suppliment);
 
-#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
+#if !PHP_8_1_OR_HIGHER
 	return TRUE;
 #endif
 }
 
 /* quotes an SQL statement */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 static zend_string* ibm_handle_quoter(
 	pdo_dbh_t *dbh,
 	const zend_string *unquoted,
@@ -815,7 +815,7 @@ static int ibm_handle_quoter(
 {
 	char *sql;
 	size_t new_length, i, j;
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	/* keep the logic close to the pre-8.1 version w/ compat vars */
 	const char *unq = ZSTR_VAL(unquoted);
 	size_t unq_len = ZSTR_LEN(unquoted);
@@ -823,7 +823,7 @@ static int ibm_handle_quoter(
 #endif
 
         size_t len;
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	/* AFAIK we can't get a non-null unquoted */
 	if (unq_len == 0) {
 		return zend_string_init("''", 2, 0);
@@ -857,7 +857,7 @@ static int ibm_handle_quoter(
 	sql[j++] = '\0';
 
 	/* copy over final string and free the memory used */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	quoted = zend_string_init(sql, strlen(sql), 0);
 	efree(sql);
 	return quoted;

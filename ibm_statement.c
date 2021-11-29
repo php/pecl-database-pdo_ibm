@@ -278,7 +278,7 @@ void stmt_cleanup(pdo_stmt_t *stmt)
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
 	if (stmt_res != NULL) {
 		if (stmt_res->converted_statement != NULL) {
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 			zend_string_release(stmt_res->converted_statement);
 #else
 			efree(stmt_res->converted_statement);
@@ -1034,7 +1034,7 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno)
 			col_res->out_length = 0;
 			/* and this is returned as a stream */
 			col_res->returned_type = PDO_PARAM_LOB;
-#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
+#if !PHP_8_1_OR_HIGHER
 			col->param_type = PDO_PARAM_LOB;
 #endif
 			col_res->lob_loc = 0;
@@ -1094,7 +1094,7 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno)
 					col_res->data.str_val, in_length,
 					(SQLINTEGER *) (&col_res->out_length));
 			col_res->returned_type = PDO_PARAM_STR;
-#if !(PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1))
+#if !PHP_8_1_OR_HIGHER
 			col->param_type = PDO_PARAM_STR;
 #endif
 	}
@@ -1534,7 +1534,7 @@ static int ibm_stmt_describer(
 static int ibm_stmt_get_col(
 	pdo_stmt_t *stmt,
 	int colno,
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	zval *result,
 	enum pdo_param_type *type)
 #else
@@ -1549,7 +1549,7 @@ static int ibm_stmt_get_col(
 
 	if (col_res->returned_type == PDO_PARAM_LOB) {
 		php_stream *stream = create_lob_stream(stmt, stmt_res, colno);	/* already opened */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 		php_stream_to_zval(stream, result);
 #else
 		if (stream != NULL) {
@@ -1563,7 +1563,7 @@ static int ibm_stmt_get_col(
 	/* see if this is a null value */
 	else if (col_res->out_length == SQL_NULL_DATA) {
 		/* return this as a real null */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 		ZVAL_NULL(result);
 #else
 		*ptr = NULL;
@@ -1574,7 +1574,7 @@ static int ibm_stmt_get_col(
 	else if (col_res->out_length == SQL_NTS) {
 		if (col_res->data.str_val && col_res->data.str_val[0] != '\0') {
 			/* it's not an empty string */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 			ZVAL_STRING(result, col_res->data.str_val);
 #else
 			*ptr = col_res->data.str_val;
@@ -1582,7 +1582,7 @@ static int ibm_stmt_get_col(
 #endif
 		} else if (col_res->data.str_val && col_res->data.str_val[0] == '\0') {
 			/* it's an empty string */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 			ZVAL_STRINGL(result, col_res->data.str_val, 0);
 #else
 			*ptr = col_res->data.str_val;
@@ -1590,7 +1590,7 @@ static int ibm_stmt_get_col(
 #endif
 		} else {
 			/* it's NULL */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 			ZVAL_NULL(result);
 #else
 			*ptr = NULL;
@@ -1601,7 +1601,7 @@ static int ibm_stmt_get_col(
 	/* string type...very common */
 	else if (col_res->returned_type == PDO_PARAM_STR) {
 		/* set the info */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 		ZVAL_STRINGL(result, col_res->data.str_val, col_res->out_length);
 #else
 		*ptr = col_res->data.str_val;
@@ -1609,7 +1609,7 @@ static int ibm_stmt_get_col(
 #endif
 	} else {
 	/* binary numeric form */
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 		ZVAL_LONG(result, col_res->data.l_val);
 #else
 		*ptr = (char *) &col_res->data.l_val;
@@ -1754,7 +1754,7 @@ static int ibm_stmt_get_column_meta(
 	/* add the flags to the result bundle. */
 	add_assoc_zval(return_value, "flags", &flags);
 
-#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION == 1)
+#if PHP_8_1_OR_HIGHER
 	/*
 	 * Just like in stmt_bind_column, but in 8.1, we need to turn it as a
 	 * PDO metadata property this time. We can't set it in pdo_column_data.
