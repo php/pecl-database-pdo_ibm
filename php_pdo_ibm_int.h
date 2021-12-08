@@ -25,6 +25,18 @@
 
 #include "sqlcli1.h"
 
+/* This is included after the PHP headers, so it's safe to use. */
+#if PHP_MAJOR_VERSION > 7 || (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION >= 4)
+#define PHP_7_4_OR_HIGHER 1
+#else
+#define PHP_7_4_OR_HIGHER 0
+#endif
+#if PHP_MAJOR_VERSION > 8 || (PHP_MAJOR_VERSION == 8 && PHP_MINOR_VERSION >= 1)
+#define PHP_8_1_OR_HIGHER 1
+#else
+#define PHP_8_1_OR_HIGHER 0
+#endif
+
 #define MAX_OPTION_LEN 10
 #define MAX_ERR_MSG_LEN (SQL_MAX_MESSAGE_LENGTH + SQL_SQLSTATE_SIZE + 1)
 #define CDTIMETYPE 112
@@ -303,16 +315,39 @@ typedef struct {
  * PHP 7.4 changes the stream r/w functions to be ssize_t
  * (so you can return errors without (size_t)-1)
  */
-#if PHP_MAJOR_VERSION > 7 || (PHP_MAJOR_VERSION == 7 && PHP_MINOR_VERSION == 4)
+#if PHP_7_4_OR_HIGHER
 #define STREAM_RETURN_TYPE ssize_t
 #else
 #define STREAM_RETURN_TYPE size_t
 #endif
 
+/*
+ * PHP 8.1 changes many functions to be bool instead of int
+ */
+#if PHP_8_1_OR_HIGHER
+#define STATUS_RETURN_TYPE bool
+#define NO_STATUS_RETURN_TYPE void
+#else
+#define STATUS_RETURN_TYPE int
+#define NO_STATUS_RETURN_TYPE int
+#endif
+
 typedef struct _stmt_handle_struct {
 	SQLHANDLE hstmt;					/* the statement handle associated with the stmt */
 	int executing;						/* an executing state flag for error cleanup */
+	/*
+	 * PHP 8.1 converts many internal PDO functions to take zend_strings
+	 * instead of {char*, size_t}.
+	 *
+	 * XXX: Why is this variable statement handle scope instead of just
+	 * being a local in the statement preparer? It seems it's so that it
+	 * can be freed at stmt free, but PDO_ODBC does so in the function...
+	 */
+#if PHP_8_1_OR_HIGHER
+	zend_string *converted_statement;			/* temporary version of the statement with parameter replacement */
+#else
 	char *converted_statement;			/* temporary version of the statement with parameter replacement */
+#endif
 	char *lob_buffer;					/* buffer used for reading in LOB parameters */
 	column_data *columns;				/* the column descriptors */
 	enum pdo_cursor_type cursor_type;	/* the type of cursor we support. */

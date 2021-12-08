@@ -128,7 +128,11 @@ static int dbh_new_stmt_data(pdo_dbh_t* dbh, pdo_stmt_t *stmt)
 }
 
 /* prepare a statement for execution. */
+#if PHP_8_1_OR_HIGHER
+static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zend_string *stmt_string, zval *driver_options)
+#else
 static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_string, size_t stmt_len, zval *driver_options)
+#endif
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	stmt_handle *stmt_res = (stmt_handle *) stmt->driver_data;
@@ -142,7 +146,9 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	SQLSMALLINT server_len = 0;
 
 	/* in case we need to convert the statement for positional syntax */
+#if !PHP_8_1_OR_HIGHER
 	size_t converted_len = 0;
+#endif
 	stmt_res->converted_statement = NULL;
 
 	/* clear the current error information to get ready for new execute */
@@ -158,9 +164,14 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 	/* this is necessary...it tells the parser what we require */
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
+#if PHP_8_1_OR_HIGHER
+	rc = pdo_parse_params(stmt, stmt_string,
+			&stmt_res->converted_statement);
+#else
 	rc = pdo_parse_params(stmt, (char *) stmt_string, stmt_len,
 			&stmt_res->converted_statement,
 			&converted_len);
+#endif
 
 	/*
 	 * If the query needed reformatting, a new statement string has been
@@ -168,7 +179,9 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 	 */
 	if (rc == 1) {
 		stmt_string = stmt_res->converted_statement;
+#if !PHP_8_1_OR_HIGHER
 		stmt_len = converted_len;
+#endif
 	}
 	/*
 	 * A negative return indicates there was an error.  The error_code
@@ -202,7 +215,11 @@ static int dbh_prepare_stmt(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *stmt_s
 
 
 	/* Prepare the stmt. */
+#if PHP_8_1_OR_HIGHER
+	rc = SQLPrepare((SQLHSTMT) stmt_res->hstmt, (SQLCHAR *) ZSTR_VAL(stmt_string), ZSTR_LEN(stmt_string));
+#else
 	rc = SQLPrepare((SQLHSTMT) stmt_res->hstmt, (SQLCHAR *) stmt_string, stmt_len);
+#endif
 
 	/* Check for errors from that prepare */
 	check_stmt_error(rc, "SQLPrepare");
@@ -273,7 +290,7 @@ static void current_error_state(pdo_dbh_t *dbh)
 *  connection.  In that case, the closer is not automatically called by PDO,
 *  so we need to force cleanup.
 */
-static int ibm_handle_closer( pdo_dbh_t * dbh)
+static NO_STATUS_RETURN_TYPE ibm_handle_closer( pdo_dbh_t * dbh)
 {
 	conn_handle *conn_res;
 
@@ -318,14 +335,20 @@ static int ibm_handle_closer( pdo_dbh_t * dbh)
 		pefree(conn_res, dbh->is_persistent);
 		dbh->driver_data = NULL;
 	}
+#if !PHP_8_1_OR_HIGHER
 	return TRUE;
+#endif
 }
 
 /* prepare a statement for execution. */
-static int ibm_handle_preparer(
+static STATUS_RETURN_TYPE ibm_handle_preparer(
 	pdo_dbh_t *dbh,
+#if PHP_8_1_OR_HIGHER
+	zend_string *sql,
+#else
 	const char *sql,
 	size_t sql_len,
+#endif
 	pdo_stmt_t *stmt,
 	zval *driver_options)
 {
@@ -336,16 +359,26 @@ static int ibm_handle_preparer(
 		/* Allocates the stmt handle */
 		/* Prepares the statement */
 		/* returns the stat_handle back to the calling function */
+#if PHP_8_1_OR_HIGHER
+		return dbh_prepare_stmt(dbh, stmt, sql, driver_options);
+#else
 		return dbh_prepare_stmt(dbh, stmt, sql, sql_len, driver_options);
+#endif
 	}
 	return FALSE;
 }
 
 /* directly execute an SQL statement. */
+#if PHP_8_1_OR_HIGHER
 static long ibm_handle_doer(
+	pdo_dbh_t *dbh,
+	const zend_string *sql)
+#else
+static zend_long ibm_handle_doer(
 	pdo_dbh_t *dbh,
 	const char *sql,
 	size_t sql_len)
+#endif
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	SQLHANDLE hstmt;
@@ -354,7 +387,11 @@ static long ibm_handle_doer(
 	int rc = SQLAllocHandle(SQL_HANDLE_STMT, conn_res->hdbc, &hstmt);
 	check_dbh_error(rc, "SQLAllocHandle");
 
+#if PHP_8_1_OR_HIGHER
+	rc = SQLExecDirect(hstmt, (SQLCHAR *) ZSTR_VAL(sql), ZSTR_LEN(sql));
+#else
 	rc = SQLExecDirect(hstmt, (SQLCHAR *) sql, sql_len);
+#endif
 	if (rc == SQL_ERROR) {
 		/*
 		* NB...we raise the error before freeing the handle so that
@@ -413,7 +450,7 @@ static long ibm_handle_doer(
 }
 
 /* start a new transaction */
-static int ibm_handle_begin(pdo_dbh_t *dbh)
+static STATUS_RETURN_TYPE ibm_handle_begin(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	int rc = SQLSetConnectAttr(conn_res->hdbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER) SQL_AUTOCOMMIT_OFF, 0);
@@ -421,7 +458,7 @@ static int ibm_handle_begin(pdo_dbh_t *dbh)
 	return TRUE;
 }
 
-static int ibm_handle_commit(pdo_dbh_t *dbh)
+static STATUS_RETURN_TYPE ibm_handle_commit(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
@@ -434,7 +471,7 @@ static int ibm_handle_commit(pdo_dbh_t *dbh)
 	return TRUE;
 }
 
-static int ibm_handle_rollback(pdo_dbh_t *dbh)
+static STATUS_RETURN_TYPE ibm_handle_rollback(pdo_dbh_t *dbh)
 {
 	conn_handle *conn_res = (conn_handle *)dbh->driver_data;
 
@@ -448,7 +485,7 @@ static int ibm_handle_rollback(pdo_dbh_t *dbh)
 }
 
 /* Set the driver attributes. We allow the setting of autocommit */
-static int ibm_handle_set_attribute(
+static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 	pdo_dbh_t *dbh,
 	zend_long attr,
 	zval *return_value)
@@ -623,7 +660,11 @@ static int ibm_handle_set_attribute(
 }
 
 /* fetch the last inserted id */
+#if PHP_8_1_OR_HIGHER
+static zend_string *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const zend_string *name)
+#else
 static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *len)
+#endif
 {
 	char *last_id;
 	int rc = 0;
@@ -636,6 +677,9 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 	SQLLEN out_length;
 #endif
 	char server[MAX_DBMS_IDENTIFIER_NAME];
+#if PHP_8_1_OR_HIGHER
+	zend_string *last_id_zstr;
+#endif
 
 #ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
 	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
@@ -693,20 +737,32 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 			return NULL;
 		}
 		/* this is a one-shot deal, so make sure we free the statement handle */
-		*len = strlen(last_id);
 		SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
+#if PHP_8_1_OR_HIGHER
+		last_id_zstr = zend_string_init(last_id, strlen(last_id), 0);
+		efree(last_id);
+		return last_id_zstr;
+#else
+		*len = strlen(last_id);
 		return last_id;
+#endif
 #ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
 	}
 #endif
 
 	sprintf(last_id, "%d", conn_res->last_insert_id);
+#if PHP_8_1_OR_HIGHER
+	last_id_zstr = zend_string_init(last_id, strlen(last_id), 0);
+	efree(last_id);
+	return last_id_zstr;
+#else
 	*len = strlen(last_id);
 	return last_id;
+#endif
 }
 
 /* fetch the supplemental error material */
-static int ibm_handle_fetch_error(
+static NO_STATUS_RETURN_TYPE ibm_handle_fetch_error(
 	pdo_dbh_t *dbh,
 	pdo_stmt_t *stmt,
 	zval *info)
@@ -741,10 +797,18 @@ static int ibm_handle_fetch_error(
 	add_next_index_long(info, conn_res->error_data.sqlcode);
         add_next_index_string(info, suppliment);
 
+#if !PHP_8_1_OR_HIGHER
 	return TRUE;
+#endif
 }
 
 /* quotes an SQL statement */
+#if PHP_8_1_OR_HIGHER
+static zend_string* ibm_handle_quoter(
+	pdo_dbh_t *dbh,
+	const zend_string *unquoted,
+	enum pdo_param_type paramtype)
+#else
 static int ibm_handle_quoter(
 	pdo_dbh_t *dbh,
 	const char *unq,
@@ -752,14 +816,28 @@ static int ibm_handle_quoter(
 	char **q,
 	size_t *q_len,
 	enum pdo_param_type paramtype)
+#endif
 {
 	char *sql;
 	size_t new_length, i, j;
+#if PHP_8_1_OR_HIGHER
+	/* keep the logic close to the pre-8.1 version w/ compat vars */
+	const char *unq = ZSTR_VAL(unquoted);
+	size_t unq_len = ZSTR_LEN(unquoted);
+	zend_string *quoted;
+#endif
 
         size_t len;
+#if PHP_8_1_OR_HIGHER
+	/* AFAIK we can't get a non-null unquoted */
+	if (unq_len == 0) {
+		return zend_string_init("''", 2, 0);
+	}
+#else
 	if(!unq)  {
 		return FALSE;
 	}
+#endif
 	/* allocate twice the source length first (worst case) */
 	sql = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
 
@@ -784,11 +862,17 @@ static int ibm_handle_quoter(
 	sql[j++] = '\0';
 
 	/* copy over final string and free the memory used */
+#if PHP_8_1_OR_HIGHER
+	quoted = zend_string_init(sql, strlen(sql), 0);
+	efree(sql);
+	return quoted;
+#else
 	*q = (char*)emalloc(((unq_len*2)+3)*sizeof(char));
 	strcpy(*q, sql);
 	*q_len = strlen(sql);
 	efree(sql);
 	return TRUE;
+#endif
 }
 
 
