@@ -32,11 +32,12 @@ jobs:
         with:
           php-version: ${{matrix.version}}
           extensions: pdo
-      - name: Build PDO_IBM
-        run: |
-          phpize
-          ./configure --with-pdo-ibm=$PWD/clidriver
-          make
+      - name: phpize
+        run: phpize
+      - name: configure
+        run: ./configure --with-pdo-ibm=$PWD/clidriver
+      - name: make
+        run: make V=1
       # XXX: No tests until DB2 Docker container is set up (see Travis)
       #- name: Test dbase
       #  run: make test TESTS=tests
