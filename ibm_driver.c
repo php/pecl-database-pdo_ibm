@@ -998,9 +998,9 @@ static int ibm_handle_get_attribute(
 }
 
 #if PHP_8_1_OR_HIGHER
-static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
-#else
 static zend_result ibm_handle_check_liveness(pdo_dbh_t *dbh)
+#else
+static int ibm_handle_check_liveness(pdo_dbh_t *dbh)
 #endif
 {
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
