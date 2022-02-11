@@ -1439,28 +1439,13 @@ static int db2_ibmi_cmd_helper(
 	int i;
 	SQLHSTMT hstmt;
 	int rc = SQL_ERROR;
-	char len[40];
-	char *len_string = (char *)&len;
-	int len_string_len = 0;
 	char query[32702];
-	char *query_string = (char *)&query;
-	int query_string_len = 0;
-	int stmt_string_len = 0;
 
-	stmt_string_len = strlen(stmt_string);
-	memset(len_string, 0, sizeof(len));
-	len_string_len = sprintf(len_string, "%d", stmt_string_len);
-	query_string_len = 20 + stmt_string_len + 2 + len_string_len + 1;
-
-	memset(query_string,0,sizeof(query));
-	strcpy(query_string, "CALL QSYS2.QCMDEXC('"); /* IBM i works V6R1+ (w/PTF) */
-	strcat(query_string, stmt_string);
-	strcat(query_string, "',");
-	strcat(query_string, len_string);
-	strcat(query_string, ")");
+	/* XXX: We don't escape the string, length accurate after conv? */
+	snprintf(query, 32702, "CALL QSYS2.QCMDEXC('%s',%d)", stmt_string, strlen(stmt_string));
 
 	rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
-	rc = SQLExecDirect((SQLHSTMT) hstmt, query_string, query_string_len);
+	rc = SQLExecDirect((SQLHSTMT) hstmt, query, SQL_NTS);
 	SQLFreeHandle( SQL_HANDLE_STMT, hstmt );
 
 	return rc;
@@ -1470,28 +1455,20 @@ static int db2_ibmi_cmd_libl(
 	char		*stmt_string)
 {
 	char buff[32600];
-	char *i5cmd = (char *)&buff;
 
-	memset(i5cmd, 0, 32600);
-	strcpy(i5cmd, "CHGLIBL LIBL(");
-	strcat(i5cmd, stmt_string);
-	strcat(i5cmd, ")");
+	snprintf(buff, 32600, "CHGLIBL LIBL(%s)", stmt_string);
 
-	return db2_ibmi_cmd_helper(hdbc, i5cmd);
+	return db2_ibmi_cmd_helper(hdbc, buff);
 }
 static int db2_ibmi_cmd_curlib(
 	SQLHDBC		hdbc,
 	char		*stmt_string)
 {
 	char buff[32600];
-	char *i5cmd = (char *)&buff;
 
-	memset(i5cmd, 0, 32600);
-	strcpy(i5cmd, "CHGCURLIB CURLIB(");
-	strcat(i5cmd, stmt_string);
-	strcat(i5cmd, ")");
+	snprintf(buff, 32600, "CHGCURLIB CURLIB(%s)", stmt_string);
 
-	return db2_ibmi_cmd_helper(hdbc, i5cmd);
+	return db2_ibmi_cmd_helper(hdbc, buff);
 }
 
 #endif /*PASE */
