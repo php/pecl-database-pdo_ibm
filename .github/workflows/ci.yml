@@ -57,7 +57,17 @@ jobs:
           docker ps -as
       - name: Tests
         # make test is insufficient to load PDO
-        run: TEST_PHP_ARGS="-n -d extension=pdo.so -d extension=modules/pdo_ibm.so" php run-tests.php -P --show-diff tests
+        # Most of these are either cribbed from the old Travis configuration,
+        # or required for the tests to use the DSN.
+        run: |
+          export TEST_PHP_ARGS="-n -d extension=pdo.so -d extension=modules/pdo_ibm.so"
+          export IBM_DB2_TEST_SKIP_CONNECT_FAILURE=0
+          export DB2CLIINIPATH=$PWD
+          export REPORT_EXIT_STATUS=1
+          export PDOTEST_DSN=ibm:SAMPLE
+          export PDOTEST_USER=db2inst1
+          export PDOTEST_PASS=password
+          php run-tests.php -P --show-diff tests
   windows:
     defaults:
       run:
