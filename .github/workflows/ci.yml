@@ -38,9 +38,25 @@ jobs:
         run: ./configure --with-pdo-ibm=$PWD/clidriver
       - name: make
         run: make V=1
-      # XXX: No tests until DB2 Docker container is set up (see Travis)
-      #- name: Test dbase
-      #  run: make test TESTS=tests
+      - name: Set up Db2 LUW in Docker
+        # XXX: Should we be caching the Docker image? Are we creating the necessary things?
+        # Adapted from the Travis setup with the changes used for the current
+        # version of the Db2 container.
+        run: |
+          set -x
+          cat <<EOF > db2cli.ini
+          [SAMPLE]
+          Hostname=localhost
+          Protocol=TCPIP
+          Port=60000
+          Database=sample
+          EOF
+          mkdir database
+          docker pull ibmcom/db2
+          docker run --name db2 --privileged=true -p 60000:50000 -e DB2INST1_PASSWORD=password -e LICENSE=accept -e DBNAME=sample -v database:/database -itd ibmcom/db2
+          docker ps -as
+      - name: Tests
+        run: make test TESTS=tests
   windows:
     defaults:
       run:
