@@ -72,7 +72,7 @@ jobs:
           export IBM_DB2_TEST_SKIP_CONNECT_FAILURE=0
           export DB2CLIINIPATH=$PWD
           export REPORT_EXIT_STATUS=1
-          export PDOTEST_DSN=ibm:SAMPLE
+          export PDOTEST_DSN=ibm:DSN=SAMPLE
           export PDOTEST_USER=db2inst1
           export PDOTEST_PASS=password
           php run-tests.php -P --show-diff tests
