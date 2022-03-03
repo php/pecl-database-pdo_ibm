@@ -40,11 +40,11 @@ pdo_ibm: Check error condition when given null connection parameters
 ?>
 --EXPECTF--
 Connection Failed
-invalid data source name
+%s
 
 Connection Failed
 SQLSTATE=08001, SQL%sonnect: -30082 [%s][%s] SQL30082N  Security processing failed with reason "%d" ("%s").  SQLSTATE=08001
-
+ ISAM: 
 Connection Failed
 SQLSTATE=08001, SQL%sonnect: -30082 [%s][%s] SQL30082N  Security processing failed with reason "%d" ("%s").  SQLSTATE=08001
-
+ ISAM:
