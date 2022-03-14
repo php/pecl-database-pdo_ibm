@@ -1,7 +1,12 @@
 --TEST--
 pdo_ibm: Trusted Context
 --SKIPIF--
-<?php require_once('skipif.inc'); ?>
+<?php
+require_once('skipif.inc');
+if (getenv("PDOTEST_TCUSER") === false || getenv("PDOTEST_TCPASS") === false) {
+	die("skip: Trusted context credentials aren't configured");
+}
+?>
 --FILE--
 <?php
 require_once('fvt.inc');
