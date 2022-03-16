@@ -1571,6 +1571,12 @@ static int ibm_stmt_get_col(
 		*len = 0;
 #endif
 	}
+	/* not declared in headers, but happens on conversion error */
+	else if (col_res->out_length == -2) {
+		/* this doesn't bubble up as an exception; weird */
+		RAISE_IBM_STMT_ERROR("IM001", "ibm_stmt_get_col",
+			"col_res->out_length == -2; conversion error?");
+	}
 	/* see if length is SQL_NTS ("count the length yourself"-value) */
 	else if (col_res->out_length == SQL_NTS) {
 		if (col_res->data.str_val && col_res->data.str_val[0] != '\0') {
