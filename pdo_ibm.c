@@ -40,13 +40,7 @@ extern pdo_driver_t pdo_ibm_driver;	/* the registration table */
 
 
 #ifdef PASE /* PASE i5/OS start-up */
-/* This routine should be called by the application prior
- * to any other CLI routine to override the ascii ccsid
- * being retrieved from the Qp2RunPase() routine.  If this
- * routine is called after any CLI routine is called in
- * the process it will have no effect.
- */
-int SQLOverrideCCSID400(int newCCSID);
+#include <as400_protos.h>
 #endif /* PASE */
 
 /* {{{ pdo_ibm_deps
@@ -101,6 +95,12 @@ static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 {
 #ifdef PASE /* prior any CLI routine override ascii ccsid */
 	if (pdo_ibm_globals->i5_override_ccsid) {
+		/* This routine should be called by the application prior
+		 * to any other CLI routine to override the ascii ccsid
+		 * being retrieved from the Qp2RunPase() routine.  If this
+		 * routine is called after any CLI routine is called in
+		 * the process it will have no effect.
+		 */
 		SQLOverrideCCSID400(pdo_ibm_globals->i5_override_ccsid);
 	}
 #endif /* PASE */
