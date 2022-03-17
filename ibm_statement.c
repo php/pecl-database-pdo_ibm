@@ -1557,7 +1557,11 @@ static int ibm_stmt_get_col(
 	if (col_res->returned_type == PDO_PARAM_LOB) {
 		php_stream *stream = create_lob_stream(stmt, stmt_res, colno);	/* already opened */
 #if PHP_8_1_OR_HIGHER
-		php_stream_to_zval(stream, result);
+		if (stream != NULL) {
+			php_stream_to_zval(stream, result);
+		} else {
+			ZVAL_NULL(result);
+		}
 #else
 		if (stream != NULL) {
 			*ptr = (char *) stream;
