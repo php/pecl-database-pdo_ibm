@@ -83,6 +83,7 @@ jobs:
         # or required for the tests to use the DSN.
         run: |
           export TEST_PHP_ARGS="-n -d extension=pdo.so -d extension=modules/pdo_ibm.so"
+          export DISABLE_SKIP_CACHE=1
           export IBM_DB2_TEST_SKIP_CONNECT_FAILURE=0
           export DB2CLIINIPATH=$PWD
           export REPORT_EXIT_STATUS=1
