@@ -87,13 +87,6 @@ ZEND_GET_MODULE(pdo_ibm)
 
 /* {{{ PHP_INI
  */
-/* Remove comments and fill if you need to have entries in php.ini
-PHP_INI_BEGIN()
-	STD_PHP_INI_ENTRY("pdo_ibm.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_pdo_ibm_globals, pdo_ibm_globals)
-	STD_PHP_INI_ENTRY("pdo_ibm.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_pdo_ibm_globals, pdo_ibm_globals)
-PHP_INI_END()
-*/
-/* }}} */
 #ifdef PASE /* i5/OS specific functions */
 PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("pdo_ibm.i5_override_ccsid", "0", PHP_INI_SYSTEM, OnUpdateLong,
@@ -119,9 +112,10 @@ static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 PHP_MINIT_FUNCTION(pdo_ibm)
 {
 	ZEND_INIT_MODULE_GLOBALS(pdo_ibm, php_pdo_ibm_init_globals, NULL);
-	/* If you have INI entries, uncomment these lines
+#ifdef PASE
+	/* Only PASE has INI entries right now. */
 	REGISTER_INI_ENTRIES();
-	*/
+#endif
 
 #ifndef PASE /* i5/OS no support trusted */
 	REGISTER_PDO_CLASS_CONST_LONG("SQL_ATTR_USE_TRUSTED_CONTEXT", (long) PDO_SQL_ATTR_USE_TRUSTED_CONTEXT);
