@@ -22,20 +22,20 @@ pdo_ibm: Select LOBs, including null and 0-length
 			$create = 'CREATE TABLE animals (id INTEGER, my_clob clob, my_blob blob)';
 			$result = $this->db->exec( $create );
 
-            $data = array (
-                array(1, 'this is the clob that never ends...',
-                         'this is the blob that never ends...')
+			$data = array (
+				array(1, 'this is the clob that never ends...',
+						 'this is the blob that never ends...')
 				,
-                array(2, null,null)
+				array(2, null,null)
 				,
 				array(3,'','')
-            );
+			);
 
 			$stmt = $this->db->prepare('insert into animals (id,my_clob,my_blob) values (?,?,?)');
 
 			print "inserting\n";
 			foreach ($data as $row) {
-			    $stmt->execute($row);
+				$stmt->execute($row);
 			}
 
 			print "succesful\n";
@@ -45,19 +45,20 @@ pdo_ibm: Select LOBs, including null and 0-length
 
 			$rs = $stmt->execute();
 
-           $count = 0;
+			$count = 0;
 			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				var_dump( $row['ID'] );
 
-                // this is a temporary workaround
-                // until zero-length/lob stream
-                // issue is fixed
-                if ($count < 2) {
+				// this is a temporary workaround
+				// until zero-length/lob stream
+				// issue is fixed
+				if ($count < 2) {
 				   var_dump( $row['MY_CLOB'] );
-                   var_dump( $row['MY_BLOB'] );
-                }
-                var_dump(strpos($row['MY_CLOB'], 'lob'));
-                $count++;
+				   var_dump( $row['MY_BLOB'] );
+				}
+				// suppressed deprecation message for NULL on 8.1
+				var_dump(@strpos($row['MY_CLOB'], 'lob'));
+				$count++;
 			}
 
 			print "done\n";
