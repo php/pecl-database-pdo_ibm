@@ -11,7 +11,8 @@ pdo_ibm: Check error condition when given null connection parameters
 		{
 			try {
 				$my_null = NULL;
-				$new_conn = new PDO($my_null, $this->user, $this->pass);
+				// PHP 8.1 makes this deprecated
+				$new_conn = @new PDO($my_null, $this->user, $this->pass);
 			} catch(Exception $e) {
 				echo "Connection Failed\n";
 				echo $e->getMessage() . "\n\n";
