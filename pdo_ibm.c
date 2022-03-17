@@ -83,7 +83,7 @@ ZEND_GET_MODULE(pdo_ibm)
  */
 #ifdef PASE /* i5/OS specific functions */
 PHP_INI_BEGIN()
-	STD_PHP_INI_BOOLEAN("pdo_ibm.i5_override_ccsid", "0", PHP_INI_SYSTEM, OnUpdateLong,
+	STD_PHP_INI_ENTRY("pdo_ibm.i5_override_ccsid", "0", PHP_INI_SYSTEM, OnUpdateLong,
 		i5_override_ccsid, zend_pdo_ibm_globals, pdo_ibm_globals)
 PHP_INI_END()
 #endif /* PASE */
@@ -187,9 +187,9 @@ PHP_MINFO_FUNCTION(pdo_ibm)
 	php_info_print_table_row(2, "Module release", PDO_IBM_VERSION);
 	php_info_print_table_end();
 
-	/* Remove comments if you have entries in php.ini
+#ifdef PASE
 	DISPLAY_INI_ENTRIES();
-	*/
+#endif
 }
 /* }}} */
 
