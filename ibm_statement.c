@@ -1711,13 +1711,6 @@ static int ibm_stmt_get_column_meta(
 #else /* not PASE */
 
 
-	/* see if we can retrieve the type name */
-	if (SQLColAttribute(stmt_res->hstmt, colno + 1, SQL_DESC_TYPE_NAME,
-			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
-			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
-		add_assoc_stringl(return_value, "native_type", attribute_buffer, length);
-	}
-
 	/* see if we can retrieve the table name  */
 	if (SQLColAttribute (stmt_res->hstmt, colno + 1, SQL_DESC_BASE_TABLE_NAME,
 			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
@@ -1729,6 +1722,14 @@ static int ibm_stmt_get_column_meta(
 		if (length > 0) {
 			add_assoc_stringl(return_value, "table", attribute_buffer, length);
 		}
+	}
+
+
+	/* see if we can retrieve the type name */
+	if (SQLColAttribute(stmt_res->hstmt, colno + 1, SQL_DESC_TYPE_NAME,
+			(SQLPOINTER) attribute_buffer, ATTRIBUTEBUFFERSIZE, &length,
+			(SQLPOINTER) & numericAttribute) != SQL_ERROR) {
+		add_assoc_stringl(return_value, "native_type", attribute_buffer, length);
 	}
 
 
