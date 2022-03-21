@@ -82,7 +82,6 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
     <file baseinstalldir="pdo_ibm" name="fvt_015_InsertSelectClobBlobColumns.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_015_V5V6_InsertSelectClobBlobColumns.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_016_InsertIntegerBindingString.phpt" role="test" />
-    <file baseinstalldir="pdo_ibm" name="fvt_016_V5V6_InsertIntegerBindingString.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_017_InsertRetrieveLargeClobFile_01.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_017b_InsertRetrieveLargeClobFile_02.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_017b_V5V6_InsertRetrieveLargeClobFile_02.phpt" role="test" />
