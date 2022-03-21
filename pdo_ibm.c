@@ -85,6 +85,8 @@ ZEND_GET_MODULE(pdo_ibm)
 PHP_INI_BEGIN()
 	STD_PHP_INI_ENTRY("pdo_ibm.i5_override_ccsid", "0", PHP_INI_SYSTEM, OnUpdateLong,
 		i5_override_ccsid, zend_pdo_ibm_globals, pdo_ibm_globals)
+	STD_PHP_INI_ENTRY("pdo_ibm.i5_dbcs_alloc", "0", PHP_INI_SYSTEM, OnUpdateLong,
+		i5_dbcs_alloc, zend_pdo_ibm_globals, pdo_ibm_globals)
 PHP_INI_END()
 #endif /* PASE */
 

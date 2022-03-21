@@ -51,6 +51,7 @@ ZEND_BEGIN_MODULE_GLOBALS(pdo_ibm)
 #ifdef PASE /* i5/OS ease of use turn off/on */
 	long		i5_ignore_userid; 		/* blank userid, possible no qsqsrvr  */
 	long		i5_override_ccsid; 		/* prior any CLI routine override ascii ccsid */
+	long		i5_dbcs_alloc;			/* if to overallocate buffers for unpredictable conversions */
 #endif /* PASE */
 ZEND_END_MODULE_GLOBALS(pdo_ibm)
 
