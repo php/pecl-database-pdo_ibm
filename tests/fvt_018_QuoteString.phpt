@@ -28,7 +28,8 @@ pdo_ibm: Quote a string.
 			print "Quoted string: " . $this->db->quote($string) . "\n";
 			$string = NULL;
 			print "Unquoted string: $string\n";
-			print "Quoted string: " . $this->db->quote($string) . "\n";
+			// PHP 8.1 makes this deprecated
+			print "Quoted string: " . @$this->db->quote($string) . "\n";
 			$string = "'";
 			print "Unquoted string: $string\n";
 			print "Quoted string: " . $this->db->quote($string) . "\n";

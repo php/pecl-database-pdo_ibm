@@ -104,11 +104,11 @@ As row column names: 0
 As row column numbers: 0 cat Pook            
 As row column names: 0
 
-Notice: Undefined offset: 1 in %s
+%s 1 in %s
 Rows not available: 
 As row column number: 0
 
-Notice: Uninitialized string offset: 1 in %s
+%s 1 in %s
 Rows not available: 
 The id is: 0 Breed is: cat
 Result in row : 1

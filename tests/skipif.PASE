@@ -26,8 +26,8 @@ $mypase = [
 "fvt_trusted_context"=>"i5 no trusted support",
 "fvt_isam_error"=>"i5 different errors"];
 $myos = PHP_OS;
+$mytest = basename($_SERVER["PHP_SELF"]);
 if (strpos("  ".$myos,'400') > 0 || strpos(" ".$myos,'AIX') > 0) {
-	$mytest = basename($_SERVER["PHP_SELF"]);
 	if ( substr(phpversion(),0,1) <= 5) {
 		$mypase["fvt_49872_V5V6_ClearingErrCodes"] = "i5 (null) missing vs LUW";
 	} else {

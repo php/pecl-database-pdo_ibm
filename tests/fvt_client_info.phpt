@@ -15,6 +15,7 @@ pdo_ibm: Client Info
 			var_dump($this->db->getAttribute(PDO::SQL_ATTR_INFO_USERID));
 			var_dump($this->db->getAttribute(PDO::SQL_ATTR_INFO_ACCTSTR));
 			var_dump($this->db->getAttribute(PDO::SQL_ATTR_INFO_APPLNAME));
+			// This will default to the hostname of the system nowadays.
 			var_dump($this->db->getAttribute(PDO::SQL_ATTR_INFO_WRKSTNNAME));
 		
 			$this->db->setAttribute(PDO::SQL_ATTR_INFO_USERID, "MyUser");
@@ -32,12 +33,12 @@ pdo_ibm: Client Info
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
---EXPECT--
+--EXPECTF--
 Attempting to connect..
 string(0) ""
 string(0) ""
 string(0) ""
-string(0) ""
+string(%d) "%s"
 string(6) "MyUser"
 string(15) "MyAccountString"
 string(5) "MyApp"

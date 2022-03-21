@@ -42,6 +42,6 @@ pdo_ibm: Check the clearing of error codes
 Array
 (
     [0] => 00000
-    [1] => 0
-    [2] =>  ((null)[0] at (null):0)
+    [1] => 
+    [2] => 
 )

@@ -39,7 +39,7 @@ pdo_ibm: Insert and retrieve a very large file.
 				var_dump( $id );
 				var_dump( $blob );
                 $fp = fopen( dirname(__FILE__) . "/large_blob_out.dat" , "wb" );
-                echo "datalength: " . stream_copy_to_stream( $blob , $fp ) . "\n";
+                echo "datalength: " . fwrite($fp, $blob) . "\n";
                 system( "diff large_blob.dat large_blob_out.dat" );
 			}
 			print "done\n";
