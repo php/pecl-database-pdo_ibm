@@ -1084,10 +1084,12 @@ static int stmt_bind_column(pdo_stmt_t *stmt, int colno)
 		case SQL_NUMERIC:
 		default:
 			in_length = col_res->data_size + in_length;
+#ifdef PASE
 			/* this includes null terminator, so a bit sloppy */
 			if (PDO_IBM_G(i5_dbcs_alloc)) {
 				in_length *= 6;
 			}
+#endif
 			col_res->data.str_val = (char *) emalloc(in_length+1);
 			check_stmt_allocation(col_res->data.str_val,
 					"stmt_bind_column",
