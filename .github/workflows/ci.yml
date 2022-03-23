@@ -91,6 +91,8 @@ jobs:
           export PDOTEST_USER=db2inst1
           export PDOTEST_PASS=password
           php run-tests.php -P --show-diff tests
+      - name: Verify package
+        run: pecl package-validate
   windows:
     defaults:
       run:
