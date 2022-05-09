@@ -1334,10 +1334,18 @@ void raise_sql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, SQLHANDLE handle,
 	conn_res->error_data.filename = file;
 	conn_res->error_data.lineno = line;
 
-	SQLGetDiagRec(hType, handle, 1, (SQLCHAR *) & (conn_res->error_data.sql_state),
+	rc = SQLGetDiagRec(hType, handle, 1, (SQLCHAR *) & (conn_res->error_data.sql_state),
 		&(conn_res->error_data.sqlcode),
 		(SQLCHAR *) & (conn_res->error_data.err_msg),
 		SQL_MAX_MESSAGE_LENGTH, &length);
+	/* you are having a bad day (is HY000 correct?) */
+	if (rc == SQL_ERROR) {
+		raise_ibm_error(dbh, stmt, "HY000", tag, "SQLGetDiagRec returned an error", file, line);
+		return;
+	} else if (rc == SQL_NO_DATA) {
+		raise_ibm_error(dbh, stmt, "HY000", tag, "SQLGetDiagRec returned no data", file, line);
+		return;
+	}
 	/* the error message is not returned null terminated. */
 	conn_res->error_data.err_msg[length] = '\0';
 
