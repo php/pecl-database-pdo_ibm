@@ -37,9 +37,9 @@ extern struct pdo_stmt_methods ibm_stmt_methods;
 extern int ibm_stmt_dtor(pdo_stmt_t *stmt);
 
 #ifdef PASE /* libl, curlib */
-static int db2_ibmi_cmd_helper(SQLHDBC hdbc, char*stmt_string);
-static int db2_ibmi_cmd_libl(SQLHDBC hdbc, char *stmt_string);
-static int db2_ibmi_cmd_curlib(SQLHDBC hdbc, char *stmt_string);
+static int db2_ibmi_cmd_helper(pdo_dbh_t* dbh, char*stmt_string);
+static int db2_ibmi_cmd_libl(pdo_dbh_t* dbh, char *stmt_string);
+static int db2_ibmi_cmd_curlib(pdo_dbh_t* dbh, char *stmt_string);
 #endif /*PASE */
 
 #ifdef PASE /* IBM i consolidate ifdefs */
@@ -635,7 +635,7 @@ static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 		*/
 		case PDO_I5_ATTR_DBC_LIBL:
 			/* if fail, assume delayed set of libl, curlib (after connect) */
-			rc = db2_ibmi_cmd_libl((SQLHDBC) conn_res->hdbc, 
+			rc = db2_ibmi_cmd_libl(dbh,
 				(SQLPOINTER) Z_STRVAL_P(return_value));
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
@@ -646,7 +646,7 @@ static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 		*/
 		case PDO_I5_ATTR_DBC_CURLIB:
 			/* if fail, assume delayed set of libl, curlib (after connect) */
-			rc = db2_ibmi_cmd_curlib((SQLHDBC) conn_res->hdbc, 
+			rc = db2_ibmi_cmd_curlib(dbh,
 				(SQLPOINTER) Z_STRVAL_P(return_value));
 			check_dbh_error(rc, "SQLSetConnectAttr");
 			return TRUE;
@@ -1235,12 +1235,12 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 		check_dbh_error(rc, "SQLConnect");
 #ifdef PASE /* delayed set of libl, curlib (after connect) */
 		if (conn_res->c_i5_pending_libl) {
-			rc = db2_ibmi_cmd_libl((SQLHDBC) conn_res->hdbc, conn_res->c_i5_pending_libl);
+			rc = db2_ibmi_cmd_libl(dbh, conn_res->c_i5_pending_libl);
 			efree(conn_res->c_i5_pending_libl);
 			conn_res->c_i5_pending_libl = NULL;
 		}
 		if (conn_res->c_i5_pending_curlib) {
-			rc = db2_ibmi_cmd_curlib((SQLHDBC) conn_res->hdbc, conn_res->c_i5_pending_curlib);
+			rc = db2_ibmi_cmd_curlib(dbh, conn_res->c_i5_pending_curlib);
 			efree(conn_res->c_i5_pending_curlib);
 			conn_res->c_i5_pending_curlib = NULL;
 		}
@@ -1433,13 +1433,16 @@ void clear_stmt_error(pdo_stmt_t *stmt)
 
 #ifdef PASE /* libl, curlib */
 static int db2_ibmi_cmd_helper(
-	SQLHDBC		hdbc,
+	pdo_dbh_t*      dbh,
 	char		*stmt_string)
 {
 	int i;
 	SQLHSTMT hstmt;
 	int rc = SQL_ERROR;
 	char query[32702];
+
+	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
+	SQLHDBC hdbc = conn_res->hdbc;
 
 	/* XXX: We don't escape the string, length accurate after conv? */
 	snprintf(query, 32702, "CALL QSYS2.QCMDEXC('%s',%d)", stmt_string, strlen(stmt_string));
@@ -1451,24 +1454,24 @@ static int db2_ibmi_cmd_helper(
 	return rc;
 }
 static int db2_ibmi_cmd_libl(
-	SQLHDBC		hdbc,
+	pdo_dbh_t*      dbh,
 	char		*stmt_string)
 {
 	char buff[32600];
 
 	snprintf(buff, 32600, "CHGLIBL LIBL(%s)", stmt_string);
 
-	return db2_ibmi_cmd_helper(hdbc, buff);
+	return db2_ibmi_cmd_helper(dbh, buff);
 }
 static int db2_ibmi_cmd_curlib(
-	SQLHDBC		hdbc,
+	pdo_dbh_t*      dbh,
 	char		*stmt_string)
 {
 	char buff[32600];
 
 	snprintf(buff, 32600, "CHGCURLIB CURLIB(%s)", stmt_string);
 
-	return db2_ibmi_cmd_helper(hdbc, buff);
+	return db2_ibmi_cmd_helper(dbh, buff);
 }
 
 #endif /*PASE */
