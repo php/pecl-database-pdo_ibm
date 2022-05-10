@@ -637,8 +637,7 @@ static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 			/* if fail, assume delayed set of libl, curlib (after connect) */
 			rc = db2_ibmi_cmd_libl(dbh,
 				(SQLPOINTER) Z_STRVAL_P(return_value));
-			check_dbh_error(rc, "SQLSetConnectAttr");
-			return TRUE;
+			return rc == 0;
 			break;
 		/* 
 		i5_curlibl - PDO::I5_ATTR_DBC_CURLIB
@@ -648,8 +647,7 @@ static STATUS_RETURN_TYPE ibm_handle_set_attribute(
 			/* if fail, assume delayed set of libl, curlib (after connect) */
 			rc = db2_ibmi_cmd_curlib(dbh,
 				(SQLPOINTER) Z_STRVAL_P(return_value));
-			check_dbh_error(rc, "SQLSetConnectAttr");
-			return TRUE;
+			return rc == 0;
 			break;
 
 
@@ -1239,11 +1237,13 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 			efree(conn_res->c_i5_pending_libl);
 			conn_res->c_i5_pending_libl = NULL;
 		}
+		check_dbh_error(rc, "db2_ibmi_cmd_libl");
 		if (conn_res->c_i5_pending_curlib) {
 			rc = db2_ibmi_cmd_curlib(dbh, conn_res->c_i5_pending_curlib);
 			efree(conn_res->c_i5_pending_curlib);
 			conn_res->c_i5_pending_curlib = NULL;
 		}
+		check_dbh_error(rc, "db2_ibmi_cmd_curlib");
 #endif /* PASE */
 	}
 
@@ -1456,7 +1456,16 @@ static int db2_ibmi_cmd_helper(
 	snprintf(query, 32702, "CALL QSYS2.QCMDEXC('%s',%d)", stmt_string, strlen(stmt_string));
 
 	rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt);
+	/* XXX: check here */
 	rc = SQLExecDirect((SQLHSTMT) hstmt, query, SQL_NTS);
+	if (rc == SQL_ERROR) {
+		/*
+		 * dbh error checks on the conn, and the error is in the stmt
+		 * XXX: use a PDO statement handle instead?
+		 */
+		raise_sql_error(dbh, NULL, hstmt, SQL_HANDLE_STMT,
+			"db2_ibmi_cmd_helper", __FILE__, __LINE__);
+	}
 	SQLFreeHandle( SQL_HANDLE_STMT, hstmt );
 
 	return rc;
