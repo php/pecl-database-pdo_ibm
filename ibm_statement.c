@@ -782,7 +782,11 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 
 			/* data buf (after alterations) */
 			data_buf = Z_STRVAL_P(parameter);
-			param_res->param_size = Z_STRLEN_P(parameter);
+			/* GH-12: Set +1 to avoid a possible CHAR(0). Db2i
+			 * reacts violently (-902) to it. zend_string is
+			 * null terminated, so it should be safe.
+			 */
+			param_res->param_size = Z_STRLEN_P(parameter) + 1;
 			/* binary */
 			switch(param_res->data_type) {
 			case SQL_BINARY:
