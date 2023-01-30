@@ -17,20 +17,25 @@ if test "$PHP_PDO_IBM" != "no"; then
     dnl XXX: Macros for this? Can these be merged?
 
     dnl LUW ships its client libraries in lib64/32 (at least on amd64 linux)
-    PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
-      PHP_ADD_LIBPATH($i/lib64, PDO_IBM_SHARED_LIBADD)
-      PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
-      PHP_ADD_INCLUDE($i/include)
-      break
-    ], [
-    ], "-L$i/lib64" )
-    PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
-      PHP_ADD_LIBPATH($i/lib32, PDO_IBM_SHARED_LIBADD)
-      PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
-      PHP_ADD_INCLUDE($i/include)
-      break
-    ], [
-    ], "-L$i/lib32" )
+    AC_CHECK_SIZEOF([long])
+    AC_MSG_CHECKING([if we're on a 64-bit platform])
+    AS_IF([test "$ac_cv_sizeof_long" -eq 4],[
+      AC_MSG_RESULT([no])
+      PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
+        PHP_ADD_LIBPATH($i/lib32, PDO_IBM_SHARED_LIBADD)
+        PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+        PHP_ADD_INCLUDE($i/include)
+        break
+      ], [], "-L$i/lib32" )
+    ],[
+      AC_MSG_RESULT([yes])
+      PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
+        PHP_ADD_LIBPATH($i/lib64, PDO_IBM_SHARED_LIBADD)
+        PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+        PHP_ADD_INCLUDE($i/include)
+        break
+      ], [], "-L$i/lib64" )
+    ])
     dnl The standalone clidriver package uses lib/
     PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
       PHP_ADD_LIBPATH($i/lib, PDO_IBM_SHARED_LIBADD)
