@@ -157,15 +157,11 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  <dependencies>
   <required>
    <php>
-    <min>7.0.0</min>
+    <min>7.3.0</min>
    </php>
    <pearinstaller>
     <min>1.4.0b1</min>
    </pearinstaller>
-   <package>
-    <name>PDO</name>
-    <channel>pear.php.net</channel>
-   </package>
   </required>
  </dependencies>
  <providesextension>PDO_IBM</providesextension>
