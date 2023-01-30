@@ -71,11 +71,6 @@ if test "$PHP_PDO_IBM" != "no"; then
   dnl Don't forget to add additional source files here
   php_pdo_ibm_sources_core="pdo_ibm.c ibm_driver.c ibm_statement.c"
 
-  case "$host_alias" in
-    *aix*)
-      CPPFLAGS="$CPPFLAGS -D__H_LOCALEDEF";;
-  esac
-
   dnl Convert the includes to __PASE__ (for IBM-shipped GCC) or use AC_DEFINE
   if test "$PDO_IBM_PASE" = "yes" ; then
     PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_cv_inc_path -DPASE)
