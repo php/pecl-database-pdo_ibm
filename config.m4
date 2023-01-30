@@ -9,96 +9,75 @@ PHP_ARG_WITH(pdo-ibm, for DB2 driver for PDO,
 if test "$PHP_PDO_IBM" != "no"; then
   SEARCH_PATH="$PHP_PDO_IBM_LIB $PHP_PDO_IBM $DB2PATH $DB2DIR"
 
-  AC_MSG_CHECKING(Looking for DB2 CLI libraries)
+  dnl Scan the library path for LUW, clidriver, and libdb400 in the usual
+  dnl places, also assuming include/ is in the directory too.
   for i in $SEARCH_PATH ; do
-    AC_MSG_CHECKING([     in $i])
-    if test -r $i/libdb2.so || test -r $i/libdb2.a || test -r $i/libdb400.a || test -r $i/libdb2.dylib; then
-      LIB_DIR="$i/"
-      AC_MSG_RESULT(found)
+    dnl XXX: The messages kinda suck and don't indicate which path
+    dnl (combined with AC_MSG_* spew from AC_CHECK_LIB)
+    dnl XXX: Macros for this? Can these be merged?
+
+    dnl LUW ships its client libraries in lib64/32 (at least on amd64 linux)
+    PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
+      PHP_ADD_LIBPATH($i/lib64, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_INCLUDE($i/include)
       break
-    else
-      AC_MSG_RESULT()
-    fi
-    AC_MSG_CHECKING([     in $i/lib64])
-    if test -r $i/lib64/libdb2.so || test -r $i/lib64/libdb2.a || test -r $i/lib64/libdb400.a || test -r $i/lib64/libdb2.dylib ; then
-      LIB_DIR="$i/lib64/"
-      AC_MSG_RESULT(found)
+    ], [
+    ], "-L$i/lib64" )
+    PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
+      PHP_ADD_LIBPATH($i/lib32, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_INCLUDE($i/include)
       break
-    else
-      AC_MSG_RESULT()
-    fi
-    AC_MSG_CHECKING([     in $i/lib32])
-    if test -r $i/lib32/libdb2.so || test -r $i/lib32/libdb2.a || test -r $i/lib32/libdb400.a || test -r $i/lib32/libdb2.dylib ; then
-      LIB_DIR="$i/lib32/"
-      AC_MSG_RESULT(found)
+    ], [
+    ], "-L$i/lib32" )
+    dnl The standalone clidriver package uses lib/
+    PHP_CHECK_LIBRARY(db2, SQLDriverConnect, [
+      PHP_ADD_LIBPATH($i/lib, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_INCLUDE($i/include)
       break
-    else
-      AC_MSG_RESULT()
-    fi
-    AC_MSG_CHECKING([     in $i/lib])
-    if test -r $i/lib/libdb2.so || test -r $i/lib/libdb2.a || test -r $i/lib/libdb400.a || test -r $i/lib/libdb2.dylib ; then
-      LIB_DIR="$i/lib/"
-      AC_MSG_RESULT(found)
+    ], [
+    ], "-L$i/lib" )
+    dnl Special cases for PASE
+    dnl SG ships a custom libdb400 (with renamed funcs to co-exist w/ ODBC)
+    dnl it requires some special handling for headers too
+    PHP_CHECK_LIBRARY(db400sg, LDBDriverConnect, [
+      PDO_IBM_PASE=yes
+      dnl from RPMs libdb400sg-devel and sqlcli-devel
+      dnl as IBM i doesn't ship SQL/CLI headers w/ PASE (and RPM's in subdir)
+      PHP_ADD_LIBPATH($i/lib, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_LIBRARY(db400sg, 1, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_INCLUDE(/QOpenSys/pkgs/include/cli-sg)
+      PHP_ADD_INCLUDE(/QOpenSys/pkgs/include/cli)
       break
-    else
-      AC_MSG_RESULT()
-    fi
+    ], [
+    ], "-L$i/lib" )
+    dnl Probably vanilla libdb400
+    dnl XXX: For PASE, libdb400 is likely on the default path
+    PHP_CHECK_LIBRARY(db400, SQLDriverConnect, [
+      PDO_IBM_PASE=yes
+      dnl from RPM sqlcli-devel
+      PHP_ADD_LIBPATH($i/lib, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_LIBRARY(db400, 1, PDO_IBM_SHARED_LIBADD)
+      PHP_ADD_INCLUDE(/QOpenSys/pkgs/include/cli)
+      break
+    ], [
+    ], "-L$i/lib" )
   done
 
-  AC_MSG_CHECKING([for DB2 CLI include files in default path])
-  if test -r $LIB_DIR/libdb400.a ; then
-    dnl PASE doesn't need that, we'll use the sqlcli-devel package.
-    PHP_ADD_INCLUDE(/QOpenSys/pkgs/include/cli)
-    AC_MSG_RESULT([found PASE headers])
-  else
-    dnl but LUW/Connect will
-    for i in $SEARCH_PATH ; do
-      AC_MSG_CHECKING([in $i])
-      if test -r "$i/include/sqlcli1.h" ; then
-        PDO_IBM_DIR=$i
-        AC_MSG_RESULT(found in $i)
-        break
-      fi
-    done
-  fi
-
-  ifdef([PHP_CHECK_PDO_INCLUDES],
-  [
-    PHP_CHECK_PDO_INCLUDES
-  ],[
-    AC_MSG_CHECKING([for PDO includes])
-    if test -f $abs_srcdir/include/php/ext/pdo/php_pdo_driver.h; then
-      pdo_cv_inc_path=$abs_srcdir/ext
-    elif test -f $abs_srcdir/ext/pdo/php_pdo_driver.h; then
-      pdo_cv_inc_path=$abs_srcdir/ext
-    elif test -f $phpincludedir/ext/pdo/php_pdo_driver.h; then
-      pdo_cv_inc_path=$phpincludedir/ext
-    else
-      AC_MSG_ERROR([Cannot find php_pdo_driver.h.])
-    fi
-    AC_MSG_RESULT($pdo_cv_inc_path)
-  ])
+  PHP_CHECK_PDO_INCLUDES
 
   dnl Don't forget to add additional source files here
   php_pdo_ibm_sources_core="pdo_ibm.c ibm_driver.c ibm_statement.c"
-
-  PHP_ADD_INCLUDE($PDO_IBM_DIR/include)
-  PHP_ADD_LIBPATH($LIB_DIR, PDO_IBM_SHARED_LIBADD)
-  AC_MSG_CHECKING(["$LIB_DIR/libdb400.a"])
-  if test -r "$LIB_DIR/libdb400.a" ; then
-    PHP_ADD_LIBRARY(db400, 1, PDO_IBM_SHARED_LIBADD)
-    AC_MSG_RESULT(found)
-  else
-    PHP_ADD_LIBRARY(db2, 1, PDO_IBM_SHARED_LIBADD)
-    AC_MSG_RESULT()
-  fi
 
   case "$host_alias" in
     *aix*)
       CPPFLAGS="$CPPFLAGS -D__H_LOCALEDEF";;
   esac
 
-  if test -r $LIB_DIR/libdb400.a ; then
+  dnl Convert the includes to __PASE__ (for IBM-shipped GCC) or use AC_DEFINE
+  if test "$PDO_IBM_PASE" = "yes" ; then
     PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_cv_inc_path -DPASE)
   else
     PHP_NEW_EXTENSION(pdo_ibm, $php_pdo_ibm_sources_core, $ext_shared,,-I$pdo_cv_inc_path)
