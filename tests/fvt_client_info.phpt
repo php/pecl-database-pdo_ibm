@@ -38,7 +38,7 @@ Attempting to connect..
 string(0) ""
 string(0) ""
 string(0) ""
-string(%d) "%s"
+string(%d) "%S"
 string(6) "MyUser"
 string(15) "MyAccountString"
 string(5) "MyApp"
