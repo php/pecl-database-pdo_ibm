@@ -679,15 +679,15 @@ static char *ibm_handle_lastInsertID(pdo_dbh_t * dbh, const char *name, size_t *
 	zend_string *last_id_zstr;
 #endif
 
-#ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
-	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
-	check_dbh_error(rc, "SQLGetInfo");
-
 	last_id = emalloc(MAX_IDENTITY_DIGITS);
 	if (last_id == NULL) {
 		return NULL;
 	}
 	strcpy(last_id, "0");
+
+#ifndef PASE /* i5 IDENTITY_VAL_LOCAL is correct */
+	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
+	check_dbh_error(rc, "SQLGetInfo");
 
 	if( strncmp( server, "DB2", 3 ) == 0 )
 	{
