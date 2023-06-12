@@ -11,7 +11,8 @@ pdo_ibm: Check error condition when given null connection parameters
 		{
 			try {
 				$my_null = NULL;
-				$new_conn = new PDO($my_null, $this->user, $this->pass);
+				// null DSN is deprecated in 8.x
+				$new_conn = @new PDO($my_null, $this->user, $this->pass);
 			} catch(Exception $e) {
 				echo "Connection Failed\n";
 				echo $e->getMessage() . "\n\n";
