@@ -32,6 +32,8 @@ public function runTest() {
   }
 }
 public function ZZARRAY2() {
+// XXX: This shouldn't hardcode the xmlservice library.
+// But it does use test programs not in the system xmlservice distribution...
 $clob = <<<ENDPROC
 <?xml version='1.0'?>
 <script>
@@ -65,7 +67,53 @@ $testcase = new Test();
 $testcase->runTest();
 ?>
 --EXPECTF--
-%s
+<?xml version='1.0'?>
+<script>
+<cmd comment='addlible'><success>%s</success>
+</cmd>
+<pgm name='%s' lib='%s' func='%s'>
+<parm comment='search this name'>
+<data var='myName' type='10A'>Ranger</data>
+</parm>
+<parm comment='max allowed return'>
+<data var='myMax' type='10i0'>5</data>
+</parm>
+<parm comment='actual count returned'>
+<data var='myCount' type='10i0' enddo='mycount'>5</data>
+</parm>
+<parm comment='array return'>
+<ds var='dcRec_t' dim='999' dou='mycount'>
+<data var='dcMyName' type='10A'>Ranger1</data>
+<data var='dcMyJob' type='4096A'>Test 101</data>
+<data var='dcMyRank' type='10i0'>11</data>
+<data var='dcMyPay' type='12p2'>13.42</data>
+</ds>
+<ds var='dcRec_t' dim='999' dou='mycount'>
+<data var='dcMyName' type='10A'>Ranger2</data>
+<data var='dcMyJob' type='4096A'>Test 102</data>
+<data var='dcMyRank' type='10i0'>12</data>
+<data var='dcMyPay' type='12p2'>26.84</data>
+</ds>
+<ds var='dcRec_t' dim='999' dou='mycount'>
+<data var='dcMyName' type='10A'>Ranger3</data>
+<data var='dcMyJob' type='4096A'>Test 103</data>
+<data var='dcMyRank' type='10i0'>13</data>
+<data var='dcMyPay' type='12p2'>40.26</data>
+</ds>
+<ds var='dcRec_t' dim='999' dou='mycount'>
+<data var='dcMyName' type='10A'>Ranger4</data>
+<data var='dcMyJob' type='4096A'>Test 104</data>
+<data var='dcMyRank' type='10i0'>14</data>
+<data var='dcMyPay' type='12p2'>53.68</data>
+</ds>
+<ds var='dcRec_t' dim='999' dou='mycount'>
+<data var='dcMyName' type='10A'>Ranger5</data>
+<data var='dcMyJob' type='4096A'>Test 105</data>
+<data var='dcMyRank' type='10i0'>15</data>
+<data var='dcMyPay' type='12p2'>67.10</data>
+</ds>
+</parm>
+<success><![CDATA[+++ success %s %s %s ]]></success>
 </pgm>
 </script>
 done
