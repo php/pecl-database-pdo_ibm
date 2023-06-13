@@ -6,7 +6,9 @@ pdo_ibm: Change fetch modes.
 <?php
 	require_once('fvt.inc');
 	class animalObj {
+		// Define both. The upper-case one is set instead of lower case, as that's what the driver returns to PDO.
 		public $id, $breed;
+		public $ID, $BREED;
 		public function __construct() {
 		}
 	}
