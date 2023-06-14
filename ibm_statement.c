@@ -1213,7 +1213,7 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt)
 		* stored a pointer to the parameter control block, so we identify
 		* which one needs data from that.
 		*/
-		while ((SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param)) == SQL_NEED_DATA) {
+		while ((rc = SQLParamData(stmt_res->hstmt, (SQLPOINTER) & param)) == SQL_NEED_DATA) {
 	
 			/*
 			* OK, we have a LOB.  This is either in string form, in
@@ -1268,6 +1268,8 @@ static int ibm_stmt_executer( pdo_stmt_t * stmt)
 		if (stmt_res->lob_buffer != NULL) {
 			efree(stmt_res->lob_buffer);
 		}
+		/* Conversion errors from input data get surfaced here. */
+		check_stmt_error(rc, "SQLParamData");
 	}
 	else
 	{
