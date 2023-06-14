@@ -17,8 +17,15 @@ pdo_ibm: Insert and retrieve a very large clob file.
 				$result = $this->db->exec( $drop );
 			} catch( Exception $e ){}
 
-			/* Create the test table */
-			$create = 'CREATE TABLE animals (id INTEGER, my_clob clob)';
+			/*
+			 * Create the test table. We use UTF-8 because the
+			 * input is UTF-8, but has an invalid character;
+			 * converting will cause it to fail (silently, because
+			 * SQLParamData errors are not checked as of 20230614).
+			 *
+			 * XXX: Set i5_override_ccsid=1208 in case?
+			 */
+			$create = 'CREATE TABLE animals (id INTEGER, my_clob clob ccsid 1208)';
 			$result = $this->db->exec( $create );
 
 			$fp = fopen( dirname(__FILE__) . "/large_clob.dat" , "r" );
