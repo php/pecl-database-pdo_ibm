@@ -30,7 +30,7 @@ pdo_ibm: Boolean data type
 			$r = $s->execute();
 			echo " ! Inserted\n";
 			
-			$s = $this->db->prepare("select * from calvinb.booltest");
+			$s = $this->db->prepare("select * from booltest");
 			$s->execute();
 			while ($r = $s->fetch(PDO::FETCH_ASSOC)) {
 				var_dump($r);
