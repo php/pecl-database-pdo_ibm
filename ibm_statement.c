@@ -353,6 +353,8 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 			* Numeric forms we can map directly to a long
 			* int value
 			*/
+			case SQL_BOOLEAN:
+			case SQL_BIT:
 			case SQL_SMALLINT:
 			case SQL_INTEGER:
 				param_res->ctype = SQL_C_LONG;
@@ -371,6 +373,8 @@ static int stmt_get_parameter_info(pdo_stmt_t * stmt, struct pdo_bound_param_dat
 static int db2_inout_parm_numeric(param_node *param_res) {
 	/* need character to number padding */
 	switch ( param_res->data_type ) {
+	case SQL_BOOLEAN:
+	case SQL_BIT:
 	case SQL_SMALLINT:
 	case SQL_INTEGER:
 	case SQL_REAL:
@@ -446,6 +450,8 @@ static void db2_inout_parm_pad_data(param_node *param_res, struct pdo_bound_para
 	* '2' becomes '000000000000000000002'
 	*/
 	switch ( param_res->data_type ) {
+	case SQL_BOOLEAN:
+	case SQL_BIT:
 	case SQL_SMALLINT:
 	case SQL_INTEGER:
 	case SQL_REAL:
@@ -591,6 +597,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 			return FALSE;
 
 		/* this is a long value for PHP (or user forced) */
+		case PDO_PARAM_BOOL:
 		case PDO_PARAM_INT:
 			/*
 			* If the parameter type is a numeric type, 
@@ -634,7 +641,6 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 			*/
 
 		/* a string value (very common) */
-		case PDO_PARAM_BOOL:
 		case PDO_PARAM_STR:
 			/*
 			* SQL_PARAM_INPUT        -- null remain untouched       (read)
@@ -1481,6 +1487,8 @@ static int ibm_stmt_describer(
 #ifdef PASE /* i5/OS size changes for "common" converts to string */
 	switch (col_res->data_type) {
 		/* BIGINT 9223372036854775807  (2^63-1) string convert */
+		case SQL_BOOLEAN:
+		case SQL_BIT:
 		case SQL_BIGINT:
 		case SQL_SMALLINT:
 		case SQL_INTEGER:
@@ -1780,6 +1788,10 @@ static int ibm_stmt_get_column_meta(
 	 * XXX: Also safe for pre-8.1?
 	 */
 	switch (col_res->data_type) {
+		/* Booleans */
+		case SQL_BOOLEAN:
+		case SQL_BIT:
+			add_assoc_long(return_value, "pdo_type", PDO_PARAM_BOOL);
 		/* LOBs */
 #ifndef PASE /* i5/OS - not LOBs */
 		case SQL_LONGVARBINARY:
@@ -1815,7 +1827,6 @@ static int ibm_stmt_get_column_meta(
 		default:
 			add_assoc_long(return_value, "pdo_type", PDO_PARAM_STR);
 			break;
-		/* XXX: PARAM_(INT|BOOL)? */
 	}
 #endif
 	return SUCCESS;
