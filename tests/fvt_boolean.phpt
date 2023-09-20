@@ -16,7 +16,7 @@ pdo_ibm: Boolean data type
 			try {
 				$this->db->exec("drop table booltest");
 			} catch (Exception $e) {}
-			$this->db->exec("create or replace table booltest (id integer not null, enabled boolean, primary key(id))");
+			$this->db->exec("create table booltest (id integer not null, enabled boolean, primary key(id))");
 			
 			$s = $this->db->prepare("insert into booltest (id, enabled) values (1, ?)");
 			$x = true;
