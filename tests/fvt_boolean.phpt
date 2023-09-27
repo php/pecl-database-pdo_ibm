@@ -22,13 +22,11 @@ pdo_ibm: Boolean data type
 			$x = true;
 			$s->bindParam(1, $x, PDO::PARAM_BOOL);
 			$r = $s->execute();;
-			echo " ! Inserted\n";
 			
 			$s = $this->db->prepare("insert into booltest (id, enabled) values (2, ?)");
 			$x = false;
 			$s->bindParam(1, $x, PDO::PARAM_BOOL);
 			$r = $s->execute();
-			echo " ! Inserted\n";
 			
 			$s = $this->db->prepare("select * from booltest");
 			$s->execute();
