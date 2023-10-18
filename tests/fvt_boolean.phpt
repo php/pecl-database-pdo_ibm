@@ -42,4 +42,4 @@ pdo_ibm: Boolean data type
 ?>
 --EXPECTREGEX--
 1: (1|TRUE)
-0: (0|FALSE)
+2: (0|FALSE)
