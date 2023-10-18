@@ -31,7 +31,8 @@ pdo_ibm: Boolean data type
 			$s = $this->db->prepare("select * from booltest");
 			$s->execute();
 			while ($r = $s->fetch(PDO::FETCH_ASSOC)) {
-				var_dump($r);
+				// This can return 0/1 on LUW or TRUE/FALSE on i
+				echo $r["ID"] . ": " . $r["ENABLED"] . "\n";
 			}
 		}
 	}
@@ -39,16 +40,6 @@ pdo_ibm: Boolean data type
 	$testcase = new Test();
 	$testcase->runTest();
 ?>
---EXPECT--
-array(2) {
-  ["ID"]=>
-  string(1) "1"
-  ["ENABLED"]=>
-  string(4) "TRUE"
-}
-array(2) {
-  ["ID"]=>
-  string(1) "2"
-  ["ENABLED"]=>
-  string(5) "FALSE"
-}
+--EXPECTREGEX--
+1: (1|TRUE)
+0: (0|FALSE)
