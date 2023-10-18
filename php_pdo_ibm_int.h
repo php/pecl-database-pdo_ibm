@@ -41,6 +41,14 @@
 #define MAX_ERR_MSG_LEN (SQL_MAX_MESSAGE_LENGTH + SQL_SQLSTATE_SIZE + 1)
 #define CDTIMETYPE 112
 
+/*
+ * Added in IBM i 7.5, also in LUW 11.1 MP1/FP1
+ * see: https://www.ibm.com/docs/en/db2/11.1?topic=database-mod-pack-fix-pack-updates#c0061179__FP1
+ */
+#ifndef SQL_BOOLEAN
+#define SQL_BOOLEAN 16
+#endif
+
 #ifndef SQL_XML
 #define SQL_XML -370
 #endif
