@@ -29,10 +29,10 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <email>calvin@cmpct.info</email>
   <active>yes</active>
  </developer>
- <date>2022-03-21</date>
+ <date>2023-11-15</date>
  <time>11:11:11</time>
  <version>
-  <release>1.5.0</release>
+  <release>1.6.0</release>
   <api>1.3.4</api>
  </version>
  <stability>
@@ -41,17 +41,13 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-* 2022-03-21: 1.5.0
-- PHP 8.1 support
-- On IBM i, support INI option for CCSID override
-- On IBM i, support INI option for pessimistic DBCS alloc
-- Resolve crash with LOBs
-- Fix build issues with MSVC
-- Fix detecting CLI driver on 64-bit Windows
-- Use modern PDO includes check (resolves compatibility with i.e. Ubuntu, MacPorts)
-- Fix tests for PHP 8.1 and modern Db2 LUW
-- Clean up IBM i command helpers
-- Fix improper return types and declarations
+  - Support for PHP 8.3
+  - Support for boolean data type (IBM i 7.5, Db2/LUW 9.6)
+  - Fix incorrect buffer size for SQLBindParameter (causing -902 otherwise)
+  - Fix error handling for IBM i attributes
+  - Improve error reporting when SQLGetDiagRec fails
+  - Build system improvements for finding driver library
+  - CI and test suite improvements
  </notes>
  <contents>
   <dir name="/">
@@ -133,6 +129,9 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
     <file baseinstalldir="pdo_ibm" name="fvt_V5V6_isam_error.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_client_info.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="fvt_isam_error.phpt" role="test" />
+    <file baseinstalldir="pdo_ibm" name="fvt_V5V6_SQLParamData_fail.phpt" role="test" />
+    <file baseinstalldir="pdo_ibm" name="fvt_handle_empty_parameter.phpt" role="test" />
+    <file baseinstalldir="pdo_ibm" name="fvt_boolean.phpt" role="test" />
     <file baseinstalldir="pdo_ibm" name="large_blob.dat" role="test" />
     <file baseinstalldir="pdo_ibm" name="large_clob.dat" role="test" />
     <file baseinstalldir="pdo_ibm" name="skipif.inc" role="test" />
