@@ -29,10 +29,10 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
   <email>calvin@cmpct.info</email>
   <active>yes</active>
  </developer>
- <date>2023-11-15</date>
+ <date>2023-11-16</date>
  <time>11:11:11</time>
  <version>
-  <release>1.6.0</release>
+  <release>1.6.1</release>
   <api>1.3.4</api>
  </version>
  <stability>
@@ -41,13 +41,7 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
  </stability>
  <license>Apache License 2.0</license>
  <notes>
-  - Support for PHP 8.3
-  - Support for boolean data type (IBM i 7.5, Db2/LUW 9.6)
-  - Fix incorrect buffer size for SQLBindParameter (causing -902 otherwise)
-  - Fix error handling for IBM i attributes
-  - Improve error reporting when SQLGetDiagRec fails
-  - Build system improvements for finding driver library
-  - CI and test suite improvements
+  This fixes a packaging issue that prevented the PECL command from being able to install the package. Manual installations weren't affected.
  </notes>
  <contents>
   <dir name="/">
@@ -147,7 +141,6 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
    <file baseinstalldir="pdo_ibm" name="README.md" role="doc" />
    <file baseinstalldir="pdo_ibm" name="ibm_driver.c" role="src" />
    <file baseinstalldir="pdo_ibm" name="ibm_statement.c" role="src" />
-   <file baseinstalldir="pdo_ibm" name="package.xml" role="src" />
    <file baseinstalldir="pdo_ibm" name="pdo_ibm.c" role="src" />
    <file baseinstalldir="pdo_ibm" name="php_pdo_ibm.h" role="src" />
    <file baseinstalldir="pdo_ibm" name="php_pdo_ibm_int.h" role="src" />
