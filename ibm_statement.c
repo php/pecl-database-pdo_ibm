@@ -46,6 +46,7 @@ struct lob_stream_data
 	stmt_handle *stmt_res;
 	pdo_stmt_t *stmt;
 	int colno;
+	zval dbh; /* for holding a ref to the statement */
 };
 
 #ifdef PASE
@@ -201,6 +202,13 @@ int lob_stream_flush(php_stream *stream)
 int lob_stream_close(php_stream *stream, int close_handle)
 {
 	struct lob_stream_data *data = stream->abstract;
+	pdo_stmt_t *stmt = data->stmt;
+	zend_object *obj = &stmt->std;
+
+	if (Z_ISREF(data->dbh)) {
+		zval_ptr_dtor(&data->dbh); /* should decref */
+		GC_DELREF(obj);
+	}
 	efree(data);
 	return 0;
 }
@@ -227,14 +235,23 @@ php_stream* create_lob_stream( pdo_stmt_t *stmt , stmt_handle *stmt_res , int co
 	data->stmt_res = stmt_res;
 	data->stmt = stmt;
 	data->colno = colno;
+
 	col_res = &data->stmt_res->columns[data->colno];
 	retval = (php_stream *) php_stream_alloc(&lob_stream_ops, data, NULL, "r");
 	/* Find out if the column contains NULL data */
 	if (lob_stream_read(retval, NULL, 0) == SQL_NULL_DATA) {
+		/* Throw away this stream immediately */
+		ZVAL_NULL(&data->dbh);
 		php_stream_close(retval);
 		return NULL;
-	} else
+	} else {
+		/* Hold a ref to the PDOStatement, or it gets deallocated */
+		ZVAL_COPY_VALUE(&data->dbh, &stmt->database_object_handle);
+		Z_ADDREF(data->dbh);
+		zend_object *obj = &stmt->std;
+		GC_ADDREF(obj);
 		return retval;
+	}
 }
 
 /*
