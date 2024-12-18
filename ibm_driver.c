@@ -1088,6 +1088,8 @@ static int dbh_connect(pdo_dbh_t *dbh, zval *driver_options)
 		rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_UTF8, (SQLPOINTER)(intptr_t)SQL_TRUE, 0);
 	}
 #endif /* PASE */
+	/* forced fixed length strings to be returned */
+	rc = SQLSetEnvAttr((SQLHENV)conn_res->henv, SQL_ATTR_OUTPUT_NTS, (SQLPOINTER)(intptr_t)SQL_FALSE, SQL_IS_INTEGER);
 
 	/* now an actual connection handle */
 	rc = SQLAllocHandle(SQL_HANDLE_DBC, conn_res->henv, &(conn_res->hdbc));

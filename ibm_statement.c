@@ -1906,10 +1906,12 @@ int record_last_insert_id( pdo_stmt_t * stmt, pdo_dbh_t *dbh, SQLHANDLE hstmt)
 	long int returnValue;
 	conn_handle *conn_res = (conn_handle *) dbh->driver_data;
 	char id[ MAX_IDENTITY_DIGITS ] = "";
-	char server[MAX_DBMS_IDENTIFIER_NAME];
+	char server[MAX_DBMS_IDENTIFIER_NAME + 1];
+	SQLSMALLINT server_name_length = 0;
 
-	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, NULL);
+	rc = SQLGetInfo(conn_res->hdbc, SQL_DBMS_NAME, (SQLPOINTER)server, MAX_DBMS_IDENTIFIER_NAME, &server_name_length);
 	check_dbh_error(rc, "SQLGetInfo");
+	server[server_name_length] = '\0';
 	if( strncmp( server, "IDS", 3 ) == 0 ) {
 		rc = SQLGetStmtAttr( (SQLHSTMT)hstmt, SQL_ATTR_GET_GENERATED_VALUE, (SQLPOINTER)id, 
 									MAX_IDENTITY_DIGITS, NULL );
