@@ -757,7 +757,7 @@ int stmt_bind_parameter(pdo_stmt_t *stmt, struct pdo_bound_param_data *curr)
 				* each string (or atom) is allocated once and never changed (immutable)
 				* aka, not useful for INOUT and OUT paramters obviously
 				*/
-				if (IS_INTERNED(Z_STR_P(parameter))) {
+				if (ZSTR_IS_INTERNED(Z_STR_P(parameter))) {
 					Z_STR_P(parameter) = zend_string_init(Z_STRVAL_P(parameter), Z_STRLEN_P(parameter), 0);
 					/* free at event hook */
 					param_res->tmp_binding_buffer = (parameter);
