@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Cache DB2 library
         id: cache-clidriver
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: clidriver
           key: ${{ runner.os }}-clidriver
@@ -94,7 +94,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Cache DB2 library
         id: cache-clidriver
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: clidriver
           key: ${{ runner.os }}-clidriver
@@ -106,7 +106,7 @@ jobs:
           Expand-Archive 'ntx64_odbc_cli.zip' -DestinationPath '.\'
       - name: Setup PHP
         id: setup-php
-        uses: php/setup-php-sdk@v0.9
+        uses: php/setup-php-sdk@v0.10
         with:
           version: ${{matrix.version}}
           arch: ${{matrix.arch}}
