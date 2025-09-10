@@ -47,32 +47,26 @@ extern pdo_driver_t pdo_ibm_driver;	/* the registration table */
 
 /* {{{ pdo_ibm_deps
  */
-#if ZEND_MODULE_API_NO >= 20041225
 static zend_module_dep pdo_ibm_deps[] = {
 	ZEND_MOD_REQUIRED("pdo")
 	{NULL, NULL, NULL}
 };
-#endif
 /* }}} */
 
 /* {{{ pdo_ibm_module_entry
  */
 zend_module_entry pdo_ibm_module_entry =
 {
-#if ZEND_MODULE_API_NO >= 20041225
 	STANDARD_MODULE_HEADER_EX, NULL,
 	pdo_ibm_deps,
-#else
-	STANDARD_MODULE_HEADER,
-#endif
 	"pdo_ibm",
 	NULL,
 	PHP_MINIT(pdo_ibm),
 	PHP_MSHUTDOWN(pdo_ibm),
-	PHP_RINIT(pdo_ibm),        /* Replace with NULL if there's nothing to do at request start */
-	PHP_RSHUTDOWN(pdo_ibm),    /* Replace with NULL if there's nothing to do at request end */
+	PHP_RINIT(pdo_ibm),
+	PHP_RSHUTDOWN(pdo_ibm),
 	PHP_MINFO(pdo_ibm),
-	PDO_IBM_VERSION,   /* Replace with version number for your extension */
+	PDO_IBM_VERSION,
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
