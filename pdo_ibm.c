@@ -30,8 +30,8 @@
 #include "php_pdo_ibm.h"
 #include "php_pdo_ibm_int.h"
 
-/* The class constants are only useful on 8,4/8.5+ */
-#if PHP_VERSION_ID >= 80500
+/* The class constants are only useful on 8.4+ */
+#if PHP_VERSION_ID >= 80400
 #include "pdo_ibm_arginfo.h"
 #endif
 
@@ -163,7 +163,7 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 	REGISTER_PDO_IBM_CLASS_CONST_LONG_DEPRECATED_ALIAS_85("ATTR_INFO_APPLNAME", (long) PDO_SQL_ATTR_INFO_APPLNAME);
 	REGISTER_PDO_IBM_CLASS_CONST_LONG_DEPRECATED_ALIAS_85("ATTR_INFO_WRKSTNNAME", (long) PDO_SQL_ATTR_INFO_WRKSTNNAME);
 
-#if PHP_VERSION_ID >= 80500
+#if PHP_VERSION_ID >= 80400
 	pdo_ibm_ce = register_class_Pdo_Ibm(pdo_dbh_ce);
 	pdo_ibm_ce->create_object = pdo_dbh_new;
 
