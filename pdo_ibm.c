@@ -134,6 +134,10 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 	REGISTER_INI_ENTRIES();
 #endif
 
+	if (FAILURE == php_pdo_register_driver(&pdo_ibm_driver)) {
+		return FAILURE;
+	}
+
 #ifndef PASE /* i5/OS no support trusted */
 	REGISTER_PDO_IBM_CLASS_CONST_LONG_DEPRECATED_ALIAS_85("ATTR_USE_TRUSTED_CONTEXT", (long) PDO_SQL_ATTR_USE_TRUSTED_CONTEXT);
 	REGISTER_PDO_IBM_CLASS_CONST_LONG_DEPRECATED_ALIAS_85("ATTR_TRUSTED_CONTEXT_USERID", (long) PDO_SQL_ATTR_TRUSTED_CONTEXT_USERID);
@@ -165,7 +169,6 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 
 	return php_pdo_register_driver_specific_ce(&pdo_ibm_driver, pdo_ibm_ce);
 #else
-	php_pdo_register_driver(&pdo_ibm_driver);
 	return TRUE;
 #endif
 }
