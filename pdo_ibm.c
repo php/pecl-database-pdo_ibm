@@ -30,7 +30,8 @@
 #include "php_pdo_ibm.h"
 #include "php_pdo_ibm_int.h"
 
-#if PHP_MAJOR_VERSION >= 8
+/* The class constants are only useful on 8,4/8.5+ */
+#if PHP_VERSION_ID >= 80500
 #include "pdo_ibm_arginfo.h"
 #endif
 
