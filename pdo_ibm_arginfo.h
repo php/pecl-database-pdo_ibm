@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: d973ffba51a2d0ff794d8b86edfdf13aafddb615 */
+ * Stub hash: 427aa66f949b5916e4fe54c09da53fa2853479e5 */
 
 static zend_class_entry *register_class_Pdo_Ibm(zend_class_entry *class_entry_PDO)
 {
