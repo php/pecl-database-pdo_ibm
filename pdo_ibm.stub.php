@@ -36,6 +36,9 @@ namespace Pdo {
 		public const int ATTR_TRUSTED_CONTEXT_PASSWORD = UNKNOWN;
 #endif
 #ifdef PASE
+		/** @cvalue PDO_I5_ATTR_DBC_SYS_NAMING */
+		public const int ATTR_DBC_SYS_NAMING = UNKNOWN;
+
 		/** @cvalue PDO_I5_ATTR_COMMIT */
 		public const int ATTR_COMMIT = UNKNOWN;
 

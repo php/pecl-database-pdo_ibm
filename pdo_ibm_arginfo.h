@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 427aa66f949b5916e4fe54c09da53fa2853479e5 */
+ * Stub hash: e6e91d0261810097515617adf9364f2ddf293a43 */
 
 static zend_class_entry *register_class_Pdo_Ibm(zend_class_entry *class_entry_PDO)
 {
@@ -52,6 +52,12 @@ static zend_class_entry *register_class_Pdo_Ibm(zend_class_entry *class_entry_PD
 	zend_string_release(const_ATTR_TRUSTED_CONTEXT_PASSWORD_name);
 #endif
 #if defined(PASE)
+
+	zval const_ATTR_DBC_SYS_NAMING_value;
+	ZVAL_LONG(&const_ATTR_DBC_SYS_NAMING_value, PDO_I5_ATTR_DBC_SYS_NAMING);
+	zend_string *const_ATTR_DBC_SYS_NAMING_name = zend_string_init_interned("ATTR_DBC_SYS_NAMING", sizeof("ATTR_DBC_SYS_NAMING") - 1, 1);
+	zend_declare_typed_class_constant(class_entry, const_ATTR_DBC_SYS_NAMING_name, &const_ATTR_DBC_SYS_NAMING_value, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_MASK(MAY_BE_LONG));
+	zend_string_release(const_ATTR_DBC_SYS_NAMING_name);
 
 	zval const_ATTR_COMMIT_value;
 	ZVAL_LONG(&const_ATTR_COMMIT_value, PDO_I5_ATTR_COMMIT);
