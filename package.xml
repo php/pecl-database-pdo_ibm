@@ -142,6 +142,8 @@ Universal Database, IBM Cloudscape, Apache Derby databases and IDS (Informix Dat
    <file baseinstalldir="pdo_ibm" name="ibm_driver.c" role="src" />
    <file baseinstalldir="pdo_ibm" name="ibm_statement.c" role="src" />
    <file baseinstalldir="pdo_ibm" name="pdo_ibm.c" role="src" />
+   <file baseinstalldir="pdo_ibm" name="pdo_ibm_arginfo.h" role="src" />
+   <file baseinstalldir="pdo_ibm" name="pdo_ibm.stub.php" role="src" />
    <file baseinstalldir="pdo_ibm" name="php_pdo_ibm.h" role="src" />
    <file baseinstalldir="pdo_ibm" name="php_pdo_ibm_int.h" role="src" />
   </dir>
