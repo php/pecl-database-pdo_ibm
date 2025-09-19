@@ -41,7 +41,7 @@ abstract class FVTTest
 		$options = array(PDO::ATTR_AUTOCOMMIT=>$autoCommit);
 		// Use the driver subclass on PHP 8.4+
 		$this->db = version_compare(PHP_VERSION, '8.4.0') >= 0
-			? PDO::construct($this->dsn, $this->user, $this->pass, $options)
+			? PDO::connect($this->dsn, $this->user, $this->pass, $options)
 			: new PDO($this->dsn, $this->user, $this->pass, $options);
 		$this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this->db->setAttribute(PDO::ATTR_CASE, PDO::CASE_UPPER);
