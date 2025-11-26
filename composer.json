@@ -1,0 +1,21 @@
+{
+    "name": "pecl/pdo_ibm",
+    "type": "php-ext",
+    "license": "Apache-2.0",
+    "description": "PDO driver for IBM databases",
+    "require": {
+        "php": ">= 7.3.0",
+	"ext-pdo": "*"
+    },
+    "php-ext": {
+        "extension-name": "PDO_IBM",
+        "configure-options": [
+            {
+                "name": "with-pdo-ibm",
+                "description": "Enable PDO_IBM support. DIR is the path to the DB2 install prefix.",
+                "needs-value": true
+            }
+        ]
+    }
+}
+
