@@ -176,9 +176,9 @@ PHP_MINIT_FUNCTION(pdo_ibm)
  */
 PHP_MSHUTDOWN_FUNCTION(pdo_ibm)
 {
-	/* uncomment this line if you have INI entries
+#ifdef PASE
 	UNREGISTER_INI_ENTRIES();
-	*/
+#endif
 	 
 	php_pdo_unregister_driver(&pdo_ibm_driver);
 	return TRUE;
