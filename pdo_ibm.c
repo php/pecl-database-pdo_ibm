@@ -90,21 +90,14 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 #endif /* PASE */
 
-
-#ifdef PASE /* prior any CLI routine override ascii ccsid */
+#ifdef PASE
 /* {{{ php_pdo_ibm_init_globals
  */
 static void php_pdo_ibm_init_globals(zend_pdo_ibm_globals *pdo_ibm_globals)
 {
-	if (PDO_IBM_G(i5_override_ccsid)) {
-		/* This routine should be called by the application prior
-		 * to any other CLI routine to override the ascii ccsid
-		 * being retrieved from the Qp2RunPase() routine.  If this
-		 * routine is called after any CLI routine is called in
-		 * the process it will have no effect.
-		 */
-		SQLOverrideCCSID400(PDO_IBM_G(i5_override_ccsid));
-	}
+#if defined(ZTS) && defined(COMPILE_DL_PDO_IBM)
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
 }
 /* }}} */
 #endif /* PASE */
@@ -161,14 +154,29 @@ PHP_MINIT_FUNCTION(pdo_ibm)
 	REGISTER_PDO_IBM_CLASS_CONST_LONG_DEPRECATED_ALIAS_85("ATTR_INFO_APPLNAME", (long) PDO_SQL_ATTR_INFO_APPLNAME);
 	REGISTER_PDO_IBM_CLASS_CONST_LONG_DEPRECATED_ALIAS_85("ATTR_INFO_WRKSTNNAME", (long) PDO_SQL_ATTR_INFO_WRKSTNNAME);
 
+	int res = FALSE;
 #if PHP_VERSION_ID >= 80400
 	pdo_ibm_ce = register_class_Pdo_Ibm(pdo_dbh_ce);
 	pdo_ibm_ce->create_object = pdo_dbh_new;
 
-	return php_pdo_register_driver_specific_ce(&pdo_ibm_driver, pdo_ibm_ce);
+	res = php_pdo_register_driver_specific_ce(&pdo_ibm_driver, pdo_ibm_ce);
 #else
-	return TRUE;
+	res = TRUE;
 #endif
+#ifdef PASE
+	if (res && PDO_IBM_G(i5_override_ccsid)) {
+		/* This routine should be called by the application prior
+		 * to any other CLI routine to override the ascii ccsid
+		 * being retrieved from the Qp2RunPase() routine.  If this
+		 * routine is called after any CLI routine is called in
+		 * the process it will have no effect.
+		 *
+		 * XXX: What about ibm_db2 setting this too?
+		 */
+		SQLOverrideCCSID400(PDO_IBM_G(i5_override_ccsid));
+	}
+#endif
+	return res;
 }
 /* }}} */
 
